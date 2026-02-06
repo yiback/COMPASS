@@ -34,5 +34,9 @@ coverage/
 .mcp.json
 shrimp_data/
 
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
 # Vercel
 .vercel

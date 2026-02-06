@@ -84,8 +84,15 @@ src/
 - **PRD 상세**: `docs/prd/PRD-v0.1-detailed.md`
 
 ### 설계
+- **시스템 아키텍처**: `docs/design/시스템아키텍처.md`
 - **기술스택**: `docs/design/기술스택.md`
 - **개발요구사항**: `docs/design/개발요구사항.md`
+
+### 데이터베이스
+- **스키마**: `supabase/migrations/00001_initial_schema.sql`
+- **RLS 정책**: `supabase/migrations/00002_rls_policies.sql`
+- **인덱스**: `supabase/migrations/00003_indexes.sql`
+- **시드 데이터**: `supabase/seed.sql`
 
 ### 개발 가이드
 - **프로젝트 구조**: `docs/guides/project-structure.md`
