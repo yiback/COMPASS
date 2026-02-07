@@ -32,7 +32,6 @@ coverage/
 
 # MCP & Shrimp (local configs)
 .mcp.json
-shrimp_data/
 
 # TypeScript
 *.tsbuildinfo
