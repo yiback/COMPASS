@@ -33,14 +33,28 @@
 
 ---
 
+## 학습 지향 개발 (필수)
+
+이 프로젝트는 **학습 목적**을 겸하므로, 모든 작업에서 다음을 준수:
+
+1. **작업 설명**: 코드 작성 전에 **무엇을, 왜 하는지** 설명
+2. **기술 설명**: 새로운 기술/패턴/라이브러리 사용 시 **개념과 동작 원리** 설명
+3. **핵심 로직 설명**: 복잡한 코드에 대해 **어떻게 동작하는지** 설명
+4. **의사결정 근거**: 기술적 선택 시 **대안과 선택 이유** 명시
+5. **에러 학습**: 에러 발생 시 **원인 분석과 해결 과정** 설명
+
+---
+
 ## 기술 스택
 
-> **현재 Phase: 0-1 (MVP)** | 전체 로드맵: [기술스택.md](docs/design/기술스택.md)
+> **현재 Phase: 0-4 완료** | 전체 로드맵: [기술스택.md](docs/design/기술스택.md)
 
 | 영역 | 기술 |
 |------|------|
-| Frontend | Next.js 15, React 19, TypeScript |
-| Styling | TailwindCSS v4, shadcn/ui |
+| Frontend | Next.js 16.1.6, React 19, TypeScript |
+| Styling | TailwindCSS v4, shadcn/ui (19개 컴포넌트) |
+| 데이터 테이블 | TanStack Table |
+| Toast | Sonner |
 | Backend | Supabase (인증, PostgreSQL, Storage) |
 | 폼/검증 | React Hook Form, Zod |
 | AI | Google Gemini |
@@ -69,7 +83,10 @@
 src/
 ├── app/           # Next.js App Router 페이지
 ├── components/    # 재사용 컴포넌트
-│   └── ui/        # shadcn/ui 컴포넌트
+│   ├── ui/        # shadcn/ui 컴포넌트 (19개)
+│   ├── data-table/ # DataTable (TanStack Table)
+│   ├── loading/   # Skeleton, Spinner
+│   └── layout/    # 레이아웃 (사이드바, 헤더)
 ├── lib/           # 유틸리티, 헬퍼 함수
 ├── hooks/         # 커스텀 훅
 └── types/         # TypeScript 타입 정의

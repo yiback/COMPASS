@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-06
+> **최종 업데이트**: 2026-02-07
 > **대상**: 이 프로젝트를 이어받는 새로운 에이전트
 
 ---
@@ -12,7 +12,7 @@
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
 - **타겟**: 소형~중형 보습학원, 중등 수학부터 시작
-- **현재 Phase**: 0-3 (Route Groups 및 레이아웃), **Supabase 연동 완료**
+- **현재 Phase**: 0-4 (공통 UI 컴포넌트 완료), **Supabase 연동 완료**
 
 기술스택: Next.js 16.1.6 + React 19 + Supabase + Google Gemini + Vercel
 
@@ -64,16 +64,44 @@
 - **연결 테스트**: `src/app/test/page.tsx` - academies 데이터 조회 성공
 - **검증**: `npm run build` 성공, Supabase 연결 확인
 
-#### 프로젝트 표준 문서 생성 (이번 세션 완료)
+#### 프로젝트 표준 문서 생성 (완료)
 - **shrimp-rules.md**: AI 에이전트용 프로젝트 개발 표준 문서 자동 생성
 - **내용**: 12개 섹션 (아키텍처, Supabase 규칙, Next.js 16 특화, 보안, 금지 사항 등)
 - **특징**: DO/DON'T 예시, 의사결정 플로우차트, 명령형 언어
 - **목적**: 새로운 AI 에이전트의 자율 작업 실행을 위한 명확한 가이드라인
 
+#### Phase 0-3: Route Groups 및 기본 레이아웃 (완료)
+- **Route Groups 생성**: `(dashboard)`, `(auth)` 디렉토리 구조
+- **대시보드 레이아웃**: `app/(dashboard)/layout.tsx` - 사이드바 + 헤더 (반응형)
+- **대시보드 페이지**: `/` (홈), `/past-exams`, `/generate`, `/settings`
+- **shadcn/ui 컴포넌트 추가**: Sheet (모바일 메뉴), Avatar, Separator
+- **네비게이션**: `src/lib/constants/menu.ts` - 메뉴 항목 정의
+- **컴포넌트**:
+  - `src/components/layout/dashboard-sidebar.tsx` - 데스크톱 사이드바
+  - `src/components/layout/dashboard-header.tsx` - 헤더 (프로필 + 모바일 메뉴)
+  - `src/components/layout/mobile-nav.tsx` - 모바일 Sheet 네비게이션
+- **검증**: 빌드/린트 성공, 반응형 동작 확인
+
+#### Phase 0-4: 공통 UI 컴포넌트 (완료)
+- **shadcn/ui 15개 컴포넌트 설치**: form, input, textarea, select, checkbox, label, radio-group, table, card, badge, dialog, alert-dialog, dropdown-menu, sonner, skeleton
+- **DataTable 컴포넌트** (TanStack Table 기반):
+  - `src/components/data-table/data-table.tsx` - 메인 (정렬, 필터, 페이지네이션, 행 선택)
+  - `src/components/data-table/data-table-column-header.tsx` - 컬럼 헤더 (정렬/숨기기)
+  - `src/components/data-table/data-table-pagination.tsx` - 페이지네이션 UI
+  - `src/components/data-table/data-table-toolbar.tsx` - 검색/필터 툴바
+  - `src/components/data-table/index.ts` - 배럴 export
+- **Loading/Skeleton 컴포넌트**:
+  - `src/components/loading/card-skeleton.tsx` - 카드 스켈레톤
+  - `src/components/loading/table-skeleton.tsx` - 테이블 스켈레톤
+  - `src/components/loading/form-skeleton.tsx` - 폼 스켈레톤
+  - `src/components/loading/spinner.tsx` - 로딩 스피너 (sm/md/lg)
+  - `src/components/loading/index.ts` - 배럴 export
+- **Toast 시스템**: Sonner 전역 설정 (layout.tsx) + `src/lib/toast.ts` 헬퍼 (showActionResult, showPromiseToast)
+- **검증**: `npm run build` 성공, `npm run lint` 에러 0
+
 ### 미완료 작업
 
 - **PRD-v0.1-detailed.md의 상대경로 오류**: `./기술스택.md` → `../design/기술스택.md` (3곳 미수정)
-- **테스트 페이지 정리**: `src/app/test/page.tsx` 삭제 또는 개발 환경에서만 접근 가능하도록 설정
 - **TypeScript 타입 자동 생성**: `supabase gen types`로 실제 DB 스키마에서 타입 생성 (현재는 placeholder)
 
 ---
@@ -90,6 +118,9 @@
 - **seed.sql UUID 형식 수정**: `s0000000-...` → `b0000000-...` (s는 16진수가 아님)
 - **RLS 테스트용 admin 클라이언트**: 로그인 없이 데이터 확인 시 service_role 키 사용
 - **init project rules 도구**: MCP `mcp__shrimp-task-manager__init_project_rules` 사용하여 프로젝트 자동 분석 및 표준 문서 생성
+- **shrimp-task-manager 활용**: `plan_task` → `analyze_task` → `reflect_task` → `split_tasks` 플로우로 Phase 0-4 계획 수립
+- **TanStack Table + shadcn/ui 조합**: DataTable 구현 시 shadcn/ui 공식 가이드 패턴 준수 (커스텀 구현보다 검증된 패턴)
+- **Sonner (Toast)**: shadcn/ui toast보다 Sonner 선택 (더 현대적, API 단순, 스택 관리 자동)
 
 ---
 
@@ -105,21 +136,20 @@
 
 ## 5. Next Steps (다음 단계)
 
-### 즉시 해야 할 일 (Phase 0-3: Route Groups 및 기본 레이아웃)
+### 🚨 즉시 해야 할 일 (Phase 0-5: AI 추상화 레이어)
 
-1. **Route Groups 생성**: `app/(auth)`, `app/(dashboard)` 디렉토리 생성
-2. **대시보드 레이아웃**: `app/(dashboard)/layout.tsx` - 헤더, 사이드바
-3. **인증 레이아웃**: `app/(auth)/layout.tsx` - 로그인/회원가입 전용 레이아웃
-4. **shadcn 컴포넌트 추가**: Sheet (사이드바), Avatar, DropdownMenu (프로필 메뉴)
-5. **네비게이션 구조**: 역할별 메뉴 항목 정의 (system_admin, academy_admin, teacher, student)
+1. **AI Provider 인터페이스 설계** - Factory + Strategy 패턴
+2. **Google Gemini 연동** - 첫 번째 Provider 구현체
+3. **프롬프트 템플릿 시스템** - 문제 생성용 프롬프트 구조화
+4. **응답 파싱/검증 유틸리티** - AI 응답을 구조화된 데이터로 변환
+5. **에러 핸들링 및 재시도 로직** - 안정적인 AI 호출
 
-### 그 다음 (ROADMAP.md Phase 0 참조)
+### 그 다음 (ROADMAP.md 단계 1 참조)
 
-6. **Phase 0-4: 인증 시스템** - Supabase Auth + 로그인/회원가입 페이지
-7. **Phase 0-5: 대시보드 홈** - 역할별 초기 화면
-8. **Phase 0-6: AI 서비스 기초** - Provider Pattern + Gemini 구현체
+6. **단계 1 트랙 B: 인증 시스템** - Supabase Auth + 로그인/회원가입 페이지
+7. **단계 1 트랙 B: 기본 CRUD UI** - 학원/학교/사용자 관리
+8. **단계 1 트랙 A: 기출문제 업로드** - 이미지/PDF 업로드 + Storage
 9. **RBAC 미들웨어 강화**: 역할별 라우트 가드 (Middleware에서 검증)
-10. **프로필 관리**: 사용자 프로필 조회/수정 기능
 
 ---
 
@@ -179,16 +209,47 @@ compass/
     ├── app/
     │   ├── globals.css                # TailwindCSS v4 + shadcn CSS 변수
     │   ├── layout.tsx                 # 루트 레이아웃 (lang="ko", COMPASS 메타데이터)
-    │   ├── page.tsx                   # 홈페이지 (COMPASS 제목 + Button)
-    │   └── favicon.ico
+    │   ├── page.tsx                   # 홈 리다이렉트 → /dashboard
+    │   ├── favicon.ico
+    │   ├── (dashboard)/               # Route Group - 대시보드
+    │   │   ├── layout.tsx             # 사이드바 + 헤더 레이아웃
+    │   │   ├── page.tsx               # 대시보드 홈 (/)
+    │   │   ├── past-exams/page.tsx    # 기출문제
+    │   │   ├── generate/page.tsx      # 시험 생성
+    │   │   └── settings/page.tsx      # 설정
+    │   └── middleware.ts              # Supabase 세션 갱신
     ├── components/
-    │   ├── ui/
-    │   │   └── button.tsx             # shadcn Button
-    │   ├── layout/                    # (빈 디렉토리 - Phase 0-3)
+    │   ├── ui/                        # shadcn/ui 컴포넌트 (19개)
+    │   │   ├── button, sheet, avatar, separator (기존 4개)
+    │   │   ├── form, input, textarea, select, checkbox, label, radio-group (폼 7개)
+    │   │   ├── table, card, badge (데이터 3개)
+    │   │   ├── dialog, alert-dialog, dropdown-menu (오버레이 3개)
+    │   │   └── sonner, skeleton (피드백 2개)
+    │   ├── data-table/                # DataTable 컴포넌트 (TanStack Table)
+    │   │   ├── data-table.tsx         # 메인 (정렬/필터/페이지네이션)
+    │   │   ├── data-table-column-header.tsx  # 컬럼 헤더
+    │   │   ├── data-table-pagination.tsx     # 페이지네이션
+    │   │   ├── data-table-toolbar.tsx        # 검색/필터 툴바
+    │   │   └── index.ts
+    │   ├── loading/                   # Loading/Skeleton 컴포넌트
+    │   │   ├── card-skeleton.tsx, table-skeleton.tsx, form-skeleton.tsx
+    │   │   ├── spinner.tsx            # sm/md/lg 스피너
+    │   │   └── index.ts
+    │   ├── layout/
+    │   │   ├── dashboard-sidebar.tsx  # 데스크톱 사이드바
+    │   │   ├── dashboard-header.tsx   # 헤더 (프로필 + 모바일)
+    │   │   └── mobile-nav.tsx         # 모바일 Sheet 네비게이션
     │   └── providers/                 # (빈 디렉토리)
     ├── lib/
-    │   ├── utils.ts                   # cn() 유틸 (shadcn)
-    │   └── supabase/                  # (빈 디렉토리 - Phase 0-2)
+    │   ├── utils.ts                   # cn() 유틸
+    │   ├── toast.ts                   # Toast 헬퍼 (showActionResult, showPromiseToast)
+    │   ├── constants/
+    │   │   └── menu.ts                # 메뉴 항목 정의
+    │   └── supabase/
+    │       ├── client.ts              # 브라우저 클라이언트
+    │       ├── server.ts              # 서버 클라이언트
+    │       ├── admin.ts               # Admin 클라이언트 (RLS 우회)
+    │       └── types.ts               # TypeScript 타입 (placeholder)
     ├── hooks/                         # (빈 디렉토리)
     └── types/                         # (빈 디렉토리)
 ```
@@ -220,8 +281,28 @@ compass/
 ## 8. 개발 명령어
 
 ```bash
+# 기본 명령어
 npm run dev      # 개발 서버 (Turbopack)
 npm run build    # 프로덕션 빌드
 npm run lint     # ESLint
 npm run start    # 프로덕션 서버
+
+# shrimp-task-manager 명령어 (Phase 0-4)
+mcp__shrimp-task-manager__list_tasks status=all
+mcp__shrimp-task-manager__get_task_detail taskId=<ID>
+mcp__shrimp-task-manager__execute_task taskId=<ID>
+mcp__shrimp-task-manager__verify_task taskId=<ID> score=<0-100> summary="..."
 ```
+
+---
+
+## 9. 설치된 패키지 요약
+
+### Dependencies
+- `@tanstack/react-table` - DataTable용 (Phase 0-4에서 추가)
+- `sonner` - Toast 알림 (shadcn/ui 의존성으로 자동 설치)
+- `next-themes` - 테마 관리 (shadcn/ui 의존성으로 자동 설치, 미사용)
+
+### shadcn/ui 컴포넌트 (총 19개)
+- 기존: button, sheet, avatar, separator
+- Phase 0-4 추가: form, input, textarea, select, checkbox, label, radio-group, table, card, badge, dialog, alert-dialog, dropdown-menu, sonner, skeleton
