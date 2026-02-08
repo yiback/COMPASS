@@ -69,9 +69,11 @@ export interface AIProvider {
 // ─── 프롬프트 설정 ──────────────────────────────────────
 
 export interface PromptConfig {
-  readonly template: string
-  readonly maxTokens: number
+  readonly systemInstruction: string
+  readonly userPrompt: string
+  readonly responseSchema: unknown
   readonly temperature: number
+  readonly maxOutputTokens: number
 }
 
 // ─── 문제 생성 ──────────────────────────────────────────
@@ -82,6 +84,7 @@ export interface GenerateQuestionParams {
   readonly questionType: QuestionType
   readonly count: number
   readonly difficulty: 'easy' | 'medium' | 'hard'
+  readonly unit?: string
   readonly topics?: readonly string[]
   readonly schoolName?: string
 }
