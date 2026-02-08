@@ -61,13 +61,13 @@
 - ✅ Toast 알림 시스템 - Sonner 전역 설정 + 헬퍼 함수
 - ✅ Loading/Skeleton 컴포넌트 - CardSkeleton, TableSkeleton, FormSkeleton, Spinner
 
-### 0-5. AI 추상화 레이어 (5/12 Steps, 42%)
+### 0-5. AI 추상화 레이어 (6/12 Steps, 50%)
 
 - [x] 커스텀 에러 계층 (AIError, AIServiceError, AIValidationError, AIRateLimitError, AIConfigError)
 - [x] 환경변수 검증 (Zod 스키마, 캐싱, AIConfigError 래핑)
 - [x] AI Provider 인터페이스 + 타입 정의 (Factory + Strategy 패턴)
 - [x] 재시도 유틸리티 (지수 백오프, 입력값 검증, AIRateLimitError 서버 명시 대기)
-- [ ] 응답 파싱/검증 (Zod 스키마 이중 활용)
+- [x] 응답 파싱/검증 (Zod 스키마 이중 활용 + 2단계 검증)
 - [ ] 프롬프트 템플릿 시스템
 - [ ] Google Gemini 연동 (GeminiProvider 구현체)
 - [ ] Factory 함수 + 공개 API
@@ -361,4 +361,4 @@
 - ✅ 0-2. Supabase 기본 연동 (완료)
 - ✅ 0-3. 기본 레이아웃 (완료)
 - ✅ 0-4. 공통 UI 컴포넌트 (완료)
-- 🚧 0-5. AI 추상화 레이어 (진행 중 - 5/12 Steps, 42%)
+- 🚧 0-5. AI 추상화 레이어 (진행 중 - 6/12 Steps, 50%)

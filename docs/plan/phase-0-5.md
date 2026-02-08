@@ -2,7 +2,7 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 5/12 Steps 완료 (42%)
+> **진행률**: 6/12 Steps 완료 (50%)
 > **마지막 업데이트**: 2026-02-08
 
 ---
@@ -44,7 +44,7 @@ const questions = await provider.generateQuestions({
 | 3 | config.ts (환경변수 검증) | ✅ | `src/lib/ai/config.ts` |
 | 4 | types.ts (인터페이스/타입) | ✅ | `src/lib/ai/types.ts` |
 | 5 | retry.ts (재시도 유틸리티) | ✅ | `src/lib/ai/retry.ts` |
-| 6 | validation.ts (응답 검증) | ⏸️ | `src/lib/ai/validation.ts` |
+| 6 | validation.ts (응답 검증) | ✅ | `src/lib/ai/validation.ts` |
 | 7 | prompts/question-generation.ts | ⏸️ | `src/lib/ai/prompts/question-generation.ts` |
 | 8 | prompts/index.ts (내보내기) | ⏸️ | `src/lib/ai/prompts/index.ts` |
 | 9 | gemini.ts (GeminiProvider) | ⏸️ | `src/lib/ai/gemini.ts` |
@@ -125,7 +125,7 @@ src/lib/ai/
 ├── errors.ts               (~70줄)  - 커스텀 에러 [완료]
 ├── config.ts               (~62줄)  - 환경변수 검증 [완료]
 ├── retry.ts                (~105줄) - 재시도 유틸리티 [완료]
-├── validation.ts           (~80줄)  - 응답 검증
+├── validation.ts           (~86줄)  - 응답 검증 [완료]
 ├── gemini.ts               (~100줄) - GeminiProvider
 ├── provider.ts             (~30줄)  - Factory 함수
 ├── index.ts                (~15줄)  - 공개 API
@@ -137,7 +137,7 @@ src/lib/ai/
     ├── config.test.ts       [완료 - 5 tests]
     ├── types.test.ts        [완료 - 8 tests]
     ├── retry.test.ts        [완료 - 13 tests]
-    ├── validation.test.ts   [대기]
+    ├── validation.test.ts   [완료 - 17 tests]
     ├── provider.test.ts     [대기]
     └── prompts/
         └── question-generation.test.ts  [대기]
@@ -396,29 +396,37 @@ await assertion  // 결과 확인
 
 ## Step 6: validation.ts (응답 검증)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/validation.ts` (~80줄)
-- 생성 예정: `src/lib/ai/__tests__/validation.test.ts`
+- 생성: `src/lib/ai/validation.ts` (86줄)
+- 생성: `src/lib/ai/__tests__/validation.test.ts` (17개 테스트)
 
 **의존성**: `types.ts` (Step 4), `errors.ts` (Step 2)
 
 **목적**: AI 응답을 Zod 스키마로 검증하고 타입 안전한 객체로 변환. Zod 스키마를 Gemini `responseJsonSchema`로도 활용 (DRY).
 
+**설계 결정**:
+
+1. **difficulty 타입: 문자열 enum 사용**: 설계 문서의 `z.number().int().min(1).max(5)` 대신 `z.enum(['easy', 'medium', 'hard'])` 사용. `GeneratedQuestion.difficulty`가 문자열이므로 변환 로직 불필요
+2. **JSON Schema 변환: Zod v4 내장 `toJSONSchema()` 사용**: `zod-to-json-schema` 대신 Zod v4(4.3.6) 내장 메서드 사용. 외부 패키지 의존성 제거
+3. **필드명 `questionType` 유지**: JSON Schema 예약어 `type`과 충돌 방지. `validateGeneratedQuestions()` 내에서 `type: q.questionType` 매핑 (1줄)
+4. **explanation 필수 강제**: TypeScript `GeneratedQuestion.explanation?`은 optional이지만, Zod에서 필수로 강제하여 항상 해설 생성
+
 **구현 가이드**:
 
 ```typescript
 import { z } from 'zod'
-import { zodToJsonSchema } from 'zod-to-json-schema'
-import type { GeneratedQuestion } from './types'
+import type { GeneratedQuestion, QuestionType } from './types'
 import { AIValidationError } from './errors'
+
+const REQUIRED_OPTIONS_COUNT = 5
 
 export const generatedQuestionSchema = z.object({
   content: z.string().min(1),
   answer: z.string().min(1),
   explanation: z.string().min(1),
-  difficulty: z.number().int().min(1).max(5),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
   questionType: z.enum(['multiple_choice', 'short_answer', 'essay']),
   options: z.array(z.string()).optional(),
 })
@@ -427,29 +435,33 @@ export const generatedQuestionsResponseSchema = z.object({
   questions: z.array(generatedQuestionSchema),
 })
 
-// Gemini responseJsonSchema로 변환
-export const questionsJsonSchema = zodToJsonSchema(generatedQuestionsResponseSchema)
+// Zod v4 내장 toJSONSchema()로 변환 (DRY)
+export const questionsJsonSchema =
+  generatedQuestionsResponseSchema.toJSONSchema()
 
-export function validateGeneratedQuestions(data: unknown): GeneratedQuestion[] {
-  // 1. Zod 파싱
-  // 2. 객관식이면 보기 5개 확인
-  // 3. 실패 시 AIValidationError throw (details 포함)
+export function validateGeneratedQuestions(data: unknown): readonly GeneratedQuestion[] {
+  // 1. Zod safeParse → AIValidationError (details에 경로+메시지)
+  // 2. 객관식 보기 5개 필수 검증
+  // 3. questionType → type 매핑 후 GeneratedQuestion[] 반환
 }
 ```
 
 검증 규칙:
 - 필수 필드: content, answer, explanation, difficulty, questionType
 - 객관식(`multiple_choice`) → options 배열 5개 필수
-- 난이도 범위: 1~5
+- 난이도: `'easy' | 'medium' | 'hard'` enum
 - Zod 파싱 실패 → `AIValidationError` (details에 경로+메시지)
 
 **검증 기준**:
-- [ ] 유효한 데이터 → `GeneratedQuestion[]` 반환
-- [ ] 무효한 데이터 → `AIValidationError` throw
-- [ ] 객관식 보기 5개 미만 → 에러
-- [ ] 난이도 범위 벗어남 → 에러
-- [ ] `questionsJsonSchema` JSON Schema 형식 확인
-- [ ] 모든 테스트 통과
+- [x] 유효한 데이터 → `GeneratedQuestion[]` 반환
+- [x] 무효한 데이터 → `AIValidationError` throw
+- [x] 객관식 보기 5개 미만 → 에러
+- [x] `questionsJsonSchema` JSON Schema 형식 확인
+- [x] 전체 회귀 테스트 52개 통과
+- [x] TypeScript 빌드 통과
+- [x] ESLint 에러 0개
+
+**완료 요약**: TDD RED→GREEN→REFACTOR 흐름으로 구현. `validation.test.ts` 17개 테스트 작성 후 `Cannot find module` RED 확인. `validation.ts` 86줄 구현 — Zod v4 `toJSONSchema()` 내장 메서드로 JSON Schema 변환 (외부 패키지 불필요), 2단계 검증(구문적 Zod + 의미적 비즈니스 규칙), `questionType` → `type` 매핑. 코드 리뷰 반영: `expect.fail()` → `expect.assertions()` 패턴으로 개선. 최종 52/52 테스트 통과, ESLint 에러 0개, 빌드 통과.
 
 ---
 
