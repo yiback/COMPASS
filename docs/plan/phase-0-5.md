@@ -2,7 +2,7 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 6/12 Steps 완료 (50%)
+> **진행률**: 8/12 Steps 완료 (67%)
 > **마지막 업데이트**: 2026-02-08
 
 ---
@@ -45,8 +45,8 @@ const questions = await provider.generateQuestions({
 | 4 | types.ts (인터페이스/타입) | ✅ | `src/lib/ai/types.ts` |
 | 5 | retry.ts (재시도 유틸리티) | ✅ | `src/lib/ai/retry.ts` |
 | 6 | validation.ts (응답 검증) | ✅ | `src/lib/ai/validation.ts` |
-| 7 | prompts/question-generation.ts | ⏸️ | `src/lib/ai/prompts/question-generation.ts` |
-| 8 | prompts/index.ts (내보내기) | ⏸️ | `src/lib/ai/prompts/index.ts` |
+| 7 | prompts/question-generation.ts | ✅ | `src/lib/ai/prompts/question-generation.ts` |
+| 8 | prompts/index.ts (내보내기) | ✅ | `src/lib/ai/prompts/index.ts` |
 | 9 | gemini.ts (GeminiProvider) | ⏸️ | `src/lib/ai/gemini.ts` |
 | 10 | provider.ts (Factory) | ⏸️ | `src/lib/ai/provider.ts` |
 | 11 | index.ts (공개 API) | ⏸️ | `src/lib/ai/index.ts` |
@@ -130,8 +130,8 @@ src/lib/ai/
 ├── provider.ts             (~30줄)  - Factory 함수
 ├── index.ts                (~15줄)  - 공개 API
 ├── prompts/
-│   ├── question-generation.ts  (~60줄) - 문제 생성 프롬프트
-│   └── index.ts                (~5줄)  - 내보내기
+│   ├── question-generation.ts  (~90줄) - 문제 생성 프롬프트 [완료]
+│   └── index.ts                (~5줄)  - 내보내기 [완료]
 └── __tests__/
     ├── errors.test.ts       [완료 - 9 tests]
     ├── config.test.ts       [완료 - 5 tests]
@@ -140,7 +140,7 @@ src/lib/ai/
     ├── validation.test.ts   [완료 - 17 tests]
     ├── provider.test.ts     [대기]
     └── prompts/
-        └── question-generation.test.ts  [대기]
+        └── question-generation.test.ts  [완료 - 16 tests]
 ```
 
 ---
@@ -467,11 +467,11 @@ export function validateGeneratedQuestions(data: unknown): readonly GeneratedQue
 
 ## Step 7: prompts/question-generation.ts (프롬프트 빌더)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/prompts/question-generation.ts` (~60줄)
-- 생성 예정: `src/lib/ai/__tests__/prompts/question-generation.test.ts`
+- 생성: `src/lib/ai/prompts/question-generation.ts` (~90줄)
+- 생성: `src/lib/ai/__tests__/prompts/question-generation.test.ts` (16개 테스트)
 
 **의존성**: `types.ts` (Step 4)
 
@@ -511,22 +511,29 @@ export function buildQuestionGenerationPrompt(
 ```
 
 **검증 기준**:
-- [ ] `PromptConfig` 형식 반환 확인
-- [ ] `systemInstruction`에 역할 정의 포함
-- [ ] `systemInstruction`에 LaTeX 수식 사용 지시 포함 (인라인 `$...$`, 블록 `$$...$$`)
-- [ ] `userPrompt`에 params 값 반영 확인
-- [ ] `responseSchema`에 JSON Schema 포함
-- [ ] temperature, maxOutputTokens 기본값 설정
-- [ ] 모든 테스트 통과
+- [x] `PromptConfig` 형식 반환 확인 (5개 필드)
+- [x] `systemInstruction`에 역할 정의 포함 ("시험 출제 전문가")
+- [x] `systemInstruction`에 LaTeX 수식 사용 지시 포함
+- [x] `systemInstruction`에 그래프 대체 지시 포함
+- [x] `userPrompt`에 필수 params 반영 (subject, grade, count, difficulty, questionType 한글 변환)
+- [x] `userPrompt`에 옵셔널 params 반영 (unit, topics, schoolName)
+- [x] `responseSchema` === `questionsJsonSchema` 확인
+- [x] temperature=0.7, maxOutputTokens=4096 기본값 설정
+- [x] 16개 테스트 모두 통과
+- [x] 전체 회귀 테스트 68개 통과
+- [x] TypeScript 빌드/프로덕션 빌드 통과
+- [x] ESLint 에러 0개
+
+**완료 요약**: TDD RED→GREEN 흐름으로 구현. `PromptConfig` 인터페이스를 `systemInstruction/userPrompt/responseSchema/temperature/maxOutputTokens` 5개 필드로 재설계 (Gemini API 실제 구조 반영). `GenerateQuestionParams`에 `unit` 필드 추가. `formatQuestionType()` 헬퍼로 `Record` 기반 한글 매핑 (`multiple_choice→'객관식(5지선다형)'`). systemInstruction에 한국 중학교 시험 출제 전문가 역할, LaTeX 규칙, 그래프 대체 지시 포함. `questionsJsonSchema` 재사용(DRY). 16개 테스트 작성(5그룹: 반환 형식, systemInstruction, 필수 파라미터, 옵셔널 파라미터, 기본값). 전체 68/68 테스트 통과, 빌드 통과.
 
 ---
 
 ## Step 8: prompts/index.ts (내보내기)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/prompts/index.ts` (~5줄)
+- 생성: `src/lib/ai/prompts/index.ts` (~5줄)
 
 **의존성**: Step 7
 
@@ -539,8 +546,10 @@ export { buildQuestionGenerationPrompt } from './question-generation'
 ```
 
 **검증 기준**:
-- [ ] `import { buildQuestionGenerationPrompt } from './prompts'` 가능
-- [ ] TypeScript 빌드 통과
+- [x] `import { buildQuestionGenerationPrompt } from './prompts'` 가능
+- [x] TypeScript 빌드 통과
+
+**완료 요약**: Step 7과 함께 구현. 배럴 파일로 `buildQuestionGenerationPrompt` re-export.
 
 ---
 

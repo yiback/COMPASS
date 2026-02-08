@@ -61,14 +61,14 @@
 - ✅ Toast 알림 시스템 - Sonner 전역 설정 + 헬퍼 함수
 - ✅ Loading/Skeleton 컴포넌트 - CardSkeleton, TableSkeleton, FormSkeleton, Spinner
 
-### 0-5. AI 추상화 레이어 (6/12 Steps, 50%)
+### 0-5. AI 추상화 레이어 (8/12 Steps, 67%)
 
 - [x] 커스텀 에러 계층 (AIError, AIServiceError, AIValidationError, AIRateLimitError, AIConfigError)
 - [x] 환경변수 검증 (Zod 스키마, 캐싱, AIConfigError 래핑)
 - [x] AI Provider 인터페이스 + 타입 정의 (Factory + Strategy 패턴)
 - [x] 재시도 유틸리티 (지수 백오프, 입력값 검증, AIRateLimitError 서버 명시 대기)
 - [x] 응답 파싱/검증 (Zod 스키마 이중 활용 + 2단계 검증)
-- [ ] 프롬프트 템플릿 시스템
+- [x] 프롬프트 템플릿 시스템 (프롬프트 빌더 + 배럴 파일)
 - [ ] Google Gemini 연동 (GeminiProvider 구현체)
 - [ ] Factory 함수 + 공개 API
 
@@ -350,7 +350,7 @@
 
 | Phase/단계 | 진행률 | 상태 |
 |-----------|--------|------|
-| Phase 0 (최소 공통 기능) | 80% (4/5 완료) | 🚧 진행 중 |
+| Phase 0 (최소 공통 기능) | 90% (4.5/5 완료) | 🚧 진행 중 |
 | 단계 1 (기출 기반 문제 생성 + 인증) | 0% | ⏸️ 대기 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
@@ -361,4 +361,4 @@
 - ✅ 0-2. Supabase 기본 연동 (완료)
 - ✅ 0-3. 기본 레이아웃 (완료)
 - ✅ 0-4. 공통 UI 컴포넌트 (완료)
-- 🚧 0-5. AI 추상화 레이어 (진행 중 - 6/12 Steps, 50%)
+- 🚧 0-5. AI 추상화 레이어 (진행 중 - 8/12 Steps, 67%)
