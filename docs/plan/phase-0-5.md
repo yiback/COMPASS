@@ -2,7 +2,7 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 4/12 Steps 완료 (33%)
+> **진행률**: 5/12 Steps 완료 (42%)
 > **마지막 업데이트**: 2026-02-08
 
 ---
@@ -43,7 +43,7 @@ const questions = await provider.generateQuestions({
 | 2 | errors.ts (커스텀 에러 계층) | ✅ | `src/lib/ai/errors.ts` |
 | 3 | config.ts (환경변수 검증) | ✅ | `src/lib/ai/config.ts` |
 | 4 | types.ts (인터페이스/타입) | ✅ | `src/lib/ai/types.ts` |
-| 5 | retry.ts (재시도 유틸리티) | ⏸️ | `src/lib/ai/retry.ts` |
+| 5 | retry.ts (재시도 유틸리티) | ✅ | `src/lib/ai/retry.ts` |
 | 6 | validation.ts (응답 검증) | ⏸️ | `src/lib/ai/validation.ts` |
 | 7 | prompts/question-generation.ts | ⏸️ | `src/lib/ai/prompts/question-generation.ts` |
 | 8 | prompts/index.ts (내보내기) | ⏸️ | `src/lib/ai/prompts/index.ts` |
@@ -124,7 +124,7 @@ src/lib/ai/
 ├── types.ts                (~140줄) - 인터페이스/타입 [완료]
 ├── errors.ts               (~70줄)  - 커스텀 에러 [완료]
 ├── config.ts               (~62줄)  - 환경변수 검증 [완료]
-├── retry.ts                (~50줄)  - 재시도 유틸리티
+├── retry.ts                (~105줄) - 재시도 유틸리티 [완료]
 ├── validation.ts           (~80줄)  - 응답 검증
 ├── gemini.ts               (~100줄) - GeminiProvider
 ├── provider.ts             (~30줄)  - Factory 함수
@@ -136,7 +136,7 @@ src/lib/ai/
     ├── errors.test.ts       [완료 - 9 tests]
     ├── config.test.ts       [완료 - 5 tests]
     ├── types.test.ts        [완료 - 8 tests]
-    ├── retry.test.ts        [대기]
+    ├── retry.test.ts        [완료 - 13 tests]
     ├── validation.test.ts   [대기]
     ├── provider.test.ts     [대기]
     └── prompts/
@@ -315,11 +315,11 @@ AIError (기본 클래스)
 
 ## Step 5: retry.ts (재시도 유틸리티)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/retry.ts` (~50줄)
-- 생성 예정: `src/lib/ai/__tests__/retry.test.ts`
+- 생성: `src/lib/ai/retry.ts` (~105줄)
+- 생성: `src/lib/ai/__tests__/retry.test.ts` (13개 테스트)
 
 **의존성**: `errors.ts` (Step 2)
 
@@ -329,9 +329,9 @@ AIError (기본 클래스)
 
 ```typescript
 export interface RetryOptions {
-  maxRetries?: number       // 기본: 3
-  baseDelayMs?: number      // 기본: 1000
-  maxDelayMs?: number       // 기본: 10000
+  readonly maxRetries?: number       // 기본: 3
+  readonly baseDelayMs?: number      // 기본: 1000
+  readonly maxDelayMs?: number       // 기본: 10000
 }
 
 export async function withRetry<T>(
@@ -343,25 +343,54 @@ export async function withRetry<T>(
 동작:
 - 기본 3회 재시도, 1초 → 2초 → 4초 (최대 10초 캡)
 - `isRetryable: true`인 에러만 재시도
-- `AIRateLimitError`는 `retryAfterMs`만큼 추가 대기
+- `AIRateLimitError`는 `retryAfterMs`가 양수일 때만 해당 값 사용, 아니면 지수 백오프 폴백
 - `AIValidationError`는 재시도 안 함 (isRetryable: false)
+- 비-AIError (일반 Error) → 재시도 대상 (네트워크 타임아웃 등 일시적 장애 가능)
 - 최대 재시도 초과 시 마지막 에러를 그대로 throw
+- 음수 입력값 검증 (maxRetries, baseDelayMs, maxDelayMs)
 
-테스트 시나리오:
-1. 첫 번째 시도에서 성공
-2. N번째 시도에서 성공 (재시도 동작 확인)
-3. 최대 재시도 초과 → 에러 throw
-4. `isRetryable: false` 에러 → 재시도 없이 즉시 throw
-5. `AIRateLimitError` → retryAfterMs 대기 확인
+**설계 결정**:
+
+1. **config.ts 연동 안 함 (독립적 기본값 사용)**: `getAIConfig()`는 `GEMINI_API_KEY` 필수 → 테스트에서 환경변수 의존성 제거. `gemini.ts`에서 `withRetry(fn, { maxRetries: config.maxRetries })` 형태로 주입
+2. **비-AIError 처리: 재시도**: 네트워크 타임아웃 등 일반 `Error`도 일시적 장애 → 재시도 대상. `AIError`이면서 `isRetryable: false`인 경우만 즉시 throw
+3. **AIRateLimitError 딜레이**: `retryAfterMs`가 양수이면 서버 명시 시간 사용 (지수 백오프 대체). 0이하이거나 없으면 지수 백오프 적용
+
+**테스트 교훈 (Unhandled Promise Rejection)**:
+
+`vi.useFakeTimers()` + 비동기 promise 조합에서, promise가 reject되기 전에 rejection handler를 등록해야 Unhandled Promise Rejection 경고를 방지할 수 있음:
+
+```typescript
+// ❌ handler 등록 전에 타이머 전진 → reject 시점에 handler 없음
+const promise = withRetry(fn, { maxRetries: 2 })
+await vi.advanceTimersByTimeAsync(300)
+await expect(promise).rejects.toThrow('에러')  // 이미 늦음!
+
+// ✅ handler를 먼저 등록 후 타이머 전진
+const promise = withRetry(fn, { maxRetries: 2 })
+const assertion = expect(promise).rejects.toThrow('에러')  // handler 등록
+await vi.advanceTimersByTimeAsync(300)
+await assertion  // 결과 확인
+```
 
 **검증 기준**:
-- [ ] 첫 번째 시도 성공 시 바로 반환
-- [ ] 재시도 성공 시 정상 반환
-- [ ] 최대 재시도 초과 시 마지막 에러 throw
-- [ ] `isRetryable: false` → 즉시 throw (재시도 안 함)
-- [ ] `AIRateLimitError` → `retryAfterMs` 대기 후 재시도
-- [ ] 지수 백오프 딜레이 증가 확인
-- [ ] 모든 테스트 통과
+- [x] 첫 번째 시도 성공 시 바로 반환
+- [x] 재시도 성공 시 정상 반환
+- [x] 최대 재시도 초과 시 마지막 에러 throw
+- [x] `isRetryable: false` → 즉시 throw (재시도 안 함)
+- [x] `AIRateLimitError` → `retryAfterMs` 양수일 때 대기 후 재시도
+- [x] `AIRateLimitError` → `retryAfterMs` 없으면 지수 백오프 사용
+- [x] `AIRateLimitError` → `retryAfterMs: 0` → 지수 백오프 폴백
+- [x] 지수 백오프 딜레이 2배씩 증가 확인
+- [x] `maxDelayMs` 캡 동작 확인
+- [x] `maxRetries: 0` → 첫 시도만, 에러 시 즉시 throw
+- [x] 비-AIError (일반 Error) → 재시도 대상
+- [x] 음수 `maxRetries` → 에러 throw
+- [x] 음수 `baseDelayMs` → 에러 throw
+- [x] 13개 테스트 모두 통과
+- [x] 전체 회귀 테스트 35개 통과
+- [x] TypeScript 빌드/프로덕션 빌드 통과
+
+**완료 요약**: TDD RED→GREEN→REFACTOR 흐름으로 구현. 10개 테스트 작성 후 RED 확인 (`Cannot find module`). `retry.ts` ~70줄 구현 후 10/10 GREEN. Unhandled Promise Rejection 해결 (assertion 먼저 등록 패턴). 코드 리뷰 반영: 음수 입력값 검증 + `retryAfterMs: 0` 폴백 처리 → 3개 테스트 추가(REFACTOR). 최종 35/35 테스트 통과, ESLint 에러 0개, 빌드 통과.
 
 ---
 
