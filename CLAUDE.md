@@ -116,19 +116,31 @@ src/
 - **컴포넌트 패턴**: `docs/guides/component-patterns.md`
 - **스타일링 가이드**: `docs/guides/styling-guide.md`
 - **폼 (React Hook Form)**: `docs/guides/forms-react-hook-form.md`
-- **Next.js 15**: `docs/guides/nextjs-15.md`
+- **Next.js 16**: `docs/guides/nextjs-15.md`
 
 ---
 
 ## 개발 명령어
 
 ```bash
-# 개발 서버 실행
+# 개발 서버 실행 (Turbopack)
 npm run dev
 
-# 빌드
+# 프로덕션 빌드
 npm run build
 
-# 린트
+# 프로덕션 서버 실행
+npm run start
+
+# ESLint 코드 검사
 npm run lint
+
+# Vitest 워치 모드 테스트
+npm run test
+
+# Vitest 단일 실행
+npm run test:run
+
+# 테스트 커버리지 리포트
+npm run test:coverage
 ```

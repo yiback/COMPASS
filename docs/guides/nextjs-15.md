@@ -1,6 +1,6 @@
-# Next.js 15.5.3 개발 지침
+# Next.js 16.1.6 개발 지침
 
-이 문서는 Claude Code에서 Next.js 15.5.3 프로젝트를 개발할 때 따라야 할 핵심 규칙과 가이드라인을 제공합니다.
+이 문서는 Claude Code에서 Next.js 16.1.6 프로젝트를 개발할 때 따라야 할 핵심 규칙과 가이드라인을 제공합니다.
 
 ## 🚀 필수 규칙 (엄격 준수)
 
@@ -56,7 +56,7 @@ export function InteractiveChart({ data }: { data: Analytics[] }) {
 ### 🔄 New: async request APIs 처리
 
 ```typescript
-// 🔄 Next.js 15.5.3 새로운 방식
+// 🔄 Next.js 15+ 비동기 방식 (16.x에서도 동일)
 import { cookies, headers } from 'next/headers'
 
 export default async function Page({
@@ -77,7 +77,7 @@ export default async function Page({
   return <UserProfile user={user} />
 }
 
-// ❌ 금지: 동기식 접근 (15.x에서 deprecated)
+// ❌ 금지: 동기식 접근 (15.x에서 deprecated, 16.x에서 제거)
 export default function Page({ params }: { params: { id: string } }) {
   const user = getUser(params.id) // 에러 발생
   return <UserProfile user={user} />
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
 // ✅ 세밀한 캐시 제어
 export async function getProductData(id: string) {
   const data = await fetch(`/api/products/${id}`, {
-    // 🔄 Next.js 15.5.3 새로운 캐시 옵션
+    // 캐시 옵션
     next: {
       revalidate: 3600, // 1시간 캐시
       tags: [`product-${id}`, 'products'], // 태그 기반 무효화
@@ -199,20 +199,15 @@ export async function updateProduct(id: string, data: ProductData) {
 ```typescript
 // next.config.ts
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
-  // ✅ Turbopack 최적화 설정
+  // ✅ Next.js 16에서 turbopack은 최상위 키로 이동
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   experimental: {
-    turbo: {
-      rules: {
-        // CSS 모듈 최적화
-        '*.module.css': {
-          loaders: ['css-loader'],
-          as: 'css',
-        },
-      },
-    },
-    // 🔄 패키지 import 최적화
+    // 패키지 import 최적화
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-icons',
@@ -224,6 +219,9 @@ const nextConfig: NextConfig = {
 
 export default nextConfig
 ```
+
+> **주의**: Next.js 16에서 `experimental.turbo`는 `turbopack` 최상위 키로 이동했다.
+> `turbopack.root`는 반드시 절대경로여야 한다 (`path.resolve(__dirname)` 사용).
 
 ## ⚠️ Breaking Changes 대응
 
@@ -494,20 +492,14 @@ function UserProfile({ user }: { user: User }) {
 개발 완료 후 다음 명령어들을 반드시 실행하세요:
 
 ```bash
-# 🚀 필수: 타입 체크
-npm run typecheck
-
 # 🚀 필수: 린트 검사
 npm run lint
 
-# ✅ 권장: 포맷 검사
-npm run format:check
-
-# 🚀 필수: 통합 검사
-npm run check-all
+# 🚀 필수: 테스트
+npm run test:run
 
 # 🚀 필수: 빌드 테스트
 npm run build
 ```
 
-이 지침을 따라 Next.js 15.5.3의 모든 기능을 최대한 활용하여 현대적이고 성능 최적화된 애플리케이션을 개발하세요.
+이 지침을 따라 Next.js 16.1.6의 모든 기능을 최대한 활용하여 현대적이고 성능 최적화된 애플리케이션을 개발하세요.

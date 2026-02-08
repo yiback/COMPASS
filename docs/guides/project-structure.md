@@ -1,24 +1,31 @@
 # 프로젝트 구조 가이드
 
-이 문서는 Next.js 15.5.3 프로젝트의 폴더 구조, 파일 조직 및 네이밍 컨벤션을 정의합니다.
+이 문서는 Next.js 16.1.6 프로젝트의 폴더 구조, 파일 조직 및 네이밍 컨벤션을 정의합니다.
 
 ## 🏗️ 전체 프로젝트 구조
 
 ```
 compass/
 ├── docs/                   # 📚 프로젝트 문서
-│   └── guides/            # 개발 가이드 모음
+│   ├── design/            # 설계 문서 (아키텍처, 기술스택)
+│   ├── guides/            # 개발 가이드 모음
+│   ├── plan/              # Phase별 구현 계획
+│   └── prd/               # PRD 상세 문서
 ├── public/                # 🌍 정적 파일 (이미지, 아이콘)
 ├── src/                   # 📦 소스 코드 루트
 │   ├── app/              # 🚀 Next.js App Router
 │   ├── components/       # 🧩 React 컴포넌트
-│   ├── lib/              # 🛠️ 유틸리티 및 설정
+│   ├── lib/              # 🛠️ 유틸리티, 서비스, 설정
 │   ├── hooks/            # 🎣 커스텀 훅
 │   └── types/            # 📝 TypeScript 타입 정의
+├── supabase/             # 🗄️ Supabase 마이그레이션/시드
+│   ├── migrations/       # DB 스키마, RLS, 인덱스
+│   └── seed.sql          # 시드 데이터
 ├── components.json       # shadcn/ui 설정
 ├── next.config.ts        # Next.js 설정
 ├── package.json          # 의존성 및 스크립트
 ├── tsconfig.json         # TypeScript 설정
+├── vitest.config.ts      # Vitest 테스트 설정
 └── CLAUDE.md            # 개발 지침 메인 문서
 ```
 
@@ -28,15 +35,23 @@ compass/
 
 ```
 src/app/
-├── layout.tsx           # 🎨 루트 레이아웃 (전역 설정)
-├── page.tsx            # 🏠 홈페이지 (/)
-├── globals.css         # 🎨 전역 CSS 스타일
-├── favicon.ico         # 🔖 파비콘
-├── login/              # 🔐 로그인 페이지
-│   └── page.tsx
-└── signup/             # ✍️ 회원가입 페이지
-    └── page.tsx
+├── layout.tsx              # 🎨 루트 레이아웃 (전역 설정)
+├── page.tsx               # 🏠 홈페이지 (/)
+├── globals.css            # 🎨 전역 CSS 스타일 (TailwindCSS v4)
+├── favicon.ico            # 🔖 파비콘
+└── (dashboard)/           # 📊 대시보드 Route Group
+    ├── layout.tsx         # 대시보드 레이아웃 (사이드바, 헤더)
+    ├── page.tsx           # 대시보드 메인 (/)
+    ├── generate/          # 시험 문제 생성
+    │   └── page.tsx
+    ├── past-exams/        # 기출문제 관리
+    │   └── page.tsx
+    └── settings/          # 설정
+        └── page.tsx
 ```
+
+> **Route Groups**: `(dashboard)/`는 URL에 영향을 주지 않고 레이아웃만 분리한다.
+> `/generate`로 접근하면 `(dashboard)/layout.tsx` + `generate/page.tsx`가 렌더링된다.
 
 **🚀 App Router 규칙:**
 
@@ -50,82 +65,93 @@ src/app/
 
 ```
 src/components/
-├── ui/                 # 🎛️ 기본 UI 컴포넌트 (shadcn/ui)
-│   ├── button.tsx     # 버튼
-│   ├── card.tsx       # 카드
-│   ├── form.tsx       # 폼 관련
-│   ├── input.tsx      # 입력 필드
-│   └── ...           # 기타 UI 컴포넌트
-├── layout/            # 🏗️ 레이아웃 컴포넌트
-│   ├── container.tsx  # 컨테이너 래퍼
-│   ├── header.tsx     # 헤더
-│   └── footer.tsx     # 푸터
-├── navigation/        # 🧭 네비게이션 컴포넌트
-│   ├── main-nav.tsx   # 메인 네비게이션
-│   └── mobile-nav.tsx # 모바일 네비게이션
-├── sections/          # 📄 페이지 섹션 컴포넌트
-│   ├── hero.tsx       # 히어로 섹션
-│   ├── features.tsx   # 기능 소개
-│   └── cta.tsx        # Call-to-Action
-├── providers/         # 🔧 Context 프로바이더
-│   └── theme-provider.tsx
-├── login-form.tsx     # 🔐 로그인 폼
-├── signup-form.tsx    # ✍️ 회원가입 폼
-└── theme-toggle.tsx   # 🌓 테마 토글
+├── ui/                         # 🎛️ shadcn/ui 컴포넌트 (19개)
+│   ├── alert-dialog.tsx
+│   ├── avatar.tsx
+│   ├── badge.tsx
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── checkbox.tsx
+│   ├── dialog.tsx
+│   ├── dropdown-menu.tsx
+│   ├── form.tsx
+│   ├── input.tsx
+│   ├── label.tsx
+│   ├── radio-group.tsx
+│   ├── select.tsx
+│   ├── separator.tsx
+│   ├── sheet.tsx
+│   ├── skeleton.tsx
+│   ├── sonner.tsx              # Toast 알림 (Sonner)
+│   ├── table.tsx
+│   └── textarea.tsx
+├── data-table/                 # 📊 DataTable (TanStack Table)
+│   ├── data-table.tsx          # 메인 테이블 컴포넌트
+│   ├── data-table-column-header.tsx
+│   ├── data-table-pagination.tsx
+│   ├── data-table-toolbar.tsx
+│   └── index.ts               # barrel export
+├── layout/                     # 🏗️ 레이아웃 컴포넌트
+│   ├── dashboard-header.tsx    # 대시보드 헤더
+│   ├── dashboard-sidebar.tsx   # 대시보드 사이드바
+│   └── mobile-nav.tsx          # 모바일 네비게이션 (Sheet)
+├── loading/                    # ⏳ 로딩/스켈레톤 컴포넌트
+│   ├── card-skeleton.tsx
+│   ├── form-skeleton.tsx
+│   ├── table-skeleton.tsx
+│   ├── spinner.tsx
+│   └── index.ts               # barrel export
+└── providers/                  # 🔧 Context 프로바이더
 ```
 
 **🧩 컴포넌트 분류 규칙:**
 
-1. **ui/**: shadcn/ui 기반 재사용 가능한 기본 컴포넌트
+1. **ui/**: shadcn/ui 기반 재사용 가능한 기본 컴포넌트 (19개)
    - 순수 UI 컴포넌트만 포함
    - 비즈니스 로직 없음
-   - props로 모든 동작 제어
+   - `npx shadcn@latest add [name]`으로 추가
 
-2. **layout/**: 페이지 구조를 담당하는 레이아웃 컴포넌트
-   - 전체 페이지 구조
-   - 공통 헤더/푸터
-   - 컨테이너 래퍼
+2. **data-table/**: TanStack Table 기반 데이터 테이블
+   - 정렬, 필터, 페이지네이션 내장
+   - render prop 패턴으로 toolbar 커스텀
 
-3. **navigation/**: 네비게이션 관련 컴포넌트
-   - 메뉴, 브레드크럼
-   - 페이지네이션
-   - 사이드바
+3. **layout/**: 대시보드 레이아웃 컴포넌트
+   - 사이드바, 헤더, 모바일 네비게이션
+   - Client Component (`'use client'`) — 상호작용 필요
 
-4. **sections/**: 특정 페이지 섹션을 위한 컴포넌트
-   - 홈페이지 섹션들
-   - 랜딩 페이지 블록
-   - 마케팅 컴포넌트
+4. **loading/**: 스켈레톤/스피너 컴포넌트
+   - 카드, 폼, 테이블용 스켈레톤
+   - Server Component에서 Suspense fallback으로 사용
 
 5. **providers/**: React Context 프로바이더
-   - 전역 상태 관리
-   - 테마 관리
-   - 인증 상태
+   - 전역 상태 관리 (필요 시 추가)
 
 ### src/lib/ - 유틸리티 및 설정
 
 ```
 src/lib/
-├── utils.ts           # 🛠️ 공통 유틸리티 함수
-└── env.ts             # 🔧 환경변수 검증
-```
-
-**📚 lib/ 폴더 확장 가이드:**
-
-```
-src/lib/
-├── utils.ts           # 공통 유틸리티
-├── env.ts             # 환경변수 검증
-├── constants.ts       # 상수 정의
-├── schemas/           # Zod 스키마
-│   ├── auth.ts
-│   └── user.ts
-├── supabase/          # Supabase 클라이언트 설정
-│   └── client.ts
-└── ai/                # AI 서비스 추상화
-    └── gemini.ts
+├── utils.ts               # 🛠️ 공통 유틸리티 (cn 함수 등)
+├── toast.ts               # 🔔 Toast 헬퍼 (Sonner 래퍼)
+├── constants/             # 📋 상수 정의
+│   └── menu.ts            # 사이드바 메뉴 항목
+├── supabase/              # 🗄️ Supabase 클라이언트 (3종)
+│   ├── client.ts          # 브라우저용 (Client Component)
+│   ├── server.ts          # Server Component/Action용
+│   ├── admin.ts           # 관리자용 (Service Role Key)
+│   └── types.ts           # Supabase 자동생성 타입
+└── ai/                    # 🤖 AI 서비스 추상화 레이어
+    ├── errors.ts          # AI 에러 클래스 계층
+    ├── config.ts          # 환경변수 검증 (Zod)
+    ├── types.ts           # AIProvider 인터페이스, 타입 정의
+    └── __tests__/         # AI 모듈 테스트 (Vitest)
+        ├── errors.test.ts
+        ├── config.test.ts
+        └── types.test.ts
 ```
 
 > **참고**: `hooks/`는 `src/hooks/`, `types/`는 `src/types/`에 위치합니다. `src/lib/`에는 서비스 코드와 유틸리티만 배치합니다.
+>
+> `src/middleware.ts`는 Supabase 인증 세션 갱신을 처리하는 미들웨어입니다.
 
 ## 🏷️ 파일 네이밍 컨벤션
 

@@ -2,8 +2,8 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 3/12 Steps 완료 (25%)
-> **마지막 업데이트**: 2026-02-07
+> **진행률**: 4/12 Steps 완료 (33%)
+> **마지막 업데이트**: 2026-02-08
 
 ---
 
@@ -42,7 +42,7 @@ const questions = await provider.generateQuestions({
 | 1 | 패키지 설치 및 Vitest 설정 | ✅ | `vitest.config.ts`, `package.json` |
 | 2 | errors.ts (커스텀 에러 계층) | ✅ | `src/lib/ai/errors.ts` |
 | 3 | config.ts (환경변수 검증) | ✅ | `src/lib/ai/config.ts` |
-| 4 | types.ts (인터페이스/타입) | ⏸️ | `src/lib/ai/types.ts` |
+| 4 | types.ts (인터페이스/타입) | ✅ | `src/lib/ai/types.ts` |
 | 5 | retry.ts (재시도 유틸리티) | ⏸️ | `src/lib/ai/retry.ts` |
 | 6 | validation.ts (응답 검증) | ⏸️ | `src/lib/ai/validation.ts` |
 | 7 | prompts/question-generation.ts | ⏸️ | `src/lib/ai/prompts/question-generation.ts` |
@@ -121,9 +121,9 @@ Step 12: .env.example (독립) ────────────────�
 
 ```
 src/lib/ai/
-├── types.ts                (~100줄) - 인터페이스/타입
+├── types.ts                (~140줄) - 인터페이스/타입 [완료]
 ├── errors.ts               (~70줄)  - 커스텀 에러 [완료]
-├── config.ts               (~40줄)  - 환경변수 검증
+├── config.ts               (~62줄)  - 환경변수 검증 [완료]
 ├── retry.ts                (~50줄)  - 재시도 유틸리티
 ├── validation.ts           (~80줄)  - 응답 검증
 ├── gemini.ts               (~100줄) - GeminiProvider
@@ -134,7 +134,8 @@ src/lib/ai/
 │   └── index.ts                (~5줄)  - 내보내기
 └── __tests__/
     ├── errors.test.ts       [완료 - 9 tests]
-    ├── config.test.ts       [작성됨 - 구현 대기]
+    ├── config.test.ts       [완료 - 5 tests]
+    ├── types.test.ts        [완료 - 8 tests]
     ├── retry.test.ts        [대기]
     ├── validation.test.ts   [대기]
     ├── provider.test.ts     [대기]
@@ -282,80 +283,33 @@ AIError (기본 클래스)
 
 ## Step 4: types.ts (인터페이스/타입 정의)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/types.ts` (~100줄)
+- 생성: `src/lib/ai/types.ts` (~140줄)
+- 생성: `src/lib/ai/__tests__/types.test.ts` (8개 테스트)
 
 **의존성**: 없음
 
 **목적**: 시스템아키텍처.md 설계 기반 `AIProvider` 인터페이스 + 모든 AI 관련 타입 정의
 
-**구현 가이드**:
+**설계 결정**:
 
-```typescript
-// types.ts 핵심 구조
-
-/** AI Provider 인터페이스 (Strategy 패턴) */
-export interface AIProvider {
-  readonly name: string
-  readonly model: string
-  generateQuestions(params: GenerateQuestionParams): Promise<GeneratedQuestion[]>
-  gradeAnswer(params: GradeAnswerParams): Promise<GradingResult>
-  extractFromImage(params: OCRParams): Promise<OCRResult>
-  analyzePastExamTrends(params: AnalyzeTrendsParams): Promise<ExamTrendAnalysis>
-}
-
-/** 프롬프트 설정 */
-export interface PromptConfig {
-  systemInstruction: string
-  userPrompt: string
-  responseSchema?: Record<string, unknown>
-  temperature?: number
-  maxOutputTokens?: number
-}
-
-/** 문제 생성 파라미터 */
-export interface GenerateQuestionParams {
-  subject: string       // 과목 (수학, 영어 등)
-  grade: number         // 학년 (7, 8, 9)
-  unit: string          // 단원명
-  difficulty: number    // 난이도 (1-5)
-  count: number         // 문제 수
-  questionType: QuestionType  // 문제 유형
-}
-
-export type QuestionType = 'multiple_choice' | 'short_answer' | 'essay'
-
-/** 생성된 문제 */
-export interface GeneratedQuestion {
-  content: string           // 문제 내용
-  answer: string            // 정답
-  explanation: string       // 해설
-  difficulty: number        // 난이도 (1-5)
-  questionType: QuestionType
-  options?: string[]        // 객관식 보기 (5개)
-}
-
-/** Provider 타입 */
-export type ProviderType = 'gemini'  // 향후 'openai' | 'claude' 추가
-
-// 아래는 기본 구조만 (Phase 0-5에서는 미구현)
-export interface GradeAnswerParams { /* ... */ }
-export interface GradingResult { /* ... */ }
-export interface OCRParams { /* ... */ }
-export interface OCRResult { /* ... */ }
-export interface AnalyzeTrendsParams { /* ... */ }
-export interface ExamTrendAnalysis { /* ... */ }
-```
+1. **DB `descriptive` vs AI `essay` 불일치 처리**: DB 스키마(이미 배포됨)는 `descriptive`, AI 프롬프트에서는 `essay`가 더 명확. `Record` 기반 매핑 함수 2개(`toDbQuestionType`, `fromDbQuestionType`)로 안전한 변환 제공. `as const satisfies Record<...>` 패턴으로 타입 체크 + 리터럴 추론 + 불변성 동시 확보
+2. **Zod 스키마 분리**: types.ts는 순수 TypeScript 타입만 포함 (zod 의존성 없음). Zod 스키마는 validation.ts(Step 6)에 배치
+3. **모든 필드에 `readonly` 적용**: 불변성 원칙 준수. `z.infer`(mutable) → `readonly` 인터페이스는 TypeScript 구조적 타이핑에서 호환됨
+4. **미구현 타입도 DB 스키마 기반 의미있는 구조 정의**: 빈 인터페이스(`{}`) 대신 Phase 2-3 구현 시 수정 범위 최소화
 
 **검증 기준**:
-- [ ] `AIProvider` 인터페이스: 4개 메서드 (generateQuestions, gradeAnswer, extractFromImage, analyzePastExamTrends)
-- [ ] `PromptConfig` 인터페이스: systemInstruction, userPrompt, responseSchema, temperature, maxOutputTokens
-- [ ] `GenerateQuestionParams` 인터페이스: subject, grade, unit, difficulty, count, questionType
-- [ ] `GeneratedQuestion` 인터페이스: content, answer, explanation, difficulty, questionType, options?
-- [ ] TypeScript 빌드 통과
-- [ ] 미구현 메서드용 타입 (기본 구조만)
+- [x] `AIProvider` 인터페이스: 4개 메서드 (generateQuestions, gradeAnswer, processOCR, analyzeTrends)
+- [x] `QuestionType` ↔ `DbQuestionType` 매핑 함수 정합성 (Roundtrip 테스트 포함)
+- [x] 모든 인터페이스 필드에 `readonly` 적용
+- [x] `as const satisfies` 패턴으로 매핑 테이블 타입 안전성 확보
+- [x] TypeScript 빌드 통과 (`tsc --noEmit`)
+- [x] 8개 테스트 모두 통과 (매핑 6개 + Roundtrip 2개)
+- [x] 전체 회귀 테스트 22개 통과
+
+**완료 요약**: TDD RED→GREEN→REFACTOR 흐름으로 구현. 매핑 함수 테스트 6개 작성 후 RED 확인. types.ts ~140줄 구현 후 GREEN. 코드 리뷰에서 `as const satisfies` 패턴 적용 + Roundtrip 테스트 2개 추가(REFACTOR). 최종 22/22 테스트 통과, TypeScript 빌드/프로덕션 빌드 모두 통과.
 
 ---
 
