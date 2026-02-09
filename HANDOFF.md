@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-07
+> **최종 업데이트**: 2026-02-09
 > **대상**: 이 프로젝트를 이어받는 새로운 에이전트
 
 ---
@@ -12,7 +12,7 @@
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
 - **타겟**: 소형~중형 보습학원, 중등 수학부터 시작
-- **현재 Phase**: 0-4 (공통 UI 컴포넌트 완료), **Supabase 연동 완료**
+- **현재 Phase**: 0-5 (AI 추상화 레이어, 9/12 Steps 완료 — 75%)
 
 기술스택: Next.js 16.1.6 + React 19 + Supabase + Google Gemini + Vercel
 
@@ -29,127 +29,107 @@
 
 #### 시스템 아키텍처 설계
 - `docs/design/시스템아키텍처.md` - 5개 레이어 아키텍처, RBAC, AI Provider Pattern
-- `supabase/migrations/00001_initial_schema.sql` - 15개 테이블 + 트리거
-- `supabase/migrations/00002_rls_policies.sql` - 멀티테넌시 RLS 정책
-- `supabase/migrations/00003_indexes.sql` - 성능 인덱스 (부분/복합 포함)
-- `supabase/seed.sql` - 개발용 시드 데이터 (학원 2개, 학교 5개, 성취기준 24개)
+- `supabase/migrations/` - 15개 테이블 + RLS 정책 + 인덱스
+- `supabase/seed.sql` - 개발용 시드 데이터
 
-#### DB 리뷰 반영 (보안 + 무결성)
-- `handle_new_user()` 트리거: role을 `'student'`로 고정 (권한 상승 방지)
-- questions/past_exams RLS에 `admin` 역할 추가
-- profiles.academy_id NOT NULL 제약 (system_admin 제외)
-- CHECK 제약: score >= 0, year BETWEEN 2000-2100, order_number > 0
+#### Phase 0-1 ~ 0-4 (모두 완료)
+- **0-1**: Next.js 16.1.6 + React 19 + TypeScript + TailwindCSS v4 + shadcn/ui
+- **0-2**: Supabase Cloud 연동 (3종 클라이언트 + 미들웨어)
+- **0-3**: Route Groups 레이아웃 (대시보드 사이드바/헤더, 반응형)
+- **0-4**: 공통 UI 컴포넌트 (shadcn/ui 19개 + DataTable + Loading/Skeleton + Toast)
 
-#### Phase 0-1: 프로젝트 초기화 (완료)
-- **Next.js 16.1.6 + React 19 + TypeScript** 프로젝트 셋업
-- **TailwindCSS v4 + shadcn/ui** (New York 스타일, Neutral base, CSS variables)
-- **추가 의존성**: @supabase/supabase-js, @supabase/ssr, react-hook-form, @hookform/resolvers, zod
-- **Prettier** 설정 (semi: false, singleQuote: true, tailwind 플러그인)
-- **ESLint** flat config (core-web-vitals + typescript)
-- **프로젝트 구조**: `src/components/{ui,layout,providers}`, `src/lib/supabase`, `src/hooks`, `src/types`
-- **홈페이지**: COMPASS 제목 + shadcn Button 렌더링 (동작 확인용)
-- **검증**: `npm run build` 에러 0, `npm run lint` 에러 0
+#### Phase 0-5: AI 추상화 레이어 (9/12 Steps 완료)
 
-#### Phase 0-2: Supabase 연동 (완료)
-- **Supabase Cloud 프로젝트 생성**: Docker 없이 클라우드 프로젝트 사용
-- **환경변수 설정**: `.env.local` (NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY)
-- **마이그레이션 실행**: 15개 테이블 + RLS 정책 + 인덱스 (Supabase SQL Editor)
-- **시드 데이터**: academies 2개, schools 5개, achievement_standards 24개
-- **Supabase 클라이언트 코드**:
-  - `src/lib/supabase/client.ts` - 브라우저 클라이언트 (Client Components)
-  - `src/lib/supabase/server.ts` - 서버 클라이언트 (Server Components, Actions)
-  - `src/lib/supabase/admin.ts` - Admin 클라이언트 (RLS 우회, service_role)
-  - `src/lib/supabase/types.ts` - TypeScript 타입 정의 (placeholder)
-- **Middleware**: `src/middleware.ts` - Supabase 세션 갱신
-- **연결 테스트**: `src/app/test/page.tsx` - academies 데이터 조회 성공
-- **검증**: `npm run build` 성공, Supabase 연결 확인
+| Step | 파일 | 테스트 | 상태 |
+|------|------|--------|------|
+| 1 | Vitest 설정 | - | ✅ |
+| 2 | `errors.ts` (커스텀 에러 계층) | 9개 | ✅ |
+| 3 | `config.ts` (환경변수 검증) | 5개 | ✅ |
+| 4 | `types.ts` (인터페이스/타입) | 8개 | ✅ |
+| 5 | `retry.ts` (재시도 유틸리티) | 13개 | ✅ |
+| 6 | `validation.ts` (응답 검증) | 17개 | ✅ |
+| 7 | `prompts/question-generation.ts` | 16개 | ✅ |
+| 8 | `prompts/index.ts` (배럴) | - | ✅ |
+| 9 | `gemini.ts` (GeminiProvider) | 18개 | ✅ |
+| 10 | `provider.ts` (Factory) | - | ⏸️ |
+| 11 | `index.ts` (공개 API) | - | ⏸️ |
+| 12 | `.env.example` 업데이트 | - | ⏸️ |
 
-#### 프로젝트 표준 문서 생성 (완료)
-- **shrimp-rules.md**: AI 에이전트용 프로젝트 개발 표준 문서 자동 생성
-- **내용**: 12개 섹션 (아키텍처, Supabase 규칙, Next.js 16 특화, 보안, 금지 사항 등)
-- **특징**: DO/DON'T 예시, 의사결정 플로우차트, 명령형 언어
-- **목적**: 새로운 AI 에이전트의 자율 작업 실행을 위한 명확한 가이드라인
-
-#### Phase 0-3: Route Groups 및 기본 레이아웃 (완료)
-- **Route Groups 생성**: `(dashboard)`, `(auth)` 디렉토리 구조
-- **대시보드 레이아웃**: `app/(dashboard)/layout.tsx` - 사이드바 + 헤더 (반응형)
-- **대시보드 페이지**: `/` (홈), `/past-exams`, `/generate`, `/settings`
-- **shadcn/ui 컴포넌트 추가**: Sheet (모바일 메뉴), Avatar, Separator
-- **네비게이션**: `src/lib/constants/menu.ts` - 메뉴 항목 정의
-- **컴포넌트**:
-  - `src/components/layout/dashboard-sidebar.tsx` - 데스크톱 사이드바
-  - `src/components/layout/dashboard-header.tsx` - 헤더 (프로필 + 모바일 메뉴)
-  - `src/components/layout/mobile-nav.tsx` - 모바일 Sheet 네비게이션
-- **검증**: 빌드/린트 성공, 반응형 동작 확인
-
-#### Phase 0-4: 공통 UI 컴포넌트 (완료)
-- **shadcn/ui 15개 컴포넌트 설치**: form, input, textarea, select, checkbox, label, radio-group, table, card, badge, dialog, alert-dialog, dropdown-menu, sonner, skeleton
-- **DataTable 컴포넌트** (TanStack Table 기반):
-  - `src/components/data-table/data-table.tsx` - 메인 (정렬, 필터, 페이지네이션, 행 선택)
-  - `src/components/data-table/data-table-column-header.tsx` - 컬럼 헤더 (정렬/숨기기)
-  - `src/components/data-table/data-table-pagination.tsx` - 페이지네이션 UI
-  - `src/components/data-table/data-table-toolbar.tsx` - 검색/필터 툴바
-  - `src/components/data-table/index.ts` - 배럴 export
-- **Loading/Skeleton 컴포넌트**:
-  - `src/components/loading/card-skeleton.tsx` - 카드 스켈레톤
-  - `src/components/loading/table-skeleton.tsx` - 테이블 스켈레톤
-  - `src/components/loading/form-skeleton.tsx` - 폼 스켈레톤
-  - `src/components/loading/spinner.tsx` - 로딩 스피너 (sm/md/lg)
-  - `src/components/loading/index.ts` - 배럴 export
-- **Toast 시스템**: Sonner 전역 설정 (layout.tsx) + `src/lib/toast.ts` 헬퍼 (showActionResult, showPromiseToast)
-- **검증**: `npm run build` 성공, `npm run lint` 에러 0
+**전체 테스트: 86개 통과, 빌드/린트 OK**
 
 ### 미완료 작업
 
-- **PRD-v0.1-detailed.md의 상대경로 오류**: `./기술스택.md` → `../design/기술스택.md` (3곳 미수정)
-- **TypeScript 타입 자동 생성**: `supabase gen types`로 실제 DB 스키마에서 타입 생성 (현재는 placeholder)
+- **Phase 0-5 Step 10-12**: Factory 함수 + 공개 API + 환경변수 템플릿
+- **TypeScript 타입 자동 생성**: `supabase gen types`로 실제 DB 스키마에서 타입 생성 (placeholder 상태)
 
 ---
 
 ## 3. What Worked (성공한 접근)
 
-- **임시 디렉토리에 create-next-app 후 복사**: 기존 docs/, supabase/, .claude/ 파일을 안전하게 보존하면서 Next.js 초기화 성공
-- **shadcn init --defaults**: 인터랙티브 프롬프트 없이 New York/Neutral/CSS variables로 자동 설정
-- **create-next-app --yes 플래그**: React Compiler 질문 등 인터랙티브 프롬프트 자동 스킵
-- **turbopack.root 설정**: 상위 디렉토리 package-lock.json으로 인한 경고를 `path.resolve(__dirname)`으로 해결
-- **database-reviewer 에이전트로 SQL 리뷰**: CRITICAL 보안 이슈 3건 발견 (트리거 권한 상승, admin 역할 누락, RLS 성능)
-- **Service Layer 분리 패턴**: Server Actions → Service Layer 구조로 Phase 2+ NestJS 전환 비용 최소화
-- **Supabase Cloud 선택**: Docker Desktop 없이도 빠른 시작. SQL Editor로 마이그레이션 직접 실행
-- **seed.sql UUID 형식 수정**: `s0000000-...` → `b0000000-...` (s는 16진수가 아님)
-- **RLS 테스트용 admin 클라이언트**: 로그인 없이 데이터 확인 시 service_role 키 사용
-- **init project rules 도구**: MCP `mcp__shrimp-task-manager__init_project_rules` 사용하여 프로젝트 자동 분석 및 표준 문서 생성
-- **shrimp-task-manager 활용**: `plan_task` → `analyze_task` → `reflect_task` → `split_tasks` 플로우로 Phase 0-4 계획 수립
-- **TanStack Table + shadcn/ui 조합**: DataTable 구현 시 shadcn/ui 공식 가이드 패턴 준수 (커스텀 구현보다 검증된 패턴)
-- **Sonner (Toast)**: shadcn/ui toast보다 Sonner 선택 (더 현대적, API 단순, 스택 관리 자동)
+### 프로젝트 셋업
+- **`create-next-app --yes`**: React Compiler 인터랙티브 프롬프트 회피
+- **`shadcn init --defaults`**: 인터랙티브 없이 설정
+- **`turbopack.root = path.resolve(__dirname)`**: 절대경로 필수
+- **Supabase Cloud**: Docker Desktop 없이 빠른 시작
+
+### AI 추상화 레이어 (Phase 0-5)
+- **TDD RED→GREEN→REFACTOR 흐름 철저 준수**: 매 Step마다 테스트 먼저 → 실패 확인 → 구현 → 통과
+- **Zod v4 `toJSONSchema()` 내장 활용**: `zod-to-json-schema` 외부 패키지 불필요
+- **`z.coerce.number()` 대신 커스텀 `coerceNumber` 헬퍼**: NaN → undefined → `.default()` 기본값 fallback
+- **fake timer 패턴**: `vi.useFakeTimers()` + `vi.advanceTimersByTimeAsync()` → withRetry 재시도 대기 시간 0ms로 단축
+- **unhandled rejection 방지**: `promise.catch()` 먼저 등록 후 타이머 전진
+- **SDK 모킹**: `vi.fn(function(this) { ... })` 사용 (arrow function은 `new` 불가)
+- **SDK 에러 duck typing**: `error.name === 'ApiError' && 'status' in error` → vi.mock 환경에서 instanceof 불안정 우회
+- **AIError 재변환 방지**: catch 블록에서 `instanceof AIError` 체크 후 즉시 re-throw
+
+### 일반
+- **database-reviewer 에이전트**: SQL 리뷰에서 CRITICAL 보안 이슈 3건 발견
+- **code-reviewer 에이전트**: 코드 리뷰로 `expect.fail()` → `expect.assertions()` 개선 등
 
 ---
 
 ## 4. What Didn't Work (실패/주의사항)
 
-- **create-next-app 인터랙티브 프롬프트**: `--yes` 플래그 없이 실행하면 React Compiler 질문에서 멈춤. 반드시 `--yes` 추가.
-- **next.config.ts에서 import.meta.url 사용 불가**: `fileURLToPath(import.meta.url)` 패턴이 Next.js config 컴파일에서 `exports is not defined` 에러 발생. `__dirname`은 사용 가능.
-- **turbopack.root에 상대경로('.') 사용 불가**: 절대경로 필요. `path.resolve(__dirname)` 사용.
-- **handle_new_user() 트리거에서 role을 사용자 입력으로 읽으면 안 됨**: 공격자가 `raw_user_meta_data`에 `role: 'admin'`을 넣어 권한 상승 가능. 반드시 `'student'` 고정.
-- **RLS 정책에서 admin 역할 누락하기 쉬움**: 교사 권한 정책 작성 시 `['teacher', 'system_admin']`만 넣고 `'admin'`을 빠뜨린 곳이 6군데. 항상 `['teacher', 'admin', 'system_admin']`으로.
+- **`next.config.ts`에서 `import.meta.url` 사용 불가**: `exports is not defined` 에러. `__dirname` 사용
+- **`handle_new_user()` 트리거에서 role을 사용자 입력으로 읽으면 안 됨**: 항상 `'student'` 고정 (권한 상승 방지)
+- **RLS 정책에서 admin 역할 누락**: 교사 권한에 `['teacher', 'admin', 'system_admin']` 모두 포함
+- **`vi.fn().mockImplementation(() => ...)` 으로 class 모킹 불가**: arrow function은 `new` 키워드와 함께 사용 불가. `vi.fn(function(this) { ... })` 사용해야 함
+- **seed.sql UUID `s0000000-...` 유효하지 않음**: `s`는 16진수가 아님. `b0000000-...` 사용
+- **`responseSchema` vs `responseJsonSchema`**: Gemini SDK v1.40.0에서 JSON Schema 객체는 `responseJsonSchema` 필드 사용. `responseSchema`는 OpenAPI Schema용
 
 ---
 
 ## 5. Next Steps (다음 단계)
 
-### 🚨 즉시 해야 할 일 (Phase 0-5: AI 추상화 레이어)
+### 🚨 즉시 해야 할 일 (Phase 0-5 완료: 3 Steps 남음)
 
-1. **AI Provider 인터페이스 설계** - Factory + Strategy 패턴
-2. **Google Gemini 연동** - 첫 번째 Provider 구현체
-3. **프롬프트 템플릿 시스템** - 문제 생성용 프롬프트 구조화
-4. **응답 파싱/검증 유틸리티** - AI 응답을 구조화된 데이터로 변환
-5. **에러 핸들링 및 재시도 로직** - 안정적인 AI 호출
+**Step 10: provider.ts (Factory 함수)**
+```typescript
+// createAIProvider('gemini') → GeminiProvider 인스턴스 반환
+// 환경변수 AI_PROVIDER 기반 선택
+// 알 수 없는 타입 → AIConfigError throw
+```
+- 참조: `docs/plan/phase-0-5.md` Step 10 섹션
+
+**Step 11: index.ts (공개 API)**
+```typescript
+// export { createAIProvider } from './provider'
+// export type { AIProvider, GenerateQuestionParams, ... } from './types'
+// export { AIError, AIServiceError, ... } from './errors'
+```
+
+**Step 12: .env.example 업데이트**
+```bash
+GEMINI_API_KEY=          # 필수
+GEMINI_MODEL=gemini-2.0-flash  # 선택
+AI_PROVIDER=gemini       # 선택
+```
 
 ### 그 다음 (ROADMAP.md 단계 1 참조)
 
-6. **단계 1 트랙 B: 인증 시스템** - Supabase Auth + 로그인/회원가입 페이지
-7. **단계 1 트랙 B: 기본 CRUD UI** - 학원/학교/사용자 관리
-8. **단계 1 트랙 A: 기출문제 업로드** - 이미지/PDF 업로드 + Storage
-9. **RBAC 미들웨어 강화**: 역할별 라우트 가드 (Middleware에서 검증)
+1. **단계 1 트랙 B: 인증 시스템** - Supabase Auth + 로그인/회원가입
+2. **단계 1 트랙 B: 기본 CRUD UI** - 학원/학교/사용자 관리
+3. **단계 1 트랙 A: 기출문제 업로드** - 이미지/PDF + Storage
 
 ---
 
@@ -158,151 +138,63 @@
 | 결정 | 이유 |
 |------|------|
 | 5개 레이어 아키텍처 | 프레젠테이션/비즈니스/AI/데이터/횡단 관심사 분리 |
-| Server Actions + Service Layer | MVP 속도 + Phase 2 NestJS 전환 시 Service Layer 재사용 |
-| AI Provider Pattern (Factory + Strategy) | Gemini → OpenAI/Claude 엔진 교체를 Factory에 case 추가로 해결 |
-| Supabase RLS 멀티테넌시 | academy_id 기반 데이터 격리, 3중 보안 (Middleware + Server Action + RLS) |
+| Server Actions + Service Layer | MVP 속도 + Phase 2 NestJS 전환 시 재사용 |
+| AI Provider Pattern (Factory + Strategy) | Gemini → OpenAI/Claude 교체를 Factory에 case 추가로 해결 |
+| Supabase RLS 멀티테넌시 | academy_id 기반 데이터 격리, 3중 보안 |
 | Route Groups: (auth)/(dashboard) | URL 영향 없이 레이아웃 분리 |
-| ActionResult<T> 통일 응답 | `{ success: true, data } | { success: false, error }` |
+| Zod 스키마 이중 활용 | Gemini responseJsonSchema + 후검증 (DRY) |
+| SDK 에러 duck typing | vi.mock 환경에서 instanceof 불안정 → name/status 판별 |
 
 ---
 
-## 7. 프로젝트 디렉토리 구조 (현재)
+## 7. AI 추상화 레이어 구조 (`src/lib/ai/`)
 
 ```
-compass/
-├── CLAUDE.md                          # 개발 지침 (메인 진입점)
-├── HANDOFF.md                         # 이 문서
-├── ROADMAP.md                         # 개발 로드맵
-├── shrimp-rules.md                    # AI 에이전트용 프로젝트 표준 문서 (자동 생성)
-├── package.json                       # Next.js 16.1.6, React 19, Supabase, RHF, Zod
-├── tsconfig.json                      # TypeScript strict, @/* alias
-├── next.config.ts                     # Turbopack root 설정
-├── postcss.config.mjs                 # TailwindCSS v4
-├── eslint.config.mjs                  # Flat config (core-web-vitals + TS)
-├── components.json                    # shadcn/ui (New York, Neutral, CSS vars)
-├── .prettierrc                        # semi: false, singleQuote: true
-├── .prettierignore
-├── .env.local.example                 # 환경변수 템플릿
-├── .gitignore
-├── docs/
-│   ├── PRD.md                         # MVP PRD 요약
-│   ├── prd/
-│   │   └── PRD-v0.1-detailed.md       # PRD 상세
-│   ├── design/
-│   │   ├── 시스템아키텍처.md            # 시스템 아키텍처
-│   │   ├── 기술스택.md                 # 기술스택 정의
-│   │   └── 개발요구사항.md              # 개발 요구사항
-│   └── guides/
-│       ├── project-structure.md       # 프로젝트 구조
-│       ├── component-patterns.md      # 컴포넌트 패턴
-│       ├── forms-react-hook-form.md   # 폼 가이드
-│       ├── styling-guide.md           # 스타일링 가이드
-│       └── nextjs-15.md               # Next.js 15 가이드
-├── public/                            # 정적 파일 (favicon만 존재)
-├── supabase/
-│   ├── migrations/
-│   │   ├── 00001_initial_schema.sql   # 15개 테이블 + 트리거
-│   │   ├── 00002_rls_policies.sql     # 멀티테넌시 RLS 정책
-│   │   └── 00003_indexes.sql          # 성능 인덱스
-│   └── seed.sql                       # 개발용 시드 데이터
-└── src/
-    ├── app/
-    │   ├── globals.css                # TailwindCSS v4 + shadcn CSS 변수
-    │   ├── layout.tsx                 # 루트 레이아웃 (lang="ko", COMPASS 메타데이터)
-    │   ├── page.tsx                   # 홈 리다이렉트 → /dashboard
-    │   ├── favicon.ico
-    │   ├── (dashboard)/               # Route Group - 대시보드
-    │   │   ├── layout.tsx             # 사이드바 + 헤더 레이아웃
-    │   │   ├── page.tsx               # 대시보드 홈 (/)
-    │   │   ├── past-exams/page.tsx    # 기출문제
-    │   │   ├── generate/page.tsx      # 시험 생성
-    │   │   └── settings/page.tsx      # 설정
-    │   └── middleware.ts              # Supabase 세션 갱신
-    ├── components/
-    │   ├── ui/                        # shadcn/ui 컴포넌트 (19개)
-    │   │   ├── button, sheet, avatar, separator (기존 4개)
-    │   │   ├── form, input, textarea, select, checkbox, label, radio-group (폼 7개)
-    │   │   ├── table, card, badge (데이터 3개)
-    │   │   ├── dialog, alert-dialog, dropdown-menu (오버레이 3개)
-    │   │   └── sonner, skeleton (피드백 2개)
-    │   ├── data-table/                # DataTable 컴포넌트 (TanStack Table)
-    │   │   ├── data-table.tsx         # 메인 (정렬/필터/페이지네이션)
-    │   │   ├── data-table-column-header.tsx  # 컬럼 헤더
-    │   │   ├── data-table-pagination.tsx     # 페이지네이션
-    │   │   ├── data-table-toolbar.tsx        # 검색/필터 툴바
-    │   │   └── index.ts
-    │   ├── loading/                   # Loading/Skeleton 컴포넌트
-    │   │   ├── card-skeleton.tsx, table-skeleton.tsx, form-skeleton.tsx
-    │   │   ├── spinner.tsx            # sm/md/lg 스피너
-    │   │   └── index.ts
-    │   ├── layout/
-    │   │   ├── dashboard-sidebar.tsx  # 데스크톱 사이드바
-    │   │   ├── dashboard-header.tsx   # 헤더 (프로필 + 모바일)
-    │   │   └── mobile-nav.tsx         # 모바일 Sheet 네비게이션
-    │   └── providers/                 # (빈 디렉토리)
-    ├── lib/
-    │   ├── utils.ts                   # cn() 유틸
-    │   ├── toast.ts                   # Toast 헬퍼 (showActionResult, showPromiseToast)
-    │   ├── constants/
-    │   │   └── menu.ts                # 메뉴 항목 정의
-    │   └── supabase/
-    │       ├── client.ts              # 브라우저 클라이언트
-    │       ├── server.ts              # 서버 클라이언트
-    │       ├── admin.ts               # Admin 클라이언트 (RLS 우회)
-    │       └── types.ts               # TypeScript 타입 (placeholder)
-    ├── hooks/                         # (빈 디렉토리)
-    └── types/                         # (빈 디렉토리)
+src/lib/ai/
+├── types.ts                (~140줄) - AIProvider 인터페이스, 매핑 함수
+├── errors.ts               (~70줄)  - AIError 계층 (4종 + 기본)
+├── config.ts               (~62줄)  - 환경변수 Zod 검증 + 캐싱
+├── retry.ts                (~105줄) - 지수 백오프 재시도
+├── validation.ts           (~86줄)  - Zod 2단계 검증 + JSON Schema 변환
+├── gemini.ts               (~130줄) - GeminiProvider (generateQuestions 완전 구현)
+├── provider.ts             (미구현) - Factory 함수
+├── index.ts                (미구현) - 공개 API
+├── prompts/
+│   ├── question-generation.ts  (~90줄) - 프롬프트 빌더
+│   └── index.ts                (~5줄)  - 배럴
+└── __tests__/
+    ├── errors.test.ts       (9 tests)
+    ├── config.test.ts       (5 tests)
+    ├── types.test.ts        (8 tests)
+    ├── retry.test.ts        (13 tests)
+    ├── validation.test.ts   (17 tests)
+    ├── gemini.test.ts       (18 tests)
+    └── prompts/
+        └── question-generation.test.ts  (16 tests)
 ```
-
-### 핵심 참조 문서 (우선순위 순)
-
-1. **`shrimp-rules.md`** - AI 에이전트용 프로젝트 표준 문서 (자동 생성, DO/DON'T 예시 포함)
-2. `CLAUDE.md` - 프로젝트 개발 지침 및 기술스택 요약
-3. `docs/design/시스템아키텍처.md` - 아키텍처, DB 스키마, 데이터 흐름
-4. `ROADMAP.md` - 단계별 개발 로드맵
-5. `docs/design/기술스택.md` - 상세 기술스택 및 Phase 전환 전략
-6. `docs/prd/PRD-v0.1-detailed.md` - 기능 명세 및 페이지별 상세
-
-### DB 스키마 (15개 테이블)
-
-| 구분 | 테이블 | 핵심 |
-|------|--------|------|
-| 인프라 | academies, profiles, schools | 멀티테넌시 기반 |
-| 확장 | students, teachers | profiles 1:1 관계 |
-| 교육과정 | achievement_standards | 교육부 성취기준 |
-| 문제 | questions, past_exam_questions | AI 생성 + 기출 |
-| 시험 | exams, exam_questions | M:N 관계 |
-| 채점 | exam_submissions, answers | AI 채점 + 교사 검수 |
-| 분석 | wrong_answer_notes, grade_appeals | 오답 + 이의제기 |
-| 모니터링 | ai_generation_logs | AI 사용 로그 |
 
 ---
 
 ## 8. 개발 명령어
 
 ```bash
-# 기본 명령어
-npm run dev      # 개발 서버 (Turbopack)
-npm run build    # 프로덕션 빌드
-npm run lint     # ESLint
-npm run start    # 프로덕션 서버
+npm run dev            # 개발 서버 (Turbopack)
+npm run build          # 프로덕션 빌드
+npm run lint           # ESLint
+npm run test           # Vitest 워치 모드
+npm run test:run       # Vitest 단일 실행
+npm run test:coverage  # 커버리지 리포트
 
-# shrimp-task-manager 명령어 (Phase 0-4)
-mcp__shrimp-task-manager__list_tasks status=all
-mcp__shrimp-task-manager__get_task_detail taskId=<ID>
-mcp__shrimp-task-manager__execute_task taskId=<ID>
-mcp__shrimp-task-manager__verify_task taskId=<ID> score=<0-100> summary="..."
+# 단일 테스트 파일 실행
+npx vitest run src/lib/ai/__tests__/gemini.test.ts
 ```
 
 ---
 
-## 9. 설치된 패키지 요약
+## 9. 핵심 참조 문서 (우선순위 순)
 
-### Dependencies
-- `@tanstack/react-table` - DataTable용 (Phase 0-4에서 추가)
-- `sonner` - Toast 알림 (shadcn/ui 의존성으로 자동 설치)
-- `next-themes` - 테마 관리 (shadcn/ui 의존성으로 자동 설치, 미사용)
-
-### shadcn/ui 컴포넌트 (총 19개)
-- 기존: button, sheet, avatar, separator
-- Phase 0-4 추가: form, input, textarea, select, checkbox, label, radio-group, table, card, badge, dialog, alert-dialog, dropdown-menu, sonner, skeleton
+1. `CLAUDE.md` - 프로젝트 개발 지침 및 기술스택 요약
+2. `docs/plan/phase-0-5.md` - Phase 0-5 상세 계획 (Step별 구현 가이드)
+3. `docs/design/시스템아키텍처.md` - 아키텍처, DB 스키마, 데이터 흐름
+4. `ROADMAP.md` - 단계별 개발 로드맵
+5. `docs/prd/PRD-v0.1-detailed.md` - 기능 명세 및 페이지별 상세

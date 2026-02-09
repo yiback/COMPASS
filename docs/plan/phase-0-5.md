@@ -2,8 +2,8 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 8/12 Steps 완료 (67%)
-> **마지막 업데이트**: 2026-02-08
+> **진행률**: 10/12 Steps 완료 (83%)
+> **마지막 업데이트**: 2026-02-09
 
 ---
 
@@ -47,7 +47,7 @@ const questions = await provider.generateQuestions({
 | 6 | validation.ts (응답 검증) | ✅ | `src/lib/ai/validation.ts` |
 | 7 | prompts/question-generation.ts | ✅ | `src/lib/ai/prompts/question-generation.ts` |
 | 8 | prompts/index.ts (내보내기) | ✅ | `src/lib/ai/prompts/index.ts` |
-| 9 | gemini.ts (GeminiProvider) | ⏸️ | `src/lib/ai/gemini.ts` |
+| 9 | gemini.ts (GeminiProvider) | ✅ | `src/lib/ai/gemini.ts` |
 | 10 | provider.ts (Factory) | ⏸️ | `src/lib/ai/provider.ts` |
 | 11 | index.ts (공개 API) | ⏸️ | `src/lib/ai/index.ts` |
 | 12 | 환경변수 템플릿 업데이트 | ⏸️ | `.env.example` |
@@ -126,7 +126,7 @@ src/lib/ai/
 ├── config.ts               (~62줄)  - 환경변수 검증 [완료]
 ├── retry.ts                (~105줄) - 재시도 유틸리티 [완료]
 ├── validation.ts           (~86줄)  - 응답 검증 [완료]
-├── gemini.ts               (~100줄) - GeminiProvider
+├── gemini.ts               (~130줄) - GeminiProvider [완료]
 ├── provider.ts             (~30줄)  - Factory 함수
 ├── index.ts                (~15줄)  - 공개 API
 ├── prompts/
@@ -138,6 +138,7 @@ src/lib/ai/
     ├── types.test.ts        [완료 - 8 tests]
     ├── retry.test.ts        [완료 - 13 tests]
     ├── validation.test.ts   [완료 - 17 tests]
+    ├── gemini.test.ts       [완료 - 18 tests]
     ├── provider.test.ts     [대기]
     └── prompts/
         └── question-generation.test.ts  [완료 - 16 tests]
@@ -555,11 +556,11 @@ export { buildQuestionGenerationPrompt } from './question-generation'
 
 ## Step 9: gemini.ts (GeminiProvider 구현체)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/gemini.ts` (~100줄)
-- 테스트: `src/lib/ai/__tests__/gemini.test.ts` (SDK 모킹)
+- 생성: `src/lib/ai/gemini.ts` (~130줄)
+- 생성: `src/lib/ai/__tests__/gemini.test.ts` (18개 테스트)
 
 **의존성**: `config.ts`, `types.ts`, `retry.ts`, `validation.ts`, `prompts/` (모든 모듈)
 
@@ -624,53 +625,63 @@ export class GeminiProvider implements AIProvider {
 
 모킹 전략: `@google/genai` SDK를 `vi.mock()`으로 모킹하여 실제 API 호출 없이 단위 테스트
 
+**설계 결정**:
+
+1. **`responseJsonSchema` 사용**: SDK v1.40.0에서 JSON Schema 객체는 `responseJsonSchema` 필드에 전달. `responseSchema`는 OpenAPI Schema용
+2. **SDK 에러 변환은 withRetry 콜백 안에서**: `withRetry`가 `AIError.isRetryable` 기반으로 재시도 판단하므로, SDK 에러를 프로젝트 에러로 변환한 후 throw
+3. **SDK `ApiError` 판별은 duck typing**: `error.name === 'ApiError' && 'status' in error` — 테스트에서 plain object로 에러 시뮬레이션 가능
+4. **AIError 재변환 방지**: catch 블록에서 `AIError instanceof` 체크 후 즉시 re-throw
+
 **검증 기준**:
-- [ ] `AIProvider` 인터페이스 구현 확인
-- [ ] `generateQuestions`: 프롬프트 빌드 → API 호출 → 검증 → 반환 흐름
-- [ ] `withRetry` 래핑 확인
-- [ ] Structured Output 설정 (`responseMimeType`, `responseSchema`)
-- [ ] 미구현 메서드 → `AIServiceError` throw
-- [ ] SDK 모킹 기반 테스트 통과
+- [x] `AIProvider` 인터페이스 구현 확인 (name='gemini')
+- [x] `generateQuestions`: 프롬프트 빌드 → API 호출 → JSON 파싱 → Zod 검증 → 반환
+- [x] `withRetry` 래핑 확인 (maxRetries=config.maxRetries)
+- [x] Structured Output 설정 (`responseMimeType: 'application/json'`, `responseJsonSchema`)
+- [x] SDK 에러 → 프로젝트 에러 변환 (429→AIRateLimitError, 5xx→AIServiceError, 네트워크→AIServiceError)
+- [x] response.text undefined/invalid JSON → AIValidationError
+- [x] Zod 검증 실패(객관식 보기 누락) → AIValidationError (재시도 안 됨)
+- [x] AIServiceError 재시도 후 성공 확인 (fake timer)
+- [x] AIValidationError 재시도 없이 즉시 throw 확인
+- [x] 미구현 메서드 → `AIServiceError` throw (gradeAnswer, processOCR, analyzeTrends)
+- [x] 18개 테스트 모두 통과
+- [x] 전체 회귀 테스트 86개 통과
+- [x] TypeScript 빌드/프로덕션 빌드 통과
+- [x] ESLint 에러 0개
+
+**완료 요약**: TDD RED→GREEN→REFACTOR 흐름으로 구현. `vi.mock('@google/genai')`로 SDK 모킹 — `vi.fn()` + `function` 키워드 사용 (arrow function은 `new` 불가). `convertSdkError()` 함수로 SDK ApiError를 duck typing 판별하여 프로젝트 에러 계층으로 변환. catch 블록에서 AIError 계열은 재변환 방지 (즉시 re-throw). 에러 테스트에 fake timer 적용하여 실행 시간 12초→7ms 개선. unhandled rejection 방지를 위해 `promise.catch()` 먼저 등록 후 타이머 전진 패턴 사용. 최종 86/86 테스트 통과, 빌드 통과.
 
 ---
 
 ## Step 10: provider.ts (Factory 함수)
 
-**상태**: ⏸️ pending
+**상태**: ✅ 완료
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/provider.ts` (~30줄)
-- 생성 예정: `src/lib/ai/__tests__/provider.test.ts`
+- `src/lib/ai/provider.ts` (33줄)
+- `src/lib/ai/__tests__/provider.test.ts` (8개 테스트)
 
 **의존성**: `gemini.ts` (Step 9)
 
 **목적**: Factory 패턴으로 AI Provider 인스턴스 생성. 환경변수 또는 매개변수 기반 엔진 선택.
 
-**구현 가이드**:
+**구현 요약**:
 
 ```typescript
-import type { AIProvider, ProviderType } from './types'
-import { GeminiProvider } from './gemini'
-import { AIConfigError } from './errors'
-
-export function createAIProvider(type?: ProviderType): AIProvider {
-  const providerType = type ?? (process.env.AI_PROVIDER as ProviderType) ?? 'gemini'
-
-  switch (providerType) {
-    case 'gemini':
-      return new GeminiProvider()
-    default:
-      throw new AIConfigError(`지원하지 않는 AI Provider: ${providerType}`)
+export function createAIProvider(type?: string): AIProvider {
+  const resolvedType = type ?? process.env.AI_PROVIDER ?? DEFAULT_PROVIDER
+  switch (resolvedType) {
+    case 'gemini': return new GeminiProvider()
+    default: throw new AIConfigError(`지원하지 않는 AI Provider: ${resolvedType}`)
   }
 }
 ```
 
-**검증 기준**:
-- [ ] `'gemini'` → `GeminiProvider` 인스턴스 반환
-- [ ] 알 수 없는 타입 → `AIConfigError` throw
-- [ ] 환경변수 `AI_PROVIDER` 기반 선택
-- [ ] 매개변수 우선순위: 인자 > 환경변수 > 기본값('gemini')
-- [ ] 모든 테스트 통과
+**검증 결과**:
+- [x] `'gemini'` → `GeminiProvider` 인스턴스 반환
+- [x] 알 수 없는 타입 → `AIConfigError` throw
+- [x] 환경변수 `AI_PROVIDER` 기반 선택
+- [x] 매개변수 우선순위: 인자 > 환경변수 > 기본값('gemini')
+- [x] 전체 테스트 94개 통과 (기존 86 + 신규 8)
 
 ---
 

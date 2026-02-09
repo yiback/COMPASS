@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-02-08
+> **최종 업데이트**: 2026-02-09
 
 ## 개발 전략
 
@@ -61,7 +61,7 @@
 - ✅ Toast 알림 시스템 - Sonner 전역 설정 + 헬퍼 함수
 - ✅ Loading/Skeleton 컴포넌트 - CardSkeleton, TableSkeleton, FormSkeleton, Spinner
 
-### 0-5. AI 추상화 레이어 (8/12 Steps, 67%)
+### 0-5. AI 추상화 레이어 (10/12 Steps, 83%)
 
 - [x] 커스텀 에러 계층 (AIError, AIServiceError, AIValidationError, AIRateLimitError, AIConfigError)
 - [x] 환경변수 검증 (Zod 스키마, 캐싱, AIConfigError 래핑)
@@ -69,8 +69,9 @@
 - [x] 재시도 유틸리티 (지수 백오프, 입력값 검증, AIRateLimitError 서버 명시 대기)
 - [x] 응답 파싱/검증 (Zod 스키마 이중 활용 + 2단계 검증)
 - [x] 프롬프트 템플릿 시스템 (프롬프트 빌더 + 배럴 파일)
-- [ ] Google Gemini 연동 (GeminiProvider 구현체)
-- [ ] Factory 함수 + 공개 API
+- [x] Google Gemini 연동 (GeminiProvider 구현체, SDK 에러 변환, 재시도 통합)
+- [x] Factory 함수 (createAIProvider, 환경변수/매개변수 기반 엔진 선택)
+- [ ] 공개 API (index.ts) + 환경변수 템플릿
 
 ---
 
@@ -361,4 +362,4 @@
 - ✅ 0-2. Supabase 기본 연동 (완료)
 - ✅ 0-3. 기본 레이아웃 (완료)
 - ✅ 0-4. 공통 UI 컴포넌트 (완료)
-- 🚧 0-5. AI 추상화 레이어 (진행 중 - 8/12 Steps, 67%)
+- 🚧 0-5. AI 추상화 레이어 (진행 중 - 10/12 Steps, 83%)
