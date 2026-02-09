@@ -1,8 +1,9 @@
 # Phase 0-5: AI 추상화 레이어
 
-> **상태**: 🚧 진행 중
+> **상태**: ✅ 완료
 > **시작일**: 2026-02-07
-> **진행률**: 11/12 Steps 완료 (92%)
+> **완료일**: 2026-02-09
+> **진행률**: 12/12 Steps 완료 (100%)
 > **마지막 업데이트**: 2026-02-09
 
 ---
@@ -50,7 +51,7 @@ const questions = await provider.generateQuestions({
 | 9 | gemini.ts (GeminiProvider) | ✅ | `src/lib/ai/gemini.ts` |
 | 10 | provider.ts (Factory) | ✅ | `src/lib/ai/provider.ts` |
 | 11 | index.ts (공개 API) | ✅ | `src/lib/ai/index.ts` |
-| 12 | 환경변수 템플릿 업데이트 | ⏸️ | `.env.example` |
+| 12 | 환경변수 템플릿 업데이트 | ✅ | `.env.example` |
 
 ---
 
@@ -737,29 +738,41 @@ export {
 
 ## Step 12: 환경변수 템플릿 업데이트
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 수정 예정: `.env.example` 또는 `.env.local.example`
+- 생성: `.env.example`
 
 **의존성**: 없음
 
 **목적**: AI 관련 환경변수를 팀원이 알 수 있도록 템플릿에 추가
 
-**구현 가이드**:
+**구현 요약**:
 
-`.env.example`에 추가:
+`.env.example` 신규 생성 (Supabase 3개 + AI 5개 = 총 8개 환경변수):
 ```bash
-# AI 서비스 설정
-GEMINI_API_KEY=          # Google Gemini API 키 (필수)
-GEMINI_MODEL=gemini-2.0-flash  # Gemini 모델 (선택, 기본: gemini-2.0-flash)
-AI_PROVIDER=gemini       # AI 제공자 (선택, 기본: gemini)
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=           # 필수
+NEXT_PUBLIC_SUPABASE_ANON_KEY=      # 필수
+SUPABASE_SERVICE_ROLE_KEY=          # 필수, 서버 전용
+
+# AI 서비스
+GEMINI_API_KEY=                     # 필수
+GEMINI_MODEL=gemini-2.0-flash      # 선택, 기본: gemini-2.0-flash
+AI_PROVIDER=gemini                  # 선택, 기본: gemini
+AI_MAX_RETRIES=3                    # 선택, 기본: 3, 범위: 1-10
+AI_TIMEOUT_MS=30000                 # 선택, 기본: 30000, 범위: 1000-120000
 ```
 
 **검증 기준**:
-- [ ] `.env.example` 또는 `.env.local.example`에 AI 환경변수 존재
-- [ ] 주석으로 필수/선택 여부 표시
-- [ ] 기본값 명시
+- [x] `.env.example`에 AI 환경변수 5개 존재 (config.ts와 일치)
+- [x] 주석으로 필수/선택 여부 표시
+- [x] 기본값 명시
+- [x] `.gitignore`에 `.env.example`이 제외되지 않음 (커밋 대상)
+- [x] `npm run build` 통과
+- [x] `npm run test:run` 97개 테스트 통과
+
+**완료 요약**: Supabase 환경변수 3개 + AI 환경변수 5개를 포함한 `.env.example` 신규 생성. `cp .env.example .env.local` 안내 포함. Phase 0-5 전체 12 Steps 완료.
 
 ---
 
