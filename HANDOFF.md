@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-09
+> **최종 업데이트**: 2026-02-09 (Step 11 완료 반영)
 > **대상**: 이 프로젝트를 이어받는 새로운 에이전트
 
 ---
@@ -12,7 +12,7 @@
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
 - **타겟**: 소형~중형 보습학원, 중등 수학부터 시작
-- **현재 Phase**: 0-5 (AI 추상화 레이어, 9/12 Steps 완료 — 75%)
+- **현재 Phase**: 0-5 (AI 추상화 레이어, 11/12 Steps 완료 — 92%)
 
 기술스택: Next.js 16.1.6 + React 19 + Supabase + Google Gemini + Vercel
 
@@ -38,7 +38,7 @@
 - **0-3**: Route Groups 레이아웃 (대시보드 사이드바/헤더, 반응형)
 - **0-4**: 공통 UI 컴포넌트 (shadcn/ui 19개 + DataTable + Loading/Skeleton + Toast)
 
-#### Phase 0-5: AI 추상화 레이어 (9/12 Steps 완료)
+#### Phase 0-5: AI 추상화 레이어 (11/12 Steps 완료)
 
 | Step | 파일 | 테스트 | 상태 |
 |------|------|--------|------|
@@ -51,16 +51,17 @@
 | 7 | `prompts/question-generation.ts` | 16개 | ✅ |
 | 8 | `prompts/index.ts` (배럴) | - | ✅ |
 | 9 | `gemini.ts` (GeminiProvider) | 18개 | ✅ |
-| 10 | `provider.ts` (Factory) | - | ⏸️ |
-| 11 | `index.ts` (공개 API) | - | ⏸️ |
+| 10 | `provider.ts` (Factory) | 8개 | ✅ |
+| 11 | `index.ts` (공개 API) | 3개 | ✅ |
 | 12 | `.env.example` 업데이트 | - | ⏸️ |
 
-**전체 테스트: 86개 통과, 빌드/린트 OK**
+**전체 테스트: 97개 통과 (9 파일), 빌드/린트 OK**
 
 ### 미완료 작업
 
-- **Phase 0-5 Step 10-12**: Factory 함수 + 공개 API + 환경변수 템플릿
+- **Phase 0-5 Step 12**: `.env.example` 환경변수 템플릿 업데이트 (1 Step 남음)
 - **TypeScript 타입 자동 생성**: `supabase gen types`로 실제 DB 스키마에서 타입 생성 (placeholder 상태)
+- **기존 tsc 경고**: `gemini.test.ts:73` 타입 캐스팅 경고 1건 (TS2352, 기능 영향 없음)
 
 ---
 
@@ -101,29 +102,17 @@
 
 ## 5. Next Steps (다음 단계)
 
-### 🚨 즉시 해야 할 일 (Phase 0-5 완료: 3 Steps 남음)
-
-**Step 10: provider.ts (Factory 함수)**
-```typescript
-// createAIProvider('gemini') → GeminiProvider 인스턴스 반환
-// 환경변수 AI_PROVIDER 기반 선택
-// 알 수 없는 타입 → AIConfigError throw
-```
-- 참조: `docs/plan/phase-0-5.md` Step 10 섹션
-
-**Step 11: index.ts (공개 API)**
-```typescript
-// export { createAIProvider } from './provider'
-// export type { AIProvider, GenerateQuestionParams, ... } from './types'
-// export { AIError, AIServiceError, ... } from './errors'
-```
+### 🚨 즉시 해야 할 일 (Phase 0-5 완료: 1 Step 남음)
 
 **Step 12: .env.example 업데이트**
 ```bash
-GEMINI_API_KEY=          # 필수
-GEMINI_MODEL=gemini-2.0-flash  # 선택
-AI_PROVIDER=gemini       # 선택
+# AI 서비스 설정
+GEMINI_API_KEY=          # Google Gemini API 키 (필수)
+GEMINI_MODEL=gemini-2.0-flash  # Gemini 모델 (선택, 기본: gemini-2.0-flash)
+AI_PROVIDER=gemini       # AI 제공자 (선택, 기본: gemini)
 ```
+- 참조: `docs/plan/phase-0-5.md` Step 12 섹션
+- 완료 후 Phase 0-5 전체 완료 → ROADMAP.md 업데이트 필요
 
 ### 그 다음 (ROADMAP.md 단계 1 참조)
 
@@ -157,8 +146,8 @@ src/lib/ai/
 ├── retry.ts                (~105줄) - 지수 백오프 재시도
 ├── validation.ts           (~86줄)  - Zod 2단계 검증 + JSON Schema 변환
 ├── gemini.ts               (~130줄) - GeminiProvider (generateQuestions 완전 구현)
-├── provider.ts             (미구현) - Factory 함수
-├── index.ts                (미구현) - 공개 API
+├── provider.ts             (~30줄)  - Factory 함수 (createAIProvider)
+├── index.ts                (~25줄)  - 공개 API 배럴
 ├── prompts/
 │   ├── question-generation.ts  (~90줄) - 프롬프트 빌더
 │   └── index.ts                (~5줄)  - 배럴
@@ -169,6 +158,8 @@ src/lib/ai/
     ├── retry.test.ts        (13 tests)
     ├── validation.test.ts   (17 tests)
     ├── gemini.test.ts       (18 tests)
+    ├── provider.test.ts     (8 tests)
+    ├── index.test.ts        (3 tests)
     └── prompts/
         └── question-generation.test.ts  (16 tests)
 ```

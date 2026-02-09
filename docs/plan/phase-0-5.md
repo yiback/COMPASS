@@ -2,7 +2,7 @@
 
 > **상태**: 🚧 진행 중
 > **시작일**: 2026-02-07
-> **진행률**: 10/12 Steps 완료 (83%)
+> **진행률**: 11/12 Steps 완료 (92%)
 > **마지막 업데이트**: 2026-02-09
 
 ---
@@ -48,8 +48,8 @@ const questions = await provider.generateQuestions({
 | 7 | prompts/question-generation.ts | ✅ | `src/lib/ai/prompts/question-generation.ts` |
 | 8 | prompts/index.ts (내보내기) | ✅ | `src/lib/ai/prompts/index.ts` |
 | 9 | gemini.ts (GeminiProvider) | ✅ | `src/lib/ai/gemini.ts` |
-| 10 | provider.ts (Factory) | ⏸️ | `src/lib/ai/provider.ts` |
-| 11 | index.ts (공개 API) | ⏸️ | `src/lib/ai/index.ts` |
+| 10 | provider.ts (Factory) | ✅ | `src/lib/ai/provider.ts` |
+| 11 | index.ts (공개 API) | ✅ | `src/lib/ai/index.ts` |
 | 12 | 환경변수 템플릿 업데이트 | ⏸️ | `.env.example` |
 
 ---
@@ -127,8 +127,8 @@ src/lib/ai/
 ├── retry.ts                (~105줄) - 재시도 유틸리티 [완료]
 ├── validation.ts           (~86줄)  - 응답 검증 [완료]
 ├── gemini.ts               (~130줄) - GeminiProvider [완료]
-├── provider.ts             (~30줄)  - Factory 함수
-├── index.ts                (~15줄)  - 공개 API
+├── provider.ts             (~30줄)  - Factory 함수 [완료]
+├── index.ts                (~25줄)  - 공개 API 배럴 [완료]
 ├── prompts/
 │   ├── question-generation.ts  (~90줄) - 문제 생성 프롬프트 [완료]
 │   └── index.ts                (~5줄)  - 내보내기 [완료]
@@ -687,19 +687,20 @@ export function createAIProvider(type?: string): AIProvider {
 
 ## Step 11: index.ts (공개 API)
 
-**상태**: ⏸️ pending
+**상태**: ✅ completed
 
 **관련 파일**:
-- 생성 예정: `src/lib/ai/index.ts` (~15줄)
+- `src/lib/ai/index.ts` (25줄)
+- `src/lib/ai/__tests__/index.test.ts` (3개 테스트)
 
 **의존성**: `provider.ts`, `types.ts`, `errors.ts`
 
 **목적**: `src/lib/ai` 모듈의 공개 API 정의. 외부에서는 `import { ... } from '@/lib/ai'`로만 접근.
 
-**구현 가이드**:
+**구현 요약**:
 
 ```typescript
-// 공개 API
+// 팩토리 함수
 export { createAIProvider } from './provider'
 
 // 타입
@@ -712,7 +713,7 @@ export type {
   QuestionType,
 } from './types'
 
-// 에러
+// 에러 클래스
 export {
   AIError,
   AIServiceError,
@@ -722,12 +723,15 @@ export {
 } from './errors'
 ```
 
-**검증 기준**:
-- [ ] `import { createAIProvider } from '@/lib/ai'` 가능
-- [ ] 타입 re-export 확인
-- [ ] 에러 클래스 re-export 확인
-- [ ] 내부 모듈 (config, retry, validation, prompts) 직접 노출 안 함
-- [ ] TypeScript 빌드 통과
+**검증 결과**:
+- [x] `import { createAIProvider } from '@/lib/ai'` 가능
+- [x] 타입 re-export 확인
+- [x] 에러 클래스 re-export 확인
+- [x] 내부 모듈 (config, retry, validation, prompts) 직접 노출 안 함
+- [x] TypeScript 빌드 통과
+- [x] 전체 테스트 97개 통과 (기존 94 + 신규 3)
+
+**완료 요약**: 배럴 파일로 공개 API 경계 정의. `createAIProvider` 팩토리, 6개 타입, 5개 에러 클래스만 re-export. 내부 모듈(config, retry, validation, prompts, gemini) 직접 노출 차단 확인. 3개 테스트 추가 (export 존재 확인 + 내부 모듈 비노출 확인).
 
 ---
 
