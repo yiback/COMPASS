@@ -41,7 +41,17 @@ export default async function DashboardLayout({
       {/* 메인 콘텐츠 영역 */}
       <div className="flex flex-1 flex-col overflow-hidden md:ml-64">
         {/* 헤더 */}
-        <DashboardHeader user={userProfile} />
+        <DashboardHeader
+          user={
+            userProfile
+              ? {
+                  name: userProfile.name,
+                  email: userProfile.email,
+                  avatar_url: userProfile.avatar_url ?? undefined,
+                }
+              : null
+          }
+        />
 
         {/* 페이지 콘텐츠 */}
         <main className="flex-1 overflow-y-auto bg-muted/40 p-4 md:p-6">
