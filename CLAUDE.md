@@ -29,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **Don't Reinvent the Wheel** — npm, shadcn/ui, Supabase 내장 기능을 우선 활용. 커스텀 구현은 최후 수단.
 2. **MVP 집중** — 필수 기능만 구현, 과도한 추상화 금지. "나중에 필요할 것 같은" 기능 구현 금지.
 3. **학습 지향** — 코드 작성 전에 무엇을/왜 하는지 설명, 새 기술 사용 시 개념과 동작 원리 설명, 의사결정 근거 명시.
+   - **병렬 구현 후 학습 플로우**: (1) 자동 구현 완료 → (2) Phase별 핵심 개념 리뷰 설명 → (3) 이해 부족 시 삭제 후 재구현 → (4) 학습 포인트 문서 정리
 
 ---
 
