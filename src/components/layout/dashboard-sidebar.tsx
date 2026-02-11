@@ -27,7 +27,7 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
       <div className="flex flex-col gap-y-5 overflow-y-auto border-r bg-card px-6 py-6">
         {/* 로고 영역 */}
         <div className="flex h-12 items-center">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <span className="text-lg font-bold">C</span>
             </div>

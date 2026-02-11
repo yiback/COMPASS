@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
 import { DashboardHeader } from '@/components/layout/dashboard-header'
@@ -9,29 +10,28 @@ interface DashboardLayoutProps {
 /**
  * 대시보드 레이아웃
  * Server Component: Supabase에서 사용자 정보 조회
+ * 인증 이중 보호: 미들웨어 + 레이아웃 레벨
  */
 export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
-  // Supabase 클라이언트 생성 (비동기)
   const supabase = await createClient()
 
-  // 현재 로그인한 사용자 정보 조회
+  // 인증 체크 (미들웨어 이중 보호)
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser()
 
-  // 사용자 프로필 조회 (profiles 테이블)
-  let userProfile = null
-  if (authUser) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, name, email, avatar_url, role')
-      .eq('id', authUser.id)
-      .single()
-
-    userProfile = data
+  if (!authUser) {
+    redirect('/login')
   }
+
+  // 사용자 프로필 조회 (profiles 테이블)
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('id, name, email, avatar_url, role')
+    .eq('id', authUser.id)
+    .single()
 
   return (
     <div className="flex h-screen overflow-hidden">

@@ -20,7 +20,7 @@ export interface MenuItem {
 export const MENU_ITEMS: MenuItem[] = [
   {
     title: '대시보드',
-    href: '/dashboard',
+    href: '/',
     icon: LayoutDashboard,
     description: '주요 지표 및 요약',
   },

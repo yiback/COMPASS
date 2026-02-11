@@ -36,7 +36,7 @@ export function MobileNav() {
         <SheetHeader className="px-6 py-6">
           <SheetTitle>
             <Link
-              href="/dashboard"
+              href="/"
               className="flex items-center gap-2"
               onClick={() => setOpen(false)}
             >

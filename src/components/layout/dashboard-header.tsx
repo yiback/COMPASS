@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MobileNav } from './mobile-nav'
+import { LogoutButton } from './logout-button'
 
 interface DashboardHeaderProps {
   user?: {
@@ -48,6 +49,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                 <AvatarImage src={user.avatar_url} alt={user.name || '사용자'} />
                 <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
               </Avatar>
+              <LogoutButton />
             </>
           )}
         </div>

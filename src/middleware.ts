@@ -3,12 +3,19 @@
  *
  * 역할:
  * - 모든 요청에서 Supabase 세션 갱신
- * - Phase 0-3에서 인증 보호 라우트 추가 예정
- * - Phase 0-4에서 멀티테넌시 academy_id 검증 추가 예정
+ * - 인증 보호 라우트: 비인증 → /login 리다이렉트
+ * - 인증 사용자가 auth 페이지 접근 시 → / 리다이렉트
  */
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+// 인증 불필요한 공개 경로
+const PUBLIC_ROUTES = ['/login', '/signup', '/forgot-password', '/auth/callback']
+
+function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -26,7 +33,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           response = NextResponse.next({
@@ -40,8 +47,24 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // 세션 갱신 (getUser 호출 시 자동 갱신)
-  await supabase.auth.getUser()
+  // 세션 갱신 + 사용자 정보 확인
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  // 비인증 사용자가 보호 경로 접근 → /login 리다이렉트
+  if (!user && !isPublicRoute(pathname)) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // 인증 사용자가 auth 페이지 접근 → /dashboard 리다이렉트
+  if (user && isPublicRoute(pathname) && pathname !== '/auth/callback') {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
 
   return response
 }
