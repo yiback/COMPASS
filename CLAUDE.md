@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
-- **현재 Phase**: 0-5 진행 중 (AI 추상화 레이어, 10/12 Steps)
+- **현재 Phase**: 단계 1 진행 중 (1-1~1-3 완료, 다음: 1-4 학원 관리)
 - **전체 로드맵**: `ROADMAP.md`
 
 ---
@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **Don't Reinvent the Wheel** — npm, shadcn/ui, Supabase 내장 기능을 우선 활용. 커스텀 구현은 최후 수단.
 2. **MVP 집중** — 필수 기능만 구현, 과도한 추상화 금지. "나중에 필요할 것 같은" 기능 구현 금지.
 3. **학습 지향** — 코드 작성 전에 무엇을/왜 하는지 설명, 새 기술 사용 시 개념과 동작 원리 설명, 의사결정 근거 명시.
-   - **병렬 구현 후 학습 플로우**: (1) 자동 구현 완료 → (2) Phase별 핵심 개념 리뷰 설명 → (3) 이해 부족 시 삭제 후 재구현 → (4) 학습 포인트 문서 정리
+   - **구현 후 학습 플로우**: (1) 자동 구현 완료 → (2) 핵심 개념 리뷰 설명 → (3) 이해 부족 시 삭제 후 재구현 → (4) 학습 포인트 문서 정리
 
 ---
 
@@ -45,6 +45,20 @@ npm run test:coverage  # 커버리지 리포트
 ```
 
 단일 테스트 파일 실행: `npx vitest run src/lib/ai/__tests__/errors.test.ts`
+
+---
+
+## 개발 워크플로우
+
+### 모델 전략
+
+- **계획/설계/분석**: Opus 4.6
+- **구현/코딩**: Sonnet 4.5
+
+### 순차 진행 원칙
+
+- 각 스텝을 순서대로 완료한 후 다음 스텝 진행
+- 상세 계획은 `docs/plan/` 디렉토리 참조
 
 ---
 
