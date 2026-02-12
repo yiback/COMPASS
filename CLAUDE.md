@@ -28,8 +28,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **Don't Reinvent the Wheel** — npm, shadcn/ui, Supabase 내장 기능을 우선 활용. 커스텀 구현은 최후 수단.
 2. **MVP 집중** — 필수 기능만 구현, 과도한 추상화 금지. "나중에 필요할 것 같은" 기능 구현 금지.
-3. **학습 지향** — 코드 작성 전에 무엇을/왜 하는지 설명, 새 기술 사용 시 개념과 동작 원리 설명, 의사결정 근거 명시.
-   - **구현 후 학습 플로우**: (1) 자동 구현 완료 → (2) 핵심 개념 리뷰 설명 → (3) 이해 부족 시 삭제 후 재구현 → (4) 학습 포인트 문서 정리
+3. **학습 지향 (MANDATORY — 구현 후 자동 실행)** — 코드 작성 전에 무엇을/왜 하는지 설명, 새 기술 사용 시 개념과 동작 원리 설명, 의사결정 근거 명시.
+
+   - **구현 후 학습 플로우 (필수, 생략 불가)**:
+     1. 자동 구현 완료
+     2. 🔴 **핵심 개념 리뷰 설명** (MANDATORY — 다음 단계 제안 전에 반드시 수행)
+     3. 🤔 **이해도 체크 질문** (사용자 답변 대기)
+     4. 필요 시 삭제 후 재구현 제안
+     5. 학습 포인트 MEMORY.md 업데이트
+
+   - **직접 구현 추천 기준** (구현 완료 후 즉시 제안):
+     - 🔴 **CRITICAL**: 보안 로직(RBAC, 인증, 권한), 핵심 비즈니스 로직, 새로운 아키텍처 패턴 첫 적용
+     - 🟡 **RECOMMENDED**: 자주 재사용될 유틸리티, 복잡한 상태 관리, 테스트 설계
+     - 🟢 **ROUTINE**: 이미 학습한 패턴의 반복, UI 마크업, 설정 파일 (AI 자동 구현 OK)
+
+   - **삭제 후 재구현 프로세스**:
+     ```bash
+     # 1. 구현 파일 백업 (참고용)
+     cp src/lib/actions/academies.ts src/lib/actions/academies.ts.reference
+
+     # 2. 구현 파일 삭제 (테스트는 유지)
+     rm src/lib/actions/academies.ts
+
+     # 3. 테스트 실행 → 모두 FAIL 확인
+     npx vitest run src/lib/actions/__tests__/academies.test.ts
+
+     # 4. 사용자가 직접 구현 (reference 참고 OK, 복붙 NO)
+     # 5. 테스트 PASS 달성 → 개념 체화 완료
+     ```
 
 ---
 
@@ -59,6 +85,18 @@ npm run test:coverage  # 커버리지 리포트
 
 - 각 스텝을 순서대로 완료한 후 다음 스텝 진행
 - 상세 계획은 `docs/plan/` 디렉토리 참조
+
+### 계획 문서 규칙
+
+- **모든 계획 파일은 `docs/plan/` 디렉토리에 마크다운으로 생성**
+- 파일명 패턴: `phase-{N}-step{N}-{N}-{description}.md` (예: `phase-1-step4-2-server-actions.md`)
+- 구현 전 반드시 계획 문서 작성 → 사용자 승인 → 구현 순서
+
+### Sequential Thinking MCP 활용
+
+- 복잡한 설계 결정이나 계획 수립 시 `mcp__sequential-thinking__sequentialthinking` 활용
+- 단계별 사고 과정을 명시적으로 기록하여 의사결정 근거 투명화
+- ToolSearch에서 정확한 도구명 확인: `select:mcp__sequential-thinking__sequentialthinking`
 
 ---
 

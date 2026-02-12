@@ -1,9 +1,9 @@
 # 단계 1-4: 학원 관리 CRUD [F007] 상세 계획
 
-> **상태**: 🚧 진행 중 (Step 1/5 완료)
+> **상태**: 🚧 진행 중 (Step 2/5 완료)
 > **작성일**: 2026-02-12
 > **마지막 업데이트**: 2026-02-12
-> **진행률**: 1/5 Steps 완료 (20%)
+> **진행률**: 2/5 Steps 완료 (40%)
 > **모델**: Sonnet (구현), Opus (계획)
 > **전제 조건**: 1-1 인증, 1-2 기출업로드, 1-3 학교관리 완료
 
@@ -131,11 +131,22 @@ export const academyUpdateSchema = z.object({
 
 ---
 
-### Step 2: Server Actions (TDD)
+### Step 2: Server Actions (TDD) ✅
+
+**상태**: ✅ 완료 (2026-02-12)
+
+**완료 요약**:
+- ✅ `src/lib/actions/academies.ts` — getMyAcademy + updateMyAcademy + checkAdminRole 구현
+- ✅ `src/lib/actions/__tests__/academies.test.ts` — 13개 테스트 모두 통과
+- ✅ Self-referencing ID 패턴 (profile에서 academy_id 추출, URL 조작 방지)
+- ✅ Defense in Depth 3중 방어 (checkAdminRole + Zod strip + RLS)
+- ✅ snake_case → camelCase 변환 + 빈 문자열 → null 처리
+- ✅ 사용자 삭제 후 재구현 (빈칸 채우기 방식) 학습 완료
+- ✅ 빌드 성공 확인
 
 **파일:**
-- `src/lib/actions/academies.ts`
-- `src/lib/actions/__tests__/academies.test.ts`
+- `src/lib/actions/academies.ts` [완료]
+- `src/lib/actions/__tests__/academies.test.ts` [완료]
 
 **Actions:**
 
