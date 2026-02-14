@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-13 (단계 1-4 Step 3 구현 완료, 다음: Step 4 사이드바 메뉴 연결)
+> **최종 업데이트**: 2026-02-14 (단계 1-4 완료, 다음: 1-5 사용자 관리 CRUD)
 > **대상**: 이 프로젝트를 이어받는 새로운 에이전트
 
 ---
@@ -11,7 +11,7 @@
 
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
-- **현재 Phase**: 단계 1 진행 중 (1-1~1-3 완료, 1-4 Step 1~3/5 완료)
+- **현재 Phase**: 단계 1 진행 중 (1-1~1-4 완료, 다음: 1-5 사용자 관리 CRUD)
 - **워크플로우**: 순차 실행 (스텝별로 하나씩 완료 후 다음 진행)
 - **사용자 학습 목표**: 코드 구현뿐 아니라 개념 이해가 핵심. 자동 구현 후 반드시 리뷰 세션 진행
 
@@ -33,7 +33,8 @@
 | 1-1 | 인증 시스템 [F010] (로그인/회원가입/비번재설정/미들웨어) | ✅ 완료 |
 | 1-2 | 기출문제 업로드 [F005] (Storage 버킷 + 업로드 폼) | ✅ 완료 |
 | 1-3 | 학교 관리 CRUD [F008] (목록/생성/수정/삭제) | ✅ 완료 |
-| **1-4** | **학원 관리 CRUD [F007]** (Step 1~3 완료) | **⏳ Step 4 진행 예정** |
+| 1-4 | 학원 관리 CRUD [F007] (조회/수정, 초대코드) | ✅ 완료 |
+| **1-5** | **사용자 관리 CRUD [F009]** | **⏳ 시작 대기** |
 | 1-5 | 사용자 관리 CRUD [F009] | 미시작 |
 | 1-6 | 기출문제 조회 [F006] | 미시작 |
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | 미시작 |
@@ -41,37 +42,32 @@
 
 ### 이번 세션에서 한 일
 
-- **단계 1-4 Step 3 구현 완료: 학원 관리 UI 컴포넌트**
-  - Sequential Thinking MCP 7단계 분석으로 계획 수립
-  - `docs/plan/phase-1-step4-3-ui-components.md` 계획 문서 작성
-  - `src/app/(dashboard)/admin/academy/page.tsx` — Server Component (역할 기반 분기)
-  - `src/app/(dashboard)/admin/academy/_components/academy-info-card.tsx` — 읽기 전용 카드 (teacher용)
-  - `src/app/(dashboard)/admin/academy/_components/academy-form.tsx` — 수정 폼 (admin용)
-  - ui-markup-specialist + nextjs-supabase-expert 병렬 에이전트 활용 (Sonnet)
-  - 빌드 성공 확인
+- **단계 1-4 완료: 학원 관리 CRUD [F007]** ✅
+  - Step 5 Phase A: 빌드 검증 완료 (테스트 235/235, 빌드 성공, 린트 에러 0)
+  - Step 5 Phase B: 학습 리뷰 완료 (6개 토픽 완전 이해)
+  - Step 5 Phase C: 문서 업데이트 완료
+  - `docs/plan/phase-1-step4-5-build-verification.md` 계획 문서 생성
 
-- **삭제 후 재구현 (academy-form.tsx, 빈칸 채우기 방식)**
-  - 빈칸 7개: useTransition → useForm+zodResolver → copyInviteCode → onSubmit → Form/FormField → Button
-  - 사용자가 직접 타이핑으로 모든 빈칸 작성 완료
-  - 오타 수정 학습: `academyUpdateScema` → `Schema`, `defaultvalues` → `defaultValues`, `logoRul` → `logoUrl`
-  - 문법 수정 학습: `startTransition()` 괄호, `new FormData()`, `await`, `})` 닫기
+- **학습 리뷰 6개 토픽 완료**
+  1. Defense in Depth (3중 방어: Server Action + Zod strip + RLS)
+  2. Self-referencing ID 패턴 (IDOR 공격 방지)
+  3. Server Actions + FormData (파일 업로드 지원, 미래 확장 용이)
+  4. useTransition + React Hook Form (직접 결과 핸들링, 중복 클릭 방지)
+  5. Zod 스키마 설계 (strip 모드, .or(z.literal('')) 패턴)
+  6. Server Component 역할 분기 (번들 크기 14배 차이, DevTools 우회 방지)
 
-- **학습 리뷰 세션 진행**
-  - `useTransition`: 비동기 작업 중 isPending 상태 관리
-  - `useForm` + `zodResolver`: 폼 상태 + Zod 자동 검증 연결
-  - `defaultValues`: DB null → 폼 '' 변환 (`??` 연산자)
-  - `navigator.clipboard`: try/catch로 클립보드 복사 + toast 알림
-  - `startTransition` + `FormData` + `await`: Server Action 호출 흐름
-  - `!` non-null assertion: `&&` 조건 내에서 안전하게 사용
-  - `const`: 변수 선언 (재할당 불가)
-  - `toast`: sonner 라이브러리의 알림 메시지
-  - Server vs Client Component 판단 기준: 브라우저 API(훅/이벤트) 사용 여부
-  - `router.refresh()` vs `router.push()`: 같은 페이지 vs 다른 페이지 이동
+- **계획 문서 생성 규칙 준수**
+  - Step 4 → 계획 문서 누락으로 지적 받음
+  - Step 5 → 계획 문서 먼저 생성 후 구현 (CRITICAL RULE #1 엄수)
+  - Sequential Thinking MCP 활용
 
-### 이전 세션 완료 작업
+### 단계 1-4 전체 요약 (5 Steps)
 
-- **단계 1-4 Step 2 완료: Server Actions (TDD + 삭제 후 재구현)**
-- **단계 1-4 Step 1 완료: Zod 검증 스키마 (TDD)**
+- ✅ Step 1: Zod 검증 스키마 (14개 테스트, TDD)
+- ✅ Step 2: Server Actions (13개 테스트, TDD + 삭제 후 재구현 학습)
+- ✅ Step 3: UI 컴포넌트 (academy-form, academy-info-card, 삭제 후 재구현 학습)
+- ✅ Step 4: 사이드바 메뉴 연결 (SSOT 패턴)
+- ✅ Step 5: 빌드 검증 + 학습 리뷰 (Phase A/B/C 모두 완료)
 
 ---
 
@@ -102,12 +98,16 @@
 
 ## 4. What Didn't Work (실패/주의사항)
 
-### Sequential Thinking MCP 누락 문제 (이번 세션에서 발생)
+### 계획 문서 누락 (이번 세션에서 발생)
+- Step 4 구현 시 `docs/plan/phase-1-step4-4-sidebar-menu.md` 계획 문서를 생성하지 않음
+- MEMORY.md CRITICAL RULE #1 위반 — 사용자 지적 받음
+- **교훈**: 아무리 단순한 작업이라도 계획 문서를 먼저 생성한 후 구현
+
+### Sequential Thinking MCP 누락 문제 (이전 세션)
 - 계획 수립 시 Sequential Thinking MCP를 사용하지 않고 바로 진행하려 함
-- 사용자가 지적하여 수정 → CLAUDE.md에 명시되어 있음에도 누락
 - **교훈**: 계획 수립 시 반드시 Sequential Thinking MCP 활용. CLAUDE.md 규칙 엄수
 
-### 병렬 에이전트 파일 충돌
+### 병렬 에이전트 파일 충돌 (이전 세션)
 - nextjs-supabase-expert와 ui-markup-specialist가 동일 파일(academy-info-card.tsx)을 각각 생성
 - 후속 에이전트가 덮어써서 일부 필드(logoUrl, updatedAt) 누락
 - **교훈**: 병렬 에이전트에 동일 파일 할당 금지. 명확히 파일 분리할 것
@@ -138,29 +138,29 @@
 
 ### 즉시 해야 할 일
 
-#### 1. 단계 1-4 Step 4: 사이드바 메뉴 연결
+#### 1. 단계 1-5: 사용자 관리 CRUD [F009]
 
-- `src/lib/constants/menu.ts`의 `MENU_ITEMS`에 메뉴 추가
-- `{ title: '학원 관리', href: '/admin/academy', icon: Building2 }`
-- `{ title: '학교 관리', href: '/admin/schools', icon: GraduationCap }`
-- 옵션 A (단순 추가) 채택 (역할별 필터링은 Phase 2 RBAC에서 처리)
+**작업 내용**:
+- 사용자 목록 DataTable (profiles 테이블)
+- 역할 변경 기능 (admin 전용, admin 클라이언트 사용)
+- 사용자 상세 조회
+- RBAC: admin/system_admin만 접근
 
-#### 2. 단계 1-4 Step 5: 빌드 검증 + 학습 리뷰
+**참고 패턴**:
+- 학교 관리(1-3) DataTable 패턴 재사용
+- admin 클라이언트로 RLS 우회 (역할 변경 시)
 
-- `npm run build` 통과 확인
-- `npm run test:run` 전체 테스트 통과 확인
-- 학습 리뷰 세션 진행
-
-#### 3. 이어서 순차 진행
+#### 2. 이어서 순차 진행
 
 - 1-5: 사용자 관리 CRUD [F009] — 역할 변경 (admin 클라이언트)
 - 1-6: 기출문제 조회 [F006] — DataTable + 검색/필터
 - 1-7: 기출 기반 AI 문제 생성 [F011] — `createAIProvider()` 연동
 - 1-8: 생성된 문제 저장 [F003] — 문제 CRUD
 
-#### 4. 정리 작업
+#### 3. Supabase 타입 생성 (선택)
 
-- `src/lib/actions/past-exams.ts.bak` 삭제 (불필요한 백업)
+- `npx supabase gen types typescript --project-id <ID> > src/types/supabase.ts`
+- `as any` 캐스팅 제거 가능 (MVP 범위 외이므로 선택 사항)
 
 ---
 
@@ -201,6 +201,7 @@ npx vitest run src/lib/actions/__tests__/academies.test.ts
 2. `ROADMAP.md` — 순차 스텝별 개발 로드맵
 3. `docs/plan/phase-1-step4-academy-crud.md` — 1-4 전체 5단계 계획
 4. `docs/plan/phase-1-step4-3-ui-components.md` — Step 3 상세 계획 (구현 완료)
+   - **주의**: Step 4 계획 문서(`phase-1-step4-4-sidebar-menu.md`)는 미생성 상태
 5. `docs/plan/phase-1-round2.md` — 라운드 2 상세 계획 (Step 1~7)
 6. `docs/design/시스템아키텍처.md` — 아키텍처, DB 스키마, 데이터 흐름
 7. `docs/prd/PRD-v0.1-detailed.md` — 기능 명세 및 페이지별 상세
