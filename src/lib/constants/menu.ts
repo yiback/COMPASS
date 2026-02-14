@@ -2,6 +2,8 @@ import {
   LayoutDashboard,
   FileText,
   Sparkles,
+  Building2,
+  GraduationCap,
   Settings,
   type LucideIcon,
 } from 'lucide-react'
@@ -35,6 +37,18 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/generate',
     icon: Sparkles,
     description: 'AI 기반 문제 생성',
+  },
+  {
+    title: '학원 관리',
+    href: '/admin/academy',
+    icon: Building2,
+    description: '학원 정보 조회 및 수정',
+  },
+  {
+    title: '학교 관리',
+    href: '/admin/schools',
+    icon: GraduationCap,
+    description: '학교 목록 관리',
   },
   {
     title: '설정',
