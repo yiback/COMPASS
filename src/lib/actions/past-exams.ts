@@ -110,7 +110,7 @@ export async function uploadPastExamAction(
       subject: parsed.data.subject,
       source_image_url: storagePath,
       extraction_status: 'pending',
-    } as any)
+    })
     .select('id')
     .single()
 

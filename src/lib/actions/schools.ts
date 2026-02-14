@@ -93,7 +93,7 @@ export async function createSchool(
     region: parsed.data.region || null,
     district: parsed.data.district || null,
     address: parsed.data.address || null,
-  } as any)
+  })
 
   if (error) {
     console.error('[createSchool] error:', error)
@@ -206,6 +206,7 @@ export async function updateSchool(
   }
 
   // 4. DB 업데이트
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성
   const supabase: any = await createClient()
   const { error } = await supabase
     .from('schools')

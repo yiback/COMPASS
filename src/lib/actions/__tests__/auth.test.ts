@@ -93,7 +93,7 @@ describe('loginAction', () => {
     expect(result?.error).toBe('이메일 또는 비밀번호가 올바르지 않습니다.')
   })
 
-  it('성공 시 /dashboard로 리다이렉트한다', async () => {
+  it('성공 시 /로 리다이렉트한다', async () => {
     mockSignInWithPassword.mockResolvedValue({ error: null })
 
     const { loginAction } = await import('../auth')
@@ -102,8 +102,8 @@ describe('loginAction', () => {
       password: 'password123',
     })
 
-    await expect(loginAction(null, formData)).rejects.toThrow('NEXT_REDIRECT:/dashboard')
-    expect(mockRedirect).toHaveBeenCalledWith('/dashboard')
+    await expect(loginAction(null, formData)).rejects.toThrow('NEXT_REDIRECT:/')
+    expect(mockRedirect).toHaveBeenCalledWith('/')
   })
 })
 
