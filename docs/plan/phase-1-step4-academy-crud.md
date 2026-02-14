@@ -1,9 +1,9 @@
 # 단계 1-4: 학원 관리 CRUD [F007] 상세 계획
 
-> **상태**: 🚧 진행 중 (Step 2/5 완료)
+> **상태**: 🚧 진행 중 (Step 4/5 완료)
 > **작성일**: 2026-02-12
-> **마지막 업데이트**: 2026-02-12
-> **진행률**: 2/5 Steps 완료 (40%)
+> **마지막 업데이트**: 2026-02-14
+> **진행률**: 4/5 Steps 완료 (80%)
 > **모델**: Sonnet (구현), Opus (계획)
 > **전제 조건**: 1-1 인증, 1-2 기출업로드, 1-3 학교관리 완료
 
@@ -178,16 +178,27 @@ async function checkAdminRole(): Promise<{ error?: string; role?: string }>
 
 ---
 
-### Step 3: 페이지 + UI 컴포넌트
+### Step 3: 페이지 + UI 컴포넌트 ✅
+
+**상태**: ✅ 완료 (2026-02-13)
+
+**완료 요약**:
+- ✅ `src/app/(dashboard)/admin/academy/page.tsx` — Server Component (역할 기반 분기)
+- ✅ `src/app/(dashboard)/admin/academy/_components/academy-info-card.tsx` — 읽기 전용 카드 (teacher용)
+- ✅ `src/app/(dashboard)/admin/academy/_components/academy-form.tsx` — 수정 폼 (admin용)
+- ✅ Sequential Thinking MCP 7단계 분석으로 계획 수립
+- ✅ ui-markup-specialist + nextjs-supabase-expert 병렬 에이전트 활용
+- ✅ 사용자 삭제 후 재구현 (academy-form.tsx, 빈칸 채우기 방식) 학습 완료
+- ✅ 빌드 성공 확인
 
 **파일:**
 
 ```
 src/app/(dashboard)/admin/academy/
-├── page.tsx                           # Server Component (데이터 조회)
+├── page.tsx                           # Server Component (데이터 조회) [완료]
 └── _components/
-    ├── academy-info-card.tsx           # 학원 정보 카드 (읽기 전용)
-    └── academy-form.tsx               # 수정 폼 (Client Component)
+    ├── academy-info-card.tsx           # 학원 정보 카드 (읽기 전용) [완료]
+    └── academy-form.tsx               # 수정 폼 (Client Component) [완료]
 ```
 
 #### page.tsx (Server Component)
@@ -212,29 +223,27 @@ src/app/(dashboard)/admin/academy/
 
 ---
 
-### Step 4: 사이드바 메뉴 연결
+### Step 4: 사이드바 메뉴 연결 ✅
 
-**파일:** `src/lib/constants/menu.ts`
+**상태**: ✅ 완료 (2026-02-14)
 
-**현재 상태:** MENU_ITEMS에 admin 관련 메뉴가 없음 (학교 관리도 미등록)
+**완료 요약**:
+- ✅ `src/lib/constants/menu.ts` — Building2, GraduationCap 아이콘 import 추가
+- ✅ MENU_ITEMS에 "학원 관리"(`/admin/academy`), "학교 관리"(`/admin/schools`) 2개 항목 추가
+- ✅ 옵션 A (단순 추가) 채택 — 역할별 필터링은 2-1 RBAC에서 처리
+- ✅ 사이드바 + 모바일 메뉴 자동 동기화 (SSOT 패턴)
+- ✅ `npm run build` + `npm run lint` 통과
 
-**변경 사항:**
-- `MENU_ITEMS`에 "관리" 섹션 추가 (학원 관리, 학교 관리 포함)
-- 또는 MenuItem에 `role` 필드 추가하여 역할별 필터링 준비
+**파일:**
+- `src/lib/constants/menu.ts` [완료]
 
-```typescript
-// 옵션 A: 단순 추가
-{ title: '학원 관리', href: '/admin/academy', icon: Building2 }
-{ title: '학교 관리', href: '/admin/schools', icon: GraduationCap }
-
-// 옵션 B: 역할 필드 추가 (확장성)
-interface MenuItem {
-  // ... 기존
-  roles?: string[]  // 빈 배열 = 전체 공개
-}
-```
-
-→ **옵션 A** 채택 (MVP 단순화). 역할별 필터링은 2-1 RBAC 시스템에서 처리
+**최종 메뉴 순서:**
+1. 대시보드 (`/`) — LayoutDashboard
+2. 기출문제 (`/past-exams`) — FileText
+3. 문제 생성 (`/generate`) — Sparkles
+4. 학원 관리 (`/admin/academy`) — Building2
+5. 학교 관리 (`/admin/schools`) — GraduationCap
+6. 설정 (`/settings`) — Settings
 
 ---
 
