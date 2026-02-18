@@ -42,9 +42,9 @@
 ### 모든 계획 작업
 1. Opus 아니면 `/model` 전환 권유
 2. /everything-claude-code:plan 에이전트를 로드 및 실행
-2. Sequential Thinking MCP 로드 및 실행
-3. `docs/plan/phase-{N}-step{N}-{N}-{description}.md`에 저장
-4. 학습 포인트 포함
+3. Sequential Thinking MCP 로드 및 실행
+4. `docs/plan/phase-{N}-step{N}-{N}-{description}.md`에 저장
+5. 학습 포인트 포함
 
 ### 모든 구현 작업
 1. Sonnet 사용

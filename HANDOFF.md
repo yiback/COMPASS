@@ -1,8 +1,7 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-16 (1-5 Step 2 완료, Step 3 대기 중 + **학습 리뷰 대기**)
+> **최종 업데이트**: 2026-02-18 (1-5 Step 2 학습 리뷰 완료, **Step 3 시작 대기**)
 > **대상**: 이 프로젝트를 이어받는 새로운 에이전트
-> **⚠️ 중요**: 다음 작업(Step 3) 시작 전에 **반드시 학습 리뷰 완료** 필요!
 
 ---
 
@@ -12,7 +11,7 @@
 
 - **비즈니스 모델**: B2B2C (학원 → 학생)
 - **핵심 가치**: 학교별 맞춤 시험 예측으로 학원의 경쟁력 강화
-- **현재 Phase**: 단계 1 진행 중 (1-1~1-4 완료, **1-5 Step 2 완료**)
+- **현재 Phase**: 단계 1 진행 중 (1-1~1-4 완료, **1-5 Step 2 완료 + 학습 리뷰 완료**)
 - **워크플로우**: 순차 실행 (스텝별로 하나씩 완료 후 다음 진행)
 - **사용자 학습 목표**: 코드 구현뿐 아니라 개념 이해가 핵심. 자동 구현 후 반드시 리뷰 세션 진행
 
@@ -35,59 +34,29 @@
 | 1-2 | 기출문제 업로드 [F005] (Storage 버킷 + 업로드 폼) | ✅ 완료 |
 | 1-3 | 학교 관리 CRUD [F008] (목록/생성/수정/삭제) | ✅ 완료 |
 | 1-4 | 학원 관리 CRUD [F007] (조회/수정, 초대코드) | ✅ 완료 |
-| **1-5** | **사용자 관리 CRUD [F009]** | **⏸️ Step 2 완료, 학습 리뷰 대기** |
+| **1-5** | **사용자 관리 CRUD [F009]** | **🚧 Step 2 완료, Step 3 대기** |
 | 1-6 | 기출문제 조회 [F006] | 미시작 |
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | 미시작 |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
-### 이번 세션에서 한 일 (2026-02-16)
+### 이번 세션에서 한 일 (2026-02-18)
 
-**✅ 완료 사항:**
+1. **Step 2 학습 리뷰 완료** ✅
+   - 이해도 체크 질문 4개 → 사용자 답변 → 피드백 제공
+   - **삭제 후 재구현(빈칸 채우기)** 완료 — 5개 빈칸 모두 채움, 28개 테스트 PASS
+   - 체화한 개념: Fail-fast 패턴, Defense in Depth, RBAC 매트릭스
 
-1. **단계 1-5 Step 2 상세 계획 수립** (`docs/plan/phase-1-step5-2-server-actions.md`)
-   - Sequential Thinking MCP 없이 진행 (상위 계획에서 이미 수행)
-   - 28개 테스트 케이스 설계
-   - RBAC 매트릭스, Defense in Depth 3중 방어 설계
-
-2. **TDD RED → GREEN 구현 완료**
-   - `src/lib/actions/__tests__/users.test.ts` — 28개 테스트 (모두 통과 ✅)
-   - `src/lib/actions/users.ts` — 3개 Server Actions + 2개 헬퍼
-     - `getUserList()`: Supabase `or()` 필터 활용 (프로젝트 최초)
-     - `changeUserRole()`: RBAC 매트릭스 10단계 검증
-     - `toggleUserActive()`: 자기 수정 방지 + system_admin 보호
-   - **전체 회귀 테스트**: 300개 통과 (기존 272개 + 신규 28개)
-   - **린트**: 에러 0개
-
-**⚠️ 미완료 사항 (CRITICAL):**
-
-3. **학습 리뷰 세션 생략됨** 🚨
-   - 사용자가 "학습부분이 빠져있잖아" 지적
-   - CLAUDE.md 필수 플로우: 구현 후 → 🔴 핵심 개념 리뷰 → 🤔 이해도 체크 → 직접 구현 추천
-   - **현재 상태**: 개념 리뷰 제시 완료, 이해도 체크 질문 제시 완료, **사용자 답변 대기 중**
-
-### 1-5 Step 2 학습 포인트 (🔴 CRITICAL)
-
-사용자에게 이해도 체크 질문 4개 제시 완료. 답변 대기 중:
-
-**Q1. Defense in Depth**
-만약 Zod 스키마에서 `system_admin`을 차단하지 않았다면, Server Action의 어느 단계에서 막힐까요?
-
-**Q2. RBAC 매트릭스**
-`admin`이 다른 `admin`의 역할을 `teacher`로 변경하려고 시도하면 어느 검증에서 막히나요? 그 이유는?
-
-**Q3. RLS 위임**
-만약 RLS 정책 없이 Server Action에서만 `academy_id`를 비교한다면, 어떤 보안 허점이 생길까요?
-
-**Q4. 자기 수정 방지**
-자기 수정 차단을 대상 조회 **이전**에 수행하는 이유는 무엇일까요?
+2. **문서 업데이트 + 커밋**
+   - ROADMAP.md, docs/plan/ 진행 상황 업데이트
+   - 4개 분할 커밋 생성 + push 완료
 
 ### 1-5 구현 Steps (5단계)
 
 | Step | 내용 | 학습 등급 | 상태 |
 |------|------|----------|------|
 | 1 | Zod 검증 스키마 (TDD) | 🟢 ROUTINE | ✅ 완료 (Step 2에 통합) |
-| **2** | **Server Actions (TDD) — 역할 변경 핵심** | **🔴 CRITICAL** | **✅ 구현 완료, 학습 리뷰 대기** |
-| 3 | DataTable + 목록 페이지 UI | 🟡 RECOMMENDED | 미시작 |
+| 2 | Server Actions (TDD) — 역할 변경 핵심 | 🔴 CRITICAL | ✅ 구현 + 학습 리뷰 완료 |
+| **3** | **DataTable + 목록 페이지 UI** | **🟡 RECOMMENDED** | **⏳ 다음 작업** |
 | 4 | 역할 변경 Dialog + 상세 Sheet | 🟡 RECOMMENDED | 미시작 |
 | 5 | 메뉴 + 빌드 검증 + 학습 리뷰 | - | 미시작 |
 
@@ -101,56 +70,43 @@
 - **Self-referencing ID 패턴**: academy_id를 파라미터가 아닌 profile에서 추출 → URL 조작 방지
 - **Server Component에서 역할 분기**: DevTools 우회 방지, 불필요한 코드 클라이언트 전송 방지
 - **TDD RED→GREEN→REFACTOR** 철저 준수
-- **UUID v4 형식 엄수** (Step 2): `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` (4는 버전, y는 8-b)
-- **Supabase `or()` 필터** (Step 2): `query.or('name.ilike.%검색%,email.ilike.%검색%')` — 복수 컬럼 동시 검색
+- **UUID v4 형식 엄수**: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` (4는 버전, y는 8-b)
+- **Supabase `or()` 필터**: `query.or('name.ilike.%검색%,email.ilike.%검색%')` — 복수 컬럼 동시 검색
 
 ### 학습 방법
 - **삭제 후 재구현 (빈칸 채우기 방식)**: 전체 삭제가 아닌 핵심 로직만 빈칸 → 구조는 보면서 직접 작성
 - **학습 리뷰 MANDATORY**: 구현 후 반드시 개념 리뷰 → 이해도 체크 → 직접 구현 추천 순서
 - **사용자 수준에 맞춘 설명**: JavaScript 기초(`const`, `await`)부터 설명 필요. 간결하게.
+- **오타도 학습 기회**: `arror` → `error`, `alert` → `error` 등 키 이름 실수가 타입 안전성의 중요성 체감에 도움
 
 ### 도구 활용
 - **Sequential Thinking MCP**: 계획 수립 시 반드시 사용. `select:mcp__sequential-thinking__sequentialthinking`
 - **병렬 에이전트 실행**: ui-markup-specialist (마크업) + nextjs-supabase-expert (로직) 동시 실행
 - **모델 전략**: Opus (계획/설계), Sonnet (구현/코딩)
-- **TDD 직접 구현** (Step 2): Task 에이전트 없이 필립이 직접 RED→GREEN 진행 → 사용자 요청에 부합
+- **TDD 직접 구현**: Task 에이전트 없이 필립이 직접 RED→GREEN 진행 → 사용자 요청에 부합
 
 ---
 
 ## 4. What Didn't Work (실패/주의사항)
 
-### 🚨 학습 리뷰 생략 (2026-02-16 — 이번 세션)
-- **문제**: Step 2 구현 완료 후 바로 Task #3(검증)으로 넘어가려 함. 사용자가 "필립 학습부분이 빠져있잖아" 지적
-- **원인**: 구현 완료 = 작업 끝으로 착각. CLAUDE.md "구현 후 학습 플로우 (필수, 생략 불가)" 무시
-- **올바른 흐름**: 구현 완료 → 🔴 핵심 개념 리뷰 → 🤔 이해도 체크 → (답변 후) 직접 구현 추천
-- **교훈**: **구현 완료 ≠ 작업 완료**. 학습 리뷰는 선택이 아닌 **MANDATORY**
+### 학습 리뷰 생략 (이전 세션)
+- **문제**: Step 2 구현 완료 후 학습 리뷰 없이 다음 단계로 넘어가려 함
+- **교훈**: **구현 완료 ≠ 작업 완료**. 학습 리뷰는 MANDATORY
 
-### Task 에이전트 vs 직접 구현 혼동 (2026-02-16)
-- **문제**: TDD 구현 시작 시 Task 에이전트(nextjs-supabase-expert)를 먼저 실행하려 함
-- **사용자 요청**: "2 (제가 직접 구현)"
+### Task 에이전트 vs 직접 구현 혼동
 - **교훈**: 사용자가 "직접 구현"을 원하면 Task 에이전트 없이 필립이 직접 수행
 
 ### 계획 문서 누락 (이전 세션)
-- Step 4 구현 시 계획 문서를 생성하지 않음 → 사용자 지적
 - **교훈**: 아무리 단순한 작업이라도 계획 문서를 먼저 생성한 후 구현
 
 ### Sequential Thinking MCP 누락 (이전 세션)
-- 계획 수립 시 Sequential Thinking MCP를 사용하지 않고 바로 진행하려 함
-- **교훈**: 계획 수립 시 반드시 Sequential Thinking MCP 활용. CLAUDE.md 규칙 엄수
+- **교훈**: 계획 수립 시 반드시 Sequential Thinking MCP 활용
 
-### 병렬 에이전트 파일 충돌 (이전 세션)
-- 두 에이전트가 동일 파일(academy-info-card.tsx)을 각각 생성 → 덮어쓰기
+### 병렬 에이전트 파일 충돌
 - **교훈**: 병렬 에이전트에 동일 파일 할당 금지
 
 ### 삭제 후 재구현 — "통째로 삭제" 방식 실패
-- 파일 전체 삭제 후 처음부터 작성 → 사용자 막막
-- **해결**: "빈칸 채우기" 방식으로 전환
-
-### UUID 형식 주의 (Step 2 — 해결됨)
-- **문제**: 테스트에서 `'target-uuid'`, `'11111111-1111-1111-1111-111111111111'` 사용 → Zod UUID 검증 실패
-- **해결**: UUID v4 형식 엄수 (`xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`)
-  - `11111111-1111-4111-8111-111111111111` (4는 버전, y는 8-b 중 하나)
-  - `22222222-2222-4222-8222-222222222222`
+- **해결**: "빈칸 채우기" 방식으로 전환 (구조 유지, 핵심 로직만 빈칸)
 
 ### Supabase placeholder 타입 문제 (진행 중)
 - `as any` 캐스팅 + `eslint-disable` 주석으로 우회 중
@@ -165,27 +121,33 @@
 
 ## 5. Next Steps (다음 단계)
 
-### ⚠️ 즉시 해야 할 일: Step 2 학습 리뷰 완료 (MANDATORY)
+### 즉시: 1-5 Step 3 — DataTable + 목록 페이지 UI
 
-**⏸️ Step 3 시작 전에 반드시 수행:**
+**계획 수립 필요** (Opus + Sequential Thinking MCP):
+- `docs/plan/phase-1-step5-user-crud.md` Step 3 섹션 참조
 
-1. **사용자 답변 확인** — 이해도 체크 질문 4개 (섹션 2 참조)
-2. **이해도에 따른 분기**:
-   - ✅ 완벽 이해 → Step 3 진행
-   - ⚠️ 일부 불확실 → 추가 설명 후 Step 3 진행
-   - 🔴 개념 체화 필요 → 삭제 후 재구현 추천 (CRITICAL이므로)
+**구현 대상**:
+```
+src/app/(dashboard)/admin/users/
+├── page.tsx                         # Server Component (데이터 조회)
+└── _components/
+    ├── user-columns.tsx             # DataTable 컬럼 정의
+    └── users-toolbar.tsx            # 필터/검색 툴바
+```
 
-### 이후 순차 진행: 1-5 Step 3~5
+**핵심 포인트**:
+- `searchParams` 파싱 (Next.js 16 `Promise` 패턴)
+- `getUserList(filters)` Server Action 연동
+- 역할 Badge (student=회색, teacher=파랑, admin=보라)
+- debounce 검색 + router.push로 searchParams 업데이트
+- 1-3 학교 관리 DataTable 패턴 재사용
 
-3. **Step 3**: DataTable + 페이지 (`src/app/(dashboard)/admin/users/`)
-4. **Step 4**: 역할 변경 Dialog + 상세 Sheet
-5. **Step 5**: 사이드바 메뉴 + 빌드 검증 + 학습 리뷰
+### 이후: 1-5 Step 4~5
 
-**상세 계획**:
-- `docs/plan/phase-1-step5-user-crud.md` (전체 5단계)
-- `docs/plan/phase-1-step5-2-server-actions.md` (Step 2 상세)
+- **Step 4**: 역할 변경 AlertDialog + 사용자 상세 Sheet
+- **Step 5**: 사이드바 메뉴 + 빌드 검증 + 학습 리뷰
 
-### 1-5 완료 후 순차 진행
+### 1-5 완료 후
 
 - 1-6: 기출문제 조회 [F006] — DataTable + 검색/필터
 - 1-7: 기출 기반 AI 문제 생성 [F011] — `createAIProvider()` 연동
@@ -206,7 +168,7 @@
 | 계획 문서 → docs/plan/ | 모든 계획은 마크다운으로 문서화 후 구현 |
 | 학습 리뷰 MANDATORY | 구현 후 반드시 개념 리뷰 + 이해도 체크 + 직접 구현 추천 |
 | useTransition (useActionState 미사용) | React Hook Form 통합 용이, 직접 결과 핸들링 |
-| **1-5: 일반 클라이언트 사용 (admin 클라이언트 미사용)** | RLS 2중 방어 유지, service role은 RLS 우회 → 코드 버그 시 위험 |
+| 1-5: 일반 클라이언트 사용 (admin 클라이언트 미사용) | RLS 2중 방어 유지, service role은 RLS 우회 → 코드 버그 시 위험 |
 
 ---
 
@@ -219,24 +181,23 @@ npm run lint           # ESLint
 npm run test:run       # Vitest 단일 실행
 
 # 단일 테스트 파일 실행
-npx vitest run src/lib/actions/__tests__/academies.test.ts
+npx vitest run src/lib/actions/__tests__/users.test.ts
 ```
 
 ---
 
 ## 8. 핵심 참조 문서 (우선순위 순)
 
-1. `CLAUDE.md` — 프로젝트 개발 지침 (역할, 원칙, 아키텍처, **학습 플로우**)
-   - **⚠️ 필독**: "구현 후 학습 플로우 (필수, 생략 불가)" 섹션
+1. `CLAUDE.md` — 프로젝트 개발 지침 (역할, 원칙, **학습 플로우**)
 2. `ROADMAP.md` — 순차 스텝별 개발 로드맵
 3. **`docs/plan/phase-1-step5-user-crud.md`** — **1-5 전체 계획 (5단계)**
-4. **`docs/plan/phase-1-step5-2-server-actions.md`** — **Step 2 상세 계획 (완료)**
+4. `docs/plan/phase-1-step5-2-server-actions.md` — Step 2 상세 계획 (완료)
 5. `docs/plan/phase-1-step5-1-zod-schemas.md` — Step 1 상세 계획 (완료)
-6. `docs/plan/phase-1-step4-academy-crud.md` — 1-4 전체 5단계 계획 (참고 패턴)
+6. `docs/plan/phase-1-step4-academy-crud.md` — 1-4 전체 계획 (참고 패턴)
 7. `docs/design/시스템아키텍처.md` — 아키텍처, DB 스키마, 데이터 흐름
 8. `docs/prd/PRD-v0.1-detailed.md` — 기능 명세 및 페이지별 상세
 
-### Step 2 핵심 구현 파일
+### 1-5 핵심 구현 파일 (완료)
 
 - `src/lib/actions/users.ts` — 3개 Server Actions + 2개 헬퍼 (300줄)
 - `src/lib/actions/__tests__/users.test.ts` — 28개 테스트 (626줄)

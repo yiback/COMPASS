@@ -252,39 +252,23 @@ async function checkAdminRole(): Promise<{
 
 ---
 
-### Step 3: DataTable + 목록 페이지 UI
+### Step 3: DataTable + 목록 페이지 UI ✅
+
+> **완료일**: 2026-02-18
+> **검증**: npm run build 성공, npm run lint 에러 0개, npx vitest run 300개 통과
+> **상세 계획**: `docs/plan/phase-1-step5-3-datatable-ui.md`
 
 **파일:**
-```
-src/app/(dashboard)/admin/users/
-├── page.tsx                         # Server Component (데이터 조회)
-└── _components/
-    ├── user-columns.tsx             # DataTable 컬럼 정의
-    └── users-toolbar.tsx            # 필터/검색 툴바
-```
+- ✅ `src/app/(dashboard)/admin/users/page.tsx` (~75줄)
+- ✅ `src/app/(dashboard)/admin/users/_components/user-columns.tsx` (~140줄)
+- ✅ `src/app/(dashboard)/admin/users/_components/users-toolbar.tsx` (~85줄)
 
-**page.tsx (Server Component):**
-- `searchParams` 파싱 (Next.js 16 `Promise` 패턴)
-- `getUserList(filters)` 호출
-- 현재 사용자 role 확인 (admin이면 액션 버튼 표시)
-- 에러 상태 처리
-
-**user-columns.tsx:**
-
-| 컬럼 | 내용 | 비고 |
-|------|------|------|
-| 이름 | name | 정렬 가능 |
-| 이메일 | email | 정렬 가능 |
-| 역할 | role | Badge 컴포넌트 (student=회색, teacher=파랑, admin=보라) |
-| 상태 | is_active | 활성/비활성 Badge |
-| 가입일 | created_at | ko-KR 포맷 |
-| 액션 | 역할 변경, 비활성화 | DropdownMenu (admin만 표시) |
-
-**users-toolbar.tsx:**
-- 이름/이메일 검색 (Input + debounce)
-- 역할 필터 (Select: 전체/학생/교사/관리자)
-- 활성 상태 필터 (Select: 전체/활성/비활성)
-- router.push로 searchParams 업데이트
+**구현 요점:**
+- `createUserColumns(callerRole, callerId)` 팩토리 함수 — 학교관리(상수배열)와 다른 패턴
+- 역할별 Badge (student=secondary, teacher=default, admin=outline, system_admin=destructive)
+- 검색 debounce 300ms + 역할/상태 필터 2개 (URL searchParams 기반)
+- admin/system_admin만 액션 컬럼, 자기 자신+system_admin 대상 비활성화
+- 역할 변경은 placeholder (Step 4에서 AlertDialog 구현)
 
 ---
 

@@ -21,7 +21,7 @@ allowed-tools: ['Read(docs/ROADMAP.md:*)', 'Edit(docs/ROADMAP.md:*)', 'Read(docs
 4. Phase 진행 상황 업데이트
 5. 문서 버전 및 최종 업데이트 날짜 갱신
 6. 진행 상황(X/12 Tasks 완료) 업데이트
-7. **`docs/plan/` 해당 Phase 문서 업데이트** (Step 상태, 진행률, 완료 요약)
+7. **`docs/plan/` 해당 Phase 문서 업데이트** (Step 상태, 진행률, 완료 요약), 상위 계획문서 업데이트
 
 ## 업데이트 규칙
 
