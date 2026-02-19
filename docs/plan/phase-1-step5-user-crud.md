@@ -303,18 +303,52 @@ src/app/(dashboard)/admin/users/_components/
 
 ### Step 5: 사이드바 메뉴 + 빌드 검증 + 학습 리뷰
 
-**Phase A: 사이드바 메뉴 추가**
-- `src/lib/constants/menu.ts`에 "사용자 관리" (`/admin/users`) 추가
-- 아이콘: `Users` (lucide-react)
-- 위치: 학원 관리 아래
+> **상태**: ⏳ 다음 작업
+> **난이도**: LOW (메뉴 1항목 추가 + 검증)
 
-**Phase B: 빌드 검증**
-- `npm run test:run` → 전체 테스트 통과
-- `npm run lint` → 에러 0개
-- `npm run build` → 빌드 성공
+#### Phase A: 사이드바 메뉴 추가
 
-**Phase C: 학습 리뷰 (MANDATORY)**
-- 핵심 개념 리뷰 → 이해도 체크 → 직접 구현 추천
+**수정 파일**: `src/lib/constants/menu.ts` (1곳만)
+
+변경 내용:
+1. import에 `Users` 아이콘 추가 (lucide-react)
+2. MENU_ITEMS 배열에서 "학원 관리"(index 3) 다음, "학교 관리"(index 4) 앞에 삽입:
+
+```typescript
+{
+  title: '사용자 관리',
+  href: '/admin/users',
+  icon: Users,
+  description: '사용자 역할 관리 및 조회',
+},
+```
+
+**사이드바 변경 없음**: `dashboard-sidebar.tsx`는 `MENU_ITEMS.map()`으로 자동 렌더링
+
+#### Phase B: 빌드 검증
+
+```bash
+npm run test:run   # 전체 테스트 통과 확인 (300개+)
+npm run lint       # 에러 0개 확인
+npm run build      # 빌드 성공 확인
+```
+
+검증 포인트:
+- 사이드바에 "사용자 관리" 메뉴 표시 확인
+- 클릭 시 `/admin/users` 페이지 이동 확인
+- 전체 테스트 회귀 없음
+
+#### Phase C: 학습 리뷰 — 1-5 전체 회고 (MANDATORY)
+
+1-5에서 배운 핵심 개념:
+- **Defense in Depth** (3중 방어): Server Action + Zod strip + RLS
+- **RBAC 매트릭스**: 역할별 권한 제한 설계 + 권한 상승 방어
+- **DataTable 패턴**: createUserColumns 팩토리, URL searchParams 기반 필터링
+- **AlertDialog vs Dialog**: 파괴적 작업의 UX 패턴 (Escape 차단)
+- **Sheet**: 페이지 이동 없는 상세 조회
+- **Controlled Dialog**: DropdownMenu 외부 Fragment 배치 (Radix 포커스 충돌 방지)
+
+이해도 질문 → 학습 등급 판단 → MEMORY.md 업데이트
 
 ---
 

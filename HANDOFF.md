@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-19 (1-5 Step 4 완료, **Step 5 시작 대기**)
+> **최종 업데이트**: 2026-02-19 (1-5 Step 4 완료 + 커밋/push 완료, **Step 5 시작 대기**)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -46,7 +46,8 @@
 1. Step 4 역할 변경 AlertDialog + 사용자 상세 Sheet 구현 — 빌드 성공, 300개 테스트 회귀 없음
 2. 학습 리뷰: AlertDialog vs Dialog, Controlled Dialog, Sheet 패턴, UI 필터링 ≠ 보안
 3. 빈칸 채우기 직접 구현 완료 (role-change-dialog.tsx) — await 누락, 템플릿 리터럴, JSX 표현식 버그 직접 수정
-4. 문서 업데이트 (ROADMAP, HANDOFF, plan)
+4. 문서 업데이트 (ROADMAP, HANDOFF, plan) + `/docs:update-roadmap` 커맨드 스텝별 계획 문서 탐색 개선
+5. 3개 커밋 + push 완료 (`b0715d9`, `9ac00a8`, `b2da290`)
 
 ---
 
@@ -67,8 +68,9 @@ npm run lint      # 에러 0개
 npm run build     # 빌드 성공
 ```
 
+**Phase C: 최종 학습 리뷰** (1-5 전체 회고)
+
 ### 이후
-- Step 5: 사이드바 메뉴 (`/admin/users`) + 빌드 검증 + 최종 학습 리뷰
 - 1-6: 기출문제 조회 → 1-7: AI 문제 생성 → 1-8: 문제 저장
 
 ---
@@ -82,11 +84,13 @@ npm run build     # 빌드 성공
 - **Server Component에서 역할 분기**: DevTools 우회 방지, 번들 크기 절감
 - **createUserColumns 팩토리 함수**: 호출자 권한에 따라 다른 컬럼 배열 반환
 - **URL searchParams 기반 상태 관리**: 북마크/공유/뒤로가기 자연 지원
+- **Controlled AlertDialog**: DropdownMenu 외부 Fragment에 배치 → Radix 포커스 충돌 방지
 - **TDD RED→GREEN→REFACTOR** 철저 준수
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
 - **사용자 수준**: JavaScript 기초(`const`, `await`)부터 설명 필요. 간결하게
+- **에이전트 커맨드 준수**: `/plan`, `/tdd` 등 명시된 경우 반드시 해당 서브에이전트 실행
 
 ### 도구 활용
 - **병렬 에이전트**: ui-markup-specialist + nextjs-supabase-expert 동시 실행
@@ -111,5 +115,7 @@ npm run build     # 빌드 성공
 - `src/lib/actions/__tests__/users.test.ts` — 28개 테스트 (626줄)
 - `src/lib/validations/users.ts` — Zod 스키마 (47줄)
 - `src/app/(dashboard)/admin/users/page.tsx` — 목록 페이지 (75줄)
-- `src/app/(dashboard)/admin/users/_components/user-columns.tsx` — 컬럼 정의 (140줄)
+- `src/app/(dashboard)/admin/users/_components/user-columns.tsx` — 컬럼 정의 (~170줄)
 - `src/app/(dashboard)/admin/users/_components/users-toolbar.tsx` — 필터 툴바 (85줄)
+- `src/app/(dashboard)/admin/users/_components/role-change-dialog.tsx` — 역할 변경 AlertDialog (~90줄)
+- `src/app/(dashboard)/admin/users/_components/user-detail-sheet.tsx` — 사용자 상세 Sheet (~130줄)
