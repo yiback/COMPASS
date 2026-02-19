@@ -1,23 +1,118 @@
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { DataTable, DataTableServerPagination } from '@/components/data-table'
+import { Button } from '@/components/ui/button'
+import { getPastExamList } from '@/lib/actions/past-exams'
+import type { PastExamListItem } from '@/lib/actions/past-exams'
+import { createClient } from '@/lib/supabase/server'
+import { pastExamColumns } from './_components/past-exam-columns'
+import { PastExamsToolbar } from './_components/past-exams-toolbar'
+
+interface PastExamsPageProps {
+  searchParams: Promise<{
+    school?: string
+    subject?: string
+    grade?: string
+    examType?: string
+    year?: string
+    semester?: string
+    page?: string
+  }>
+}
+
 /**
- * 기출문제 페이지
- * TODO: Phase 0-5에서 구현 예정
+ * 기출문제 목록 페이지
+ *
+ * Server Component: 현재 사용자 역할 확인 + 데이터 조회 + DataTable 렌더링
+ * 교사/관리자만 업로드 버튼 표시 (Server에서 역할 결정 → DevTools 우회 방지)
  */
-export default function PastExamsPage() {
+export default async function PastExamsPage({
+  searchParams,
+}: PastExamsPageProps) {
+  const params = await searchParams
+
+  // 1. 현재 사용자 역할 조회 (Server Component에서 Supabase 직접 접근 — RLS 적용)
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let callerRole = 'student'
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile) {
+      callerRole = (profile as { role: string }).role
+    }
+  }
+
+  // 2. 기출문제 목록 조회
+  const result = await getPastExamList({
+    school: params.school,
+    grade: params.grade,
+    subject: params.subject,
+    examType: params.examType ?? 'all',
+    year: params.year,
+    semester: params.semester ?? 'all',
+    page: params.page ?? '1',
+  })
+
+  if (result.error) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">기출문제</h1>
+        </div>
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive">
+          에러: {result.error}
+        </div>
+      </div>
+    )
+  }
+
+  const exams = (result.data ?? []) as PastExamListItem[]
+  const total = result.meta?.total ?? 0
+  const isTeacherOrAbove = ['teacher', 'admin', 'system_admin'].includes(
+    callerRole
+  )
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-card p-6">
-        <h1 className="text-3xl font-bold">기출문제</h1>
-        <p className="mt-2 text-muted-foreground">
-          학교별 기출문제를 관리하고 분석합니다.
-        </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">기출문제</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            총 {total}건의 기출문제
+          </p>
+        </div>
+        {isTeacherOrAbove && (
+          <Link href="/past-exams/upload">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              기출문제 업로드
+            </Button>
+          </Link>
+        )}
       </div>
 
-      {/* TODO: 기출문제 목록 */}
-      <div className="rounded-lg border bg-card p-6">
-        <p className="text-sm text-muted-foreground">
-          기출문제 관리 기능은 Phase 0-5에서 구현될 예정입니다.
-        </p>
-      </div>
+      <DataTable
+        columns={pastExamColumns}
+        data={exams}
+        toolbar={<PastExamsToolbar />}
+        noResultsMessage="등록된 기출문제가 없습니다."
+        showPagination={false}
+      />
+
+      <DataTableServerPagination
+        total={total}
+        page={result.meta?.page ?? 1}
+        pageSize={result.meta?.pageSize ?? 10}
+      />
     </div>
   )
 }

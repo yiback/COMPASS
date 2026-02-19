@@ -359,45 +359,66 @@ export async function getPastExamDetail(id: string): Promise<PastExamDetailResul
   const supabase = await createClient()
 
   try {
-    // 2. 단건 조회 (FK JOIN + extracted_content 포함)
-    const { data: row, error: dbError } = (await supabase
-      .from('past_exam_questions')
-      .select(
-        `
-          id, year, semester, exam_type, grade, subject,
-          source_image_url, extracted_content, extraction_status, created_at,
-          schools!inner ( name, school_type ),
-          profiles!uploaded_by ( name )
-        `
-      )
-      .eq('id', id)
-      .single()) as {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성
-      data: any | null
-      error: unknown
-    }
-
-    if (dbError || !row) {
-      return { error: '기출문제를 찾을 수 없습니다.' }
-    }
-
-    // 3. Signed URL 생성 (source_image_url 있을 때만)
-    let signedImageUrl: string | null = null
-    if (row.source_image_url) {
-      const { data: signedData } = await supabase.storage
-        .from('past-exams')
-        .createSignedUrl(row.source_image_url, 60)
-      signedImageUrl = signedData?.signedUrl ?? null
-    }
-
-    return {
-      data: {
-        ...toPastExamListItem(row),
-        signedImageUrl,
-        extractedContent: row.extracted_content ?? null,
-      },
-    }
-  } catch {
-    return { error: '기출문제 상세 조회에 실패했습니다.' }
-  }
+    // =========================================================================
+    // 🔴 빈칸 #1: FK JOIN 단건 조회
+    // 힌트:
+    //   - 테이블: past_exam_questions
+    //   - select 컬럼: id, year, semester, exam_type, grade, subject,
+    //                  source_image_url, extracted_content, extraction_status, created_at
+    //   - FK JOIN 두 개:
+    //       a. schools → INNER JOIN, name + school_type 가져오기
+    //       b. profiles → uploaded_by FK로, name 가져오기
+    //   - .eq('id', id).single() 으로 단건 조회
+    //   - 결과를 as { data: any | null; error: unknown } 으로 캐스팅
+    // =========================================================================
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성
+        const { data: row, error: dbError } = ( await supabase
+          .from('past_exam_questions')
+          .select (
+            `
+              id, year, semester, exam_type, grade,  subject,
+              source_image_url, extracted_content, extraction_status, created_at,
+              schools!inner (name, school_type),
+              profiles!uploaded_by(name)
+            `
+          )
+          .eq('id', id)
+          .single()) as {
+            data: any | null
+            error: unknown
+          }
+        
+        
+        if (dbError || !row) {
+          return { error: '기출문제를 찾을 수 없습니다.' }
+        }
+        
+        // =========================================================================
+        // 🔴 빈칸 #2: Storage Signed URL 생성
+        // 힌트:
+        //   - source_image_url 이 있을 때만 생성 (없으면 null 유지)
+        //   - 버킷 이름: 'past-exams'
+        //   - 만료 시간: 60초
+        //   - supabase.storage.from(...).createSignedUrl(path, seconds)
+        //   - 결과: signedData?.signedUrl ?? null
+        // =========================================================================
+        let signedImageUrl: string | null = null
+        // TODO: source_image_url 있을 때 Signed URL 생성 로직 작성
+        if (row.source_image_url) {
+          const { data: signedData } = await supabase.storage
+            .from('past-exams')
+            .createSignedUrl(row.source_image_url, 60)
+          signedImageUrl = signedData?.signedUrl ?? null
+        }
+    
+        return {
+          data: {
+            ...toPastExamListItem(row),
+            signedImageUrl,
+            extractedContent: row.extracted_content ?? null,
+          },
+        }
+      } catch {
+        return { error: '기출문제 상세 조회에 실패했습니다.' }
+      }
 }
