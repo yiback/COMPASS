@@ -85,6 +85,11 @@
 - **업로드 vs 필터 스키마**: 업로드=필수+엄격, 필터=선택+관대 (`optional` = "없으면 전체")
 - **URL searchParams 필터 enum에 'all' 추가**: 문자열 타입으로 "전체" 상태 표현
 - **`z.coerce.number('')`**: `0` → `.min(1)` 실패 (Zod v4 안전 동작 — `z.preprocess` 불필요)
+- **`schools!inner`**: INNER JOIN — `!` 뒤 `inner`=JOIN방식, 컬럼명=FK구분자 (혼용 가능)
+- **`profiles!uploaded_by`**: FK 컬럼명 명시 — 같은 테이블로의 FK 2개 이상일 때 PostgREST 구분
+- **Signed URL 패턴**: 경로만 DB 저장, 상세 조회 시에만 `createSignedUrl(path, 60)` 생성
+- **sanitizeFilters**: Zod 파싱 전 빈 문자열(`''`) → `undefined` 변환, Action 내부에서 처리
+- **Mock 테스트 한계**: SQL 문자열 오타(`subjects`, `anme`)는 Mock이 잡지 못함 → E2E 필요
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -108,7 +113,7 @@
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
 | 4 | `docs/plan/phase-1-step6-past-exam-list.md` — 1-6 전체 계획 |
-| 5 | `docs/plan/phase-1-step6-1-filter-schema.md` — Step 1 완료 문서 |
+| 5 | `docs/plan/phase-1-step6-2-server-actions.md` — Step 2 완료 문서 |
 | 6 | `PRD.md` — 기능 명세 |
 | 7 | `supabase/migrations/` — DB 스키마·RLS 정책 |
 
@@ -117,10 +122,11 @@
 | 재사용 대상 | 출처 파일 |
 |------------|----------|
 | Server Action + 페이지네이션 | `src/lib/actions/users.ts` |
+| **기출문제 조회 액션 (완성)** | **`src/lib/actions/past-exams.ts`** — `getPastExamList`, `getPastExamDetail` |
 | Server Component + searchParams | `src/app/(dashboard)/admin/users/page.tsx` |
 | URL searchParams 필터 | `src/app/(dashboard)/admin/users/_components/users-toolbar.tsx` |
 | DataTable 컴포넌트 | `src/components/data-table/data-table.tsx` |
 | Sheet 상세 보기 | `src/app/(dashboard)/admin/users/_components/user-detail-sheet.tsx` |
 | Badge 상수 매핑 | `src/app/(dashboard)/admin/users/_components/user-columns.tsx` |
-| Zod 필터 패턴 | `src/lib/validations/past-exams.ts` (완성된 pastExamFilterSchema) |
-| 기출문제 업로드 액션 | `src/lib/actions/past-exams.ts` (기존 upload 로직) |
+| Zod 필터 스키마 (완성) | `src/lib/validations/past-exams.ts` — `pastExamFilterSchema` |
+| 조회 테스트 패턴 | `src/lib/actions/__tests__/past-exams-list.test.ts` |
