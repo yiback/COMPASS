@@ -36,7 +36,8 @@
 1. Step 4 역할 변경 AlertDialog + 사용자 상세 Sheet 구현 + 학습 리뷰
 2. Step 5 사이드바 메뉴 추가 + 빌드 검증 (300개 테스트, lint 에러 0, build 성공)
 3. 1-5 전체 학습 리뷰: Defense in Depth, RBAC, AlertDialog vs Dialog, Controlled Dialog
-4. 커밋 완료 (`f8f4048`, `6bd1706`)
+4. ROADMAP/HANDOFF/계획 파일 업데이트 (`/docs:update-roadmap`)
+5. 커밋 완료 (`f8f4048`, `6bd1706`, `3158082`) — origin 미push (3 commits ahead)
 
 ---
 
@@ -83,17 +84,19 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step5-user-crud.md` — 1-5 전체 계획 |
-| 5 | `docs/design/시스템아키텍처.md` — 아키텍처, DB 스키마 |
-| 6 | `PRD.md` — 기능 명세 |
+| 4 | `docs/design/시스템아키텍처.md` — 아키텍처, DB 스키마 |
+| 5 | `PRD.md` — 기능 명세 |
+| 6 | `supabase/migrations/` — DB 스키마·RLS 정책 |
 
-### 1-5 핵심 구현 파일
+### 1-6 참고용: 기존 DataTable 구현 패턴
+
+1-5에서 완성된 패턴을 1-6에서 재사용:
+- `src/lib/actions/users.ts` — Server Action + 페이지네이션 패턴 참고
+- `src/app/(dashboard)/admin/users/page.tsx` — Server Component + searchParams 패턴 참고
+- `src/app/(dashboard)/admin/schools/` — DataTable CRUD 완전한 예시 (생성/수정/삭제 포함)
+
+### 1-5 구현 파일 (참고)
 
 - `src/lib/actions/users.ts` — Server Actions (390줄)
-- `src/lib/actions/__tests__/users.test.ts` — 28개 테스트 (626줄)
-- `src/lib/validations/users.ts` — Zod 스키마 (47줄)
 - `src/app/(dashboard)/admin/users/page.tsx` — 목록 페이지 (75줄)
-- `src/app/(dashboard)/admin/users/_components/user-columns.tsx` — 컬럼 정의 (~170줄)
-- `src/app/(dashboard)/admin/users/_components/users-toolbar.tsx` — 필터 툴바 (85줄)
-- `src/app/(dashboard)/admin/users/_components/role-change-dialog.tsx` — 역할 변경 AlertDialog (~90줄)
-- `src/app/(dashboard)/admin/users/_components/user-detail-sheet.tsx` — 사용자 상세 Sheet (~130줄)
+- `src/app/(dashboard)/admin/users/_components/` — DataTable 컴포넌트 4종
