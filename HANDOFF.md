@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-19 (1-6 Step 1 완료, Step 2 계획 대기)
+> **최종 업데이트**: 2026-02-19 (1-6 Step 2 완료, Step 3 대기)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -28,47 +28,36 @@
 | 1-3 | 학교 관리 CRUD [F008] | ✅ 완료 |
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
-| **1-6** | **기출문제 조회 [F006]** | **🚧 Step 1 완료 (1/5), Step 2 대기** |
+| **1-6** | **기출문제 조회 [F006]** | **🚧 Step 2 완료 (2/5), Step 3 대기** |
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | 미시작 |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
 ### 현재 세션 (2026-02-19)
 
-1. 1-6 Step 1 구현: `pastExamFilterSchema` + `PastExamFilterInput` 추가
-2. 테스트 29개 전부 PASS (RED→GREEN→IMPROVE TDD)
-3. 빈칸 채우기 재구현 완료 (`'midterm'` 오타 + `z.coerce` 누락 직접 발견·수정)
-4. 계획 문서 업데이트: `phase-1-step6-1-filter-schema.md` 완료 반영
-5. 커밋 완료 (2개 커밋)
-6. **Step 2 계획 파일 미작성** — 다음 세션 시작 시 `/plan` 또는 계획 작성 먼저
+1. 1-6 Step 1 구현: `pastExamFilterSchema` + `PastExamFilterInput` 추가 (테스트 29개)
+2. 1-6 Step 2 구현: `getPastExamList` + `getPastExamDetail` TDD 완료 (테스트 18개)
+3. 빈칸 채우기: FK JOIN 쿼리 + Signed URL 직접 구현 (`subjects`→`subject`, `anme`→`name` 오타 스스로 발견)
+4. 전체 347개 테스트 PASS
+5. 커밋 완료 (총 4개 커밋)
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-6 Step 2 계획 작성 → 구현
+### 즉시: 1-6 Step 3 계획 작성 → 구현
 
-**계획 파일 생성 필요**: `docs/plan/phase-1-step6-2-server-actions.md`
+**계획 파일 생성 필요**: `docs/plan/phase-1-step6-3-datatable-ui.md`
 
 **구현할 내용** (기존 상위 계획 참조: `docs/plan/phase-1-step6-past-exam-list.md`):
-- `src/lib/actions/past-exams.ts` — `getPastExamList()`, `getPastExamDetail()` 추가
-- `src/lib/actions/__tests__/past-exams.test.ts` — 테스트 ~15개 추가
-- Supabase FK JOIN: `schools!inner`, `profiles!uploaded_by`
-- Signed URL 생성: `supabase.storage.from('past-exams').createSignedUrl(path, 60)`
-- **주의**: Server Action에서 searchParams 빈 문자열(`''`)을 `undefined`로 변환 처리 필요
+- `src/app/(dashboard)/admin/past-exams/` 페이지 신규 생성
+- DataTable 컬럼 정의 (`past-exam-columns.tsx`)
+- Toolbar 필터 컴포넌트 (`past-exams-toolbar.tsx`)
+- 상세 보기 Sheet (`past-exam-detail-sheet.tsx`)
+- **재사용**: `src/app/(dashboard)/admin/users/` 패턴 동일
 
-**핵심 쿼리 패턴**:
-```typescript
-supabase
-  .from('past_exam_questions')
-  .select(`
-    id, year, semester, exam_type, grade, subject,
-    source_image_url, extraction_status, created_at,
-    schools!inner ( name, school_type ),
-    profiles!uploaded_by ( name )
-  `, { count: 'exact' })
-```
-
-**재사용 패턴**: `src/lib/actions/users.ts` (페이지네이션, 필터 구조 동일)
+**참고 파일**:
+- `src/components/data-table/data-table.tsx`
+- `src/app/(dashboard)/admin/users/_components/`
 
 ### 이후 Step 3~5
 
