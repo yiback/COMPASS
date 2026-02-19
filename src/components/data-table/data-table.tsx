@@ -31,8 +31,8 @@ interface DataTableProps<TData, TValue> {
   noResultsMessage?: string
   /** 페이지네이션 표시 여부 */
   showPagination?: boolean
-  /** 테이블 상단 툴바 영역 */
-  toolbar?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode
+  /** 테이블 상단 툴바 영역 (ReactNode 또는 table 인스턴스를 받는 함수) */
+  toolbar?: React.ReactNode | ((table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode)
 }
 
 export function DataTable<TData, TValue>({
@@ -68,7 +68,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {toolbar?.(table)}
+      {typeof toolbar === 'function' ? toolbar(table) : toolbar}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

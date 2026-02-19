@@ -72,7 +72,7 @@ export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
       <DataTable
         columns={schoolColumns}
         data={schools}
-        toolbar={() => <SchoolsToolbar />}
+        toolbar={<SchoolsToolbar />}
         noResultsMessage="등록된 학교가 없습니다."
       />
     </div>

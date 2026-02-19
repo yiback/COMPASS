@@ -82,7 +82,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       <DataTable
         columns={columns}
         data={users}
-        toolbar={() => <UsersToolbar />}
+        toolbar={<UsersToolbar />}
         noResultsMessage="등록된 사용자가 없습니다."
       />
     </div>

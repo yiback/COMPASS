@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { DataTableColumnHeader } from '@/components/data-table/data-table-column-header'
 import { Badge } from '@/components/ui/badge'
@@ -11,22 +12,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, ShieldAlert, UserX, UserCheck } from 'lucide-react'
+import { MoreHorizontal, ShieldAlert, UserX, UserCheck, Eye } from 'lucide-react'
 import { toggleUserActive } from '@/lib/actions/users'
 import type { UserProfile } from '@/lib/actions/users'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { RoleChangeDialog } from './role-change-dialog'
+import { UserDetailSheet } from './user-detail-sheet'
 
-// ─── 상수 매핑 ──────────────────────────────────────────
+// ─── 상수 매핑 (export: user-detail-sheet.tsx 등에서 재사용) ──
 
-const ROLE_MAP: Record<string, string> = {
+export const ROLE_MAP: Record<string, string> = {
   student: '학생',
   teacher: '교사',
   admin: '관리자',
   system_admin: '시스템관리자',
 } as const
 
-const ROLE_BADGE_VARIANT: Record<
+export const ROLE_BADGE_VARIANT: Record<
   string,
   'secondary' | 'default' | 'outline' | 'destructive'
 > = {
@@ -36,7 +39,7 @@ const ROLE_BADGE_VARIANT: Record<
   system_admin: 'destructive',
 } as const
 
-const STATUS_BADGE: Record<
+export const STATUS_BADGE: Record<
   string,
   { label: string; variant: 'default' | 'secondary' }
 > = {
@@ -111,6 +114,10 @@ export function createUserColumns(
         const isSystemAdmin = user.role === 'system_admin'
         const isDisabled = isSelf || isSystemAdmin
 
+        // Dialog/Sheet 열림 상태 관리
+        const [roleDialogOpen, setRoleDialogOpen] = useState(false)
+        const [detailSheetOpen, setDetailSheetOpen] = useState(false)
+
         async function handleToggleActive() {
           const action = user.isActive ? '비활성화' : '활성화'
           if (!confirm(`${user.name}님을 ${action}하시겠습니까?`)) return
@@ -125,42 +132,68 @@ export function createUserColumns(
           }
         }
 
-        function handleRoleChange() {
-          toast.info('역할 변경 기능은 곧 추가됩니다.')
-        }
-
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" disabled={isDisabled}>
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">메뉴 열기</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleRoleChange}>
-                <ShieldAlert className="mr-2 h-4 w-4" />
-                역할 변경
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleToggleActive}
-                className={user.isActive ? 'text-destructive' : ''}
-              >
-                {user.isActive ? (
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only">메뉴 열기</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {/* 상세보기 — 모든 사용자 */}
+                <DropdownMenuItem onClick={() => setDetailSheetOpen(true)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  상세보기
+                </DropdownMenuItem>
+
+                {/* 역할 변경 / 비활성화 — 자기 자신 · system_admin 제외 */}
+                {!isDisabled && (
                   <>
-                    <UserX className="mr-2 h-4 w-4" />
-                    비활성화
-                  </>
-                ) : (
-                  <>
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    활성화
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setRoleDialogOpen(true)}>
+                      <ShieldAlert className="mr-2 h-4 w-4" />
+                      역할 변경
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleToggleActive}
+                      className={user.isActive ? 'text-destructive' : ''}
+                    >
+                      {user.isActive ? (
+                        <>
+                          <UserX className="mr-2 h-4 w-4" />
+                          비활성화
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="mr-2 h-4 w-4" />
+                          활성화
+                        </>
+                      )}
+                    </DropdownMenuItem>
                   </>
                 )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* AlertDialog/Sheet를 DropdownMenu 외부에 배치 — Radix 포커스 충돌 방지 */}
+            <RoleChangeDialog
+              open={roleDialogOpen}
+              onOpenChange={setRoleDialogOpen}
+              user={user}
+              callerRole={callerRole}
+            />
+            <UserDetailSheet
+              open={detailSheetOpen}
+              onOpenChange={setDetailSheetOpen}
+              user={user}
+              callerId={callerId}
+              callerRole={callerRole}
+              onRoleChangeClick={() => setRoleDialogOpen(true)}
+            />
+          </>
         )
       },
     })
