@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-19 (1-6 기출문제 조회 Step 1 계획 완료, **구현 대기**)
+> **최종 업데이트**: 2026-02-19 (1-6 Step 1 완료, Step 2 계획 대기)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -28,38 +28,52 @@
 | 1-3 | 학교 관리 CRUD [F008] | ✅ 완료 |
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
-| **1-6** | **기출문제 조회 [F006]** | **🔄 Step 1 계획 완료, 구현 대기** |
+| **1-6** | **기출문제 조회 [F006]** | **🚧 Step 1 완료 (1/5), Step 2 대기** |
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | 미시작 |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
 ### 현재 세션 (2026-02-19)
 
-1. 1-6 전체 계획 파일 저장: `docs/plan/phase-1-step6-past-exam-list.md`
-2. Step 1 상세 계획 파일 저장: `docs/plan/phase-1-step6-1-filter-schema.md`
-3. planner 에이전트로 기존 코드 분석 + 스키마 설계 + TDD 테스트 케이스 17개 정리
-4. 학습 리뷰 섹션 추가 (이해도 질문 3개, 🟡 재구현 권장)
-5. **아직 코드 작성 없음** — 사용자 승인 후 구현 시작
+1. 1-6 Step 1 구현: `pastExamFilterSchema` + `PastExamFilterInput` 추가
+2. 테스트 29개 전부 PASS (RED→GREEN→IMPROVE TDD)
+3. 빈칸 채우기 재구현 완료 (`'midterm'` 오타 + `z.coerce` 누락 직접 발견·수정)
+4. 계획 문서 업데이트: `phase-1-step6-1-filter-schema.md` 완료 반영
+5. 커밋 완료 (2개 커밋)
+6. **Step 2 계획 파일 미작성** — 다음 세션 시작 시 `/plan` 또는 계획 작성 먼저
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-6 Step 1 — Zod 필터 스키마 (TDD) 구현
+### 즉시: 1-6 Step 2 계획 작성 → 구현
 
-**계획 파일**: `docs/plan/phase-1-step6-1-filter-schema.md`
+**계획 파일 생성 필요**: `docs/plan/phase-1-step6-2-server-actions.md`
 
-**구현할 내용**:
-- `src/lib/validations/past-exams.ts`에 `pastExamFilterSchema` + `PastExamFilterInput` 추가 (~15행)
-- `src/lib/validations/__tests__/past-exams-filter.test.ts` 생성 (테스트 17개)
-- TDD 순서: RED(테스트) → GREEN(스키마) → IMPROVE(엣지 케이스)
+**구현할 내용** (기존 상위 계획 참조: `docs/plan/phase-1-step6-past-exam-list.md`):
+- `src/lib/actions/past-exams.ts` — `getPastExamList()`, `getPastExamDetail()` 추가
+- `src/lib/actions/__tests__/past-exams.test.ts` — 테스트 ~15개 추가
+- Supabase FK JOIN: `schools!inner`, `profiles!uploaded_by`
+- Signed URL 생성: `supabase.storage.from('past-exams').createSignedUrl(path, 60)`
+- **주의**: Server Action에서 searchParams 빈 문자열(`''`)을 `undefined`로 변환 처리 필요
 
-**핵심 리스크**: `z.coerce.number()` + `optional()`에서 빈 문자열(`''`)이 `0`으로 변환되는 문제 → `z.preprocess` 래핑 필요 여부를 TDD에서 확인
+**핵심 쿼리 패턴**:
+```typescript
+supabase
+  .from('past_exam_questions')
+  .select(`
+    id, year, semester, exam_type, grade, subject,
+    source_image_url, extraction_status, created_at,
+    schools!inner ( name, school_type ),
+    profiles!uploaded_by ( name )
+  `, { count: 'exact' })
+```
 
-### 이후 Step 2~5
+**재사용 패턴**: `src/lib/actions/users.ts` (페이지네이션, 필터 구조 동일)
+
+### 이후 Step 3~5
 
 | Step | 내용 | 계획 파일 |
 |------|------|-----------|
-| Step 2 | Server Actions (getPastExamList, getPastExamDetail) | 미작성 |
 | Step 3 | DataTable UI (columns, toolbar, detail-sheet) | 미작성 |
 | Step 4 | 서버사이드 페이지네이션 UI | 미작성 |
 | Step 5 | 빌드 검증 + 학습 리뷰 | 미작성 |
@@ -79,6 +93,9 @@
 - **URL searchParams 기반 상태 관리**: 북마크/공유/뒤로가기 자연 지원
 - **Controlled AlertDialog**: DropdownMenu 외부 Fragment에 배치 → Radix 포커스 충돌 방지
 - **TDD RED→GREEN→REFACTOR** 철저 준수
+- **업로드 vs 필터 스키마**: 업로드=필수+엄격, 필터=선택+관대 (`optional` = "없으면 전체")
+- **URL searchParams 필터 enum에 'all' 추가**: 문자열 타입으로 "전체" 상태 표현
+- **`z.coerce.number('')`**: `0` → `.min(1)` 실패 (Zod v4 안전 동작 — `z.preprocess` 불필요)
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -102,7 +119,7 @@
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
 | 4 | `docs/plan/phase-1-step6-past-exam-list.md` — 1-6 전체 계획 |
-| 5 | `docs/plan/phase-1-step6-1-filter-schema.md` — Step 1 상세 계획 |
+| 5 | `docs/plan/phase-1-step6-1-filter-schema.md` — Step 1 완료 문서 |
 | 6 | `PRD.md` — 기능 명세 |
 | 7 | `supabase/migrations/` — DB 스키마·RLS 정책 |
 
@@ -116,5 +133,5 @@
 | DataTable 컴포넌트 | `src/components/data-table/data-table.tsx` |
 | Sheet 상세 보기 | `src/app/(dashboard)/admin/users/_components/user-detail-sheet.tsx` |
 | Badge 상수 매핑 | `src/app/(dashboard)/admin/users/_components/user-columns.tsx` |
-| Zod 필터 패턴 | `src/lib/validations/users.ts` |
-| 기존 기출문제 스키마 | `src/lib/validations/past-exams.ts` |
+| Zod 필터 패턴 | `src/lib/validations/past-exams.ts` (완성된 pastExamFilterSchema) |
+| 기출문제 업로드 액션 | `src/lib/actions/past-exams.ts` (기존 upload 로직) |
