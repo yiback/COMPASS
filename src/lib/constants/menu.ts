@@ -3,6 +3,7 @@ import {
   FileText,
   Sparkles,
   Building2,
+  Users,
   GraduationCap,
   Settings,
   type LucideIcon,
@@ -43,6 +44,12 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/admin/academy',
     icon: Building2,
     description: '학원 정보 조회 및 수정',
+  },
+  {
+    title: '사용자 관리',
+    href: '/admin/users',
+    icon: Users,
+    description: '사용자 역할 관리 및 조회',
   },
   {
     title: '학교 관리',
