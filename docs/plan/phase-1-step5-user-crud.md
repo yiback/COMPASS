@@ -1,7 +1,8 @@
 # 단계 1-5: 사용자 관리 CRUD [F009] 상세 계획
 
-> **상태**: ✅ 계획 승인 완료 (2026-02-15)
+> **상태**: 🚧 진행 중 (Step 4/5 완료)
 > **작성일**: 2026-02-15
+> **마지막 업데이트**: 2026-02-19
 > **모델**: Opus 4.6 (계획), Sonnet 4.5 (구현)
 > **전제 조건**: 1-1 인증, 1-3 학교 관리, 1-4 학원 관리 완료
 > **Sequential Thinking**: 9단계 분석 완료
@@ -272,13 +273,17 @@ async function checkAdminRole(): Promise<{
 
 ---
 
-### Step 4: 역할 변경/비활성화 UI + 상세 Sheet
+### Step 4: 역할 변경/비활성화 UI + 상세 Sheet ✅
+
+> **완료일**: 2026-02-19
+> **검증**: npm run build 성공, 300개 테스트 회귀 없음
+> **학습 리뷰**: 🟡 RECOMMENDED — AlertDialog vs Dialog, Controlled Dialog 패턴, Sheet 패턴, UI 필터링 ≠ 보안 학습 + 빈칸 채우기 직접 구현 완료
 
 **파일:**
 ```
 src/app/(dashboard)/admin/users/_components/
-├── role-change-dialog.tsx           # 역할 변경 AlertDialog
-└── user-detail-sheet.tsx            # 사용자 상세 Sheet
+├── role-change-dialog.tsx           # 역할 변경 AlertDialog ✅
+└── user-detail-sheet.tsx            # 사용자 상세 Sheet ✅
 ```
 
 **role-change-dialog.tsx:**
