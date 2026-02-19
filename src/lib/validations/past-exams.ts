@@ -82,6 +82,23 @@ export function validateFile(file: unknown): FileValidationResult {
   return { valid: true }
 }
 
+// ─── 기출문제 목록 필터 스키마 ───────────────────────────
+
+export const pastExamFilterSchema = z.object({
+  school: z.string().optional(),
+  grade: z.coerce.number().int().min(1).max(12).optional(),
+  subject: z.string().optional(),
+  examType: z
+    .enum(['midterm', 'final', 'mock', 'diagnostic', 'all'])
+    .optional()
+    .default('all'),
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+  semester: z.enum(['1', '2', 'all']).optional().default('all'),
+  page: z.coerce.number().int().min(1).optional().default(1),
+})
+
+export type PastExamFilterInput = z.infer<typeof pastExamFilterSchema>
+
 // ─── 파일 확장자 추출 ─────────────────────────────────────
 
 export function getFileExtension(filename: string): string {
