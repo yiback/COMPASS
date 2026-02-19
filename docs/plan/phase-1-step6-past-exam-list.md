@@ -1,6 +1,6 @@
 # 1-6 기출문제 조회 [F006] 구현 계획
 
-> **진행률**: 2/5 Steps 완료 (40%)
+> **진행률**: 4/5 Steps 완료 (80%)
 > **마지막 업데이트**: 2026-02-19
 > **상태**: 🚧 진행 중
 
@@ -8,8 +8,8 @@
 |------|------|------|
 | Step 1 | Zod 필터 스키마 (TDD) | ✅ 완료 |
 | Step 2 | Server Actions (getPastExamList, getPastExamDetail) | ✅ 완료 |
-| Step 3 | DataTable UI (columns, toolbar, detail-sheet) | ⏸️ 대기 |
-| Step 4 | 서버사이드 페이지네이션 UI | ⏸️ 대기 |
+| Step 3 | DataTable UI (columns, toolbar, detail-sheet) | ✅ 완료 |
+| Step 4 | 서버사이드 페이지네이션 UI | ✅ 완료 |
 | Step 5 | 빌드 검증 + 학습 리뷰 | ⏸️ 대기 |
 
 ---
@@ -64,11 +64,13 @@ export const pastExamFilterSchema = z.object({
 
 ---
 
-## Step 2: Server Actions (TDD)
+## Step 2: Server Actions (TDD) ✅ 완료 (2026-02-19)
 
 ### 수정 파일
-- `src/lib/actions/past-exams.ts` — `getPastExamList()`, `getPastExamDetail()` 추가
-- `src/lib/actions/__tests__/past-exams.test.ts` — 테스트 추가
+- `src/lib/actions/past-exams.ts` — `getPastExamList()`, `getPastExamDetail()` 추가 (미커밋 빈칸 채우기 상태)
+
+### 새로 생성
+- `src/lib/actions/__tests__/past-exams-list.test.ts` — 조회 테스트 18개 (past-exams.test.ts와 별도 파일)
 
 ### 타입 정의
 
@@ -126,9 +128,11 @@ supabase
 
 ---
 
-## Step 3: DataTable UI
+## Step 3: DataTable UI ✅ 완료 (2026-02-19)
 
-### 새로 생성 (3개)
+**완료 요약**: constants.ts(UI상수) + past-exams-toolbar.tsx(6필터) + past-exam-detail-sheet.tsx(상세Sheet+SignedURL) + past-exam-columns.tsx(9컬럼) + page.tsx(Server Component) — 5개 파일 ~500줄. 학습 리뷰: useEffect race condition `let cancelled = false` 패턴 (🟡 빈칸채우기 완료).
+
+### 새로 생성 (4개 — constants.ts 포함)
 - `src/app/(dashboard)/past-exams/_components/past-exam-columns.tsx`
 - `src/app/(dashboard)/past-exams/_components/past-exams-toolbar.tsx`
 - `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx`
@@ -196,27 +200,22 @@ export default async function PastExamsPage({ searchParams }) {
 
 ---
 
-## Step 4: 서버사이드 페이지네이션 UI
+## Step 4: 서버사이드 페이지네이션 UI ✅ 완료 (2026-02-19)
+
+**완료 요약**: `DataTableServerPagination` 공용 컴포넌트 신규 생성 (~100줄). URL searchParams 기반 페이지 전환, 기존 필터 보존, 1페이지 이하 시 미렌더링. `basePath` prop 제거 → `usePathname()`으로 동적 처리.
 
 ### 새로 생성 (1개)
 - `src/components/data-table/data-table-server-pagination.tsx`
 
-**현재 문제**: DataTable의 기본 pagination은 클라이언트 사이드. 서버가 10건만 반환하면 "1/1 페이지"로 표시되어 다음 페이지 이동 불가.
+### 수정 (2개)
+- `src/components/data-table/index.ts` — export 추가
+- `src/app/(dashboard)/past-exams/page.tsx` — 컴포넌트 배치
 
-**해결**: URL searchParams 기반 서버사이드 페이지네이션 컴포넌트 생성
-
-```typescript
-interface ServerPaginationProps {
-  total: number
-  page: number
-  pageSize: number
-  basePath: string  // '/past-exams'
-}
-```
-
-- 이전/다음 페이지 버튼 → `router.push(?page=N)`
-- 현재 페이지 / 전체 페이지 표시
-- DataTable에 `showPagination={false}` 설정 후 이 컴포넌트 별도 배치
+### 설계 결정
+- `useRouter` + `useSearchParams` + `usePathname` (toolbar과 동일 패턴)
+- `page=1`이면 URL에서 `page` 파라미터 삭제 (기본값 생략 관례)
+- `pageSize=10` 고정 ("페이지당 행" Select 제외)
+- 기존 `DataTablePagination`과 동일한 4버튼 UI (첫/이전/다음/마지막)
 
 ---
 
@@ -241,28 +240,32 @@ npm run build                      # 빌드 성공
 
 ## 파일 변경 요약
 
-### 수정 (3개)
+### 수정 (4개)
 | 파일 | 변경 |
 |------|------|
 | `src/lib/validations/past-exams.ts` | `pastExamFilterSchema` 추가 |
 | `src/lib/actions/past-exams.ts` | `getPastExamList()`, `getPastExamDetail()` + 타입 |
-| `src/app/(dashboard)/past-exams/page.tsx` | placeholder → DataTable |
+| `src/app/(dashboard)/past-exams/page.tsx` | placeholder → DataTable + ServerPagination |
+| `src/components/data-table/index.ts` | `DataTableServerPagination` export 추가 |
 
-### 새로 생성 (5개)
+### 새로 생성 (6개)
 | 파일 | 설명 |
 |------|------|
 | `src/lib/validations/__tests__/past-exams-filter.test.ts` | 필터 스키마 테스트 |
+| `src/app/(dashboard)/past-exams/_components/constants.ts` | UI 상수 (Badge 매핑) |
 | `src/app/(dashboard)/past-exams/_components/past-exam-columns.tsx` | 컬럼 정의 |
 | `src/app/(dashboard)/past-exams/_components/past-exams-toolbar.tsx` | 필터 툴바 |
 | `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` | 상세 Sheet |
 | `src/components/data-table/data-table-server-pagination.tsx` | 서버 페이지네이션 |
 
-### 기존 테스트 수정 (1개)
+### 새로 생성 테스트 (1개)
 | 파일 | 변경 |
 |------|------|
-| `src/lib/actions/__tests__/past-exams.test.ts` | 조회 테스트 ~15개 추가 |
+| `src/lib/actions/__tests__/past-exams-list.test.ts` | 조회 테스트 18개 (신규 파일) |
 
-**총: 3개 수정 + 5개 생성 + 1개 테스트 수정 = 9개 파일**
+> ⚠️ `past-exams.ts` — Step 2 완료 커밋 후 빈칸 채우기 형태로 수정됨 (미커밋 상태)
+
+**총: 4개 수정 + 7개 생성 = 11개 파일**
 
 ---
 

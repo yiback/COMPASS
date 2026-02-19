@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-02-19 (1-6 Step 2 Server Actions 완료)
+> **최종 업데이트**: 2026-02-19 (1-6 Step 4 서버사이드 페이지네이션 완료)
 
 ## 개발 전략
 
@@ -114,12 +114,12 @@
 - ✅ 역할 변경 (admin 전용)
 - ✅ 사용자 상세 조회
 
-### 1-6. 기출문제 조회 [F006] 🚧 (2/5 Steps 완료)
+### 1-6. 기출문제 조회 [F006] 🚧 (4/5 Steps 완료)
 
 - ✅ Zod 필터 스키마 (pastExamFilterSchema, 테스트 29개)
 - ✅ Server Actions (getPastExamList, getPastExamDetail, 테스트 18개)
-- [ ] DataTable UI (columns, toolbar, detail-sheet)
-- [ ] 서버사이드 페이지네이션 UI
+- ✅ DataTable UI (constants, columns, toolbar, detail-sheet, page.tsx — 5개 파일)
+- ✅ 서버사이드 페이지네이션 UI (DataTableServerPagination 공용 컴포넌트)
 - [ ] 빌드 검증
 
 ### 1-7. 기출 기반 AI 문제 생성 [F011]
@@ -418,7 +418,7 @@ CREATE TABLE teacher_subjects (
 | Phase/단계 | 진행률 | 상태 |
 |-----------|--------|------|
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
-| 단계 1 (기출 기반 문제 생성 + 인증) | 63% (1-1~1-5 완료, 1-6 진행 중 2/5) | 🚧 진행 중 |
+| 단계 1 (기출 기반 문제 생성 + 인증) | 68% (1-1~1-5 완료, 1-6 진행 중 4/5) | 🚧 진행 중 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
