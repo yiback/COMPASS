@@ -371,7 +371,6 @@ export async function getPastExamDetail(id: string): Promise<PastExamDetailResul
     //   - .eq('id', id).single() 으로 단건 조회
     //   - 결과를 as { data: any | null; error: unknown } 으로 캐스팅
     // =========================================================================
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성
         const { data: row, error: dbError } = ( await supabase
           .from('past_exam_questions')
           .select (
@@ -384,6 +383,7 @@ export async function getPastExamDetail(id: string): Promise<PastExamDetailResul
           )
           .eq('id', id)
           .single()) as {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성 (FK JOIN 중첩 객체)
             data: any | null
             error: unknown
           }

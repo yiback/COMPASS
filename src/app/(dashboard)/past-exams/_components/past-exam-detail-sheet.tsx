@@ -65,6 +65,7 @@ export function PastExamDetailSheet({
 
     let cancelled = false
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- race condition 방지 패턴: cancelled 플래그와 함께 사용
     setLoading(true)
     setError(null)
 
