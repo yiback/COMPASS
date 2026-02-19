@@ -1,13 +1,13 @@
 # 1-6 기출문제 조회 [F006] 구현 계획
 
-> **진행률**: 1/5 Steps 완료 (20%)
+> **진행률**: 2/5 Steps 완료 (40%)
 > **마지막 업데이트**: 2026-02-19
 > **상태**: 🚧 진행 중
 
 | Step | 내용 | 상태 |
 |------|------|------|
 | Step 1 | Zod 필터 스키마 (TDD) | ✅ 완료 |
-| Step 2 | Server Actions (getPastExamList, getPastExamDetail) | ⏸️ 대기 |
+| Step 2 | Server Actions (getPastExamList, getPastExamDetail) | ✅ 완료 |
 | Step 3 | DataTable UI (columns, toolbar, detail-sheet) | ⏸️ 대기 |
 | Step 4 | 서버사이드 페이지네이션 UI | ⏸️ 대기 |
 | Step 5 | 빌드 검증 + 학습 리뷰 | ⏸️ 대기 |
