@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-19 (1-6 기출문제 조회 [F006] 완료)
+> **최종 업데이트**: 2026-02-20 (1-7 Step 1 타입 확장 + Zod 스키마 구현 완료)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -19,7 +19,7 @@
 - 0-1~0-4: Next.js + Supabase + 레이아웃 + 공통 UI
 - 0-5: AI 추상화 레이어 (Factory + Strategy, GeminiProvider, 94개+ 테스트)
 
-### 단계 1: 기출 기반 문제 생성 + 인증 (75% 완료)
+### 단계 1: 기출 기반 문제 생성 + 인증 (78% 완료)
 
 | 스텝 | 작업 | 상태 |
 |------|------|------|
@@ -29,43 +29,54 @@
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
 | 1-6 | 기출문제 조회 [F006] | ✅ 완료 (5/5 Steps, 347 tests, 빌드 성공) |
-| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **미시작 ← 다음 작업** |
+| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 1/5 완료 (369 tests), Step 2 대기 ← 다음 작업** |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
-### 최근 세션 요약 (2026-02-19)
+### 최근 세션 요약 (2026-02-20)
 
-1. 1-6 Step 5 빌드 검증 — 347 tests PASS, lint 0 errors, build 성공
-2. 빌드 수정 2건: eslint-disable 위치 조정 (기능 변경 없음)
-3. 1-6 완료 처리 — ROADMAP/HANDOFF/MEMORY/계획 문서 7개 업데이트
-4. 미커밋 상태 — 커밋·푸시 필요
+1. 1-7 Step 1 구현 완료 — TDD RED→GREEN→REFACTOR (서브스텝 a~e)
+2. PastExamContext 인터페이스 + GenerateQuestionParams 확장 (하위 호환, optional)
+3. generateQuestionsRequestSchema Zod 스키마 + MAX_QUESTION_COUNT = 10
+4. `z.enum`의 `errorMap` → `message` 파라미터로 변경 (Zod 최신 버전 호환 이슈 발견·해결)
+5. 전체 369 tests PASS, 회귀 없음
+6. 학습 리뷰 완료 (optional 이유, z.coerce vs z.number, z.coerce + 빈 문자열)
+7. **미커밋 파일**: 계획 파일 2개 + 구현 파일 5개 + HANDOFF/ROADMAP
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 미커밋 변경사항 커밋·푸시
+### 즉시: 1-7 Step 1 커밋
 
-변경 파일:
-- `HANDOFF.md`, `ROADMAP.md` — 1-6 완료 반영
-- `docs/plan/phase-1-step6-5-build-verify.md` — 신규 (Step 5 계획)
-- `docs/plan/phase-1-step6-*.md` (5개) — 성공 기준 체크
-- `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` — eslint-disable 추가
-- `src/lib/actions/past-exams.ts` — eslint-disable 위치 이동
+**커밋 대상 파일**:
+- `HANDOFF.md`, `ROADMAP.md` — 업데이트
+- `docs/plan/phase-1-step7-ai-question-generation.md` — 업데이트 (Step 1 ✅)
+- `docs/plan/phase-1-step7-step1-detail.md` — 업데이트 (✅ 완료)
+- `src/lib/ai/types.ts` — PastExamContext + GenerateQuestionParams 확장
+- `src/lib/ai/index.ts` — PastExamContext export 추가
+- `src/lib/ai/__tests__/types.test.ts` — PastExamContext 타입 호환성 테스트 3개
+- `src/lib/validations/generate-questions.ts` — Zod 스키마 + 상수 (신규)
+- `src/lib/validations/__tests__/generate-questions.test.ts` — 19개 테스트 (신규)
 
-### 이후: 1-7 기출 기반 AI 문제 생성 [F011] 계획 수립
+### 이후: 1-7 Step 2~5
 
-**활용할 기존 인프라**:
-- **AI 추상화 레이어 (0-5)**: `src/lib/ai/` — Factory + Strategy, GeminiProvider, retry, validation, prompts
-- **기출문제 조회 (1-6)**: `src/lib/actions/past-exams.ts` — `getPastExamList`, `getPastExamDetail`
-- **프롬프트 시스템**: `src/lib/ai/prompts/` — 템플릿 빌더 + 배럴 파일
+**전체 계획**: `docs/plan/phase-1-step7-ai-question-generation.md`
 
-**ROADMAP 기준 범위**:
-- 기출문제 분석 프롬프트 설계
-- 기출 기반 유사 문제 생성
-- 기출 스타일 반영 옵션
+| Step | 내용 | 예상 테스트 |
+|------|------|------------|
+| Step 2 | 프롬프트 빌더 (TDD) | ~14개 |
+| Step 3 | Server Action + GeminiProvider 통합 (TDD) | ~21개 |
+| Step 4 | UI (생성 다이얼로그) | — |
+| Step 5 | 빌드 검증 + 학습 리뷰 | 전체 ~397 |
 
 ### 그 다음: 1-8 생성된 문제 저장 [F003]
-- 문제 저장 및 관리, 문제 목록/상세 조회
+
+**핵심 설계 결정 (확정)**:
+1. Gemini Vision → Phase 3 연기 (MVP: 텍스트 기반만)
+2. `GenerateQuestionParams`에 optional `pastExamContext` 추가 (하위 호환)
+3. 생성 결과 화면 표시만, DB 저장은 1-8
+4. 교사/관리자만 문제 생성 가능
+5. `MAX_QUESTION_COUNT = 10` (API 비용 관리)
 
 ---
 
@@ -82,6 +93,7 @@
 - **useEffect race condition 방지**: `let cancelled = false` + cleanup 패턴
 - **DataTableServerPagination**: 공용 서버사이드 페이지네이션 (URL searchParams 기반)
 - **정적 컬럼 배열 vs 팩토리 함수**: 권한별 분기 없으면 정적, 있으면 팩토리
+- **Sequential Thinking MCP + planner 에이전트**: 복잡한 계획 수립 시 MCP로 분석 후 에이전트로 정형화
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -104,9 +116,11 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `PRD.md` — 기능 명세 |
-| 5 | `supabase/migrations/` — DB 스키마·RLS 정책 |
-| 6 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (1/5 Steps 완료)** |
+| 5 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
+| 6 | `docs/PRD.md` — 기능 명세 |
+| 7 | `supabase/migrations/` — DB 스키마·RLS 정책 |
+| 8 | `docs/guides/architecture-reference.md` — 아키텍처 |
 
 ### 1-7 참고용: 기존 구현 패턴
 
@@ -114,12 +128,12 @@
 |------------|----------|
 | AI 추상화 레이어 (Factory + Strategy) | `src/lib/ai/index.ts` — 공개 API |
 | GeminiProvider 구현체 | `src/lib/ai/gemini.ts` |
-| 프롬프트 빌더 + 템플릿 | `src/lib/ai/prompts/` |
+| 기존 프롬프트 빌더 패턴 | `src/lib/ai/prompts/question-generation.ts` |
 | 응답 파싱/검증 (Zod 이중 검증) | `src/lib/ai/validation.ts` |
 | 재시도 유틸리티 (지수 백오프) | `src/lib/ai/retry.ts` |
 | 기출문제 조회 액션 | `src/lib/actions/past-exams.ts` — `getPastExamList`, `getPastExamDetail` |
 | 기출문제 DataTable UI | `src/app/(dashboard)/past-exams/_components/` |
-| Server Action + 페이지네이션 | `src/lib/actions/users.ts` |
+| Server Action 인증 패턴 | `src/lib/actions/past-exams.ts` — `getCurrentUserProfile` |
 | 테스트 패턴 (Mock Supabase) | `src/lib/actions/__tests__/past-exams-list.test.ts` |
 
 ### ⚠️ 진행 중 이슈
