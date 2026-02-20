@@ -76,6 +76,18 @@ export interface PromptConfig {
   readonly maxOutputTokens: number
 }
 
+// ─── 기출 컨텍스트 (1-7 추가) ────────────────────────────
+
+/** 기출문제 참고 AI 문제 생성 시 전달되는 컨텍스트 */
+export interface PastExamContext {
+  readonly pastExamId: string
+  readonly schoolName: string
+  readonly year: number
+  readonly semester: number
+  readonly examType: string
+  readonly extractedContent?: string // OCR 추출 또는 수동 입력된 기출 내용
+}
+
 // ─── 문제 생성 ──────────────────────────────────────────
 
 export interface GenerateQuestionParams {
@@ -87,6 +99,7 @@ export interface GenerateQuestionParams {
   readonly unit?: string
   readonly topics?: readonly string[]
   readonly schoolName?: string
+  readonly pastExamContext?: PastExamContext // 1-7 추가: 기출 기반 생성 시
 }
 
 export interface GeneratedQuestion {

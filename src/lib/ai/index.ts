@@ -9,6 +9,7 @@ export type {
   AIProvider,
   GenerateQuestionParams,
   GeneratedQuestion,
+  PastExamContext,
   PromptConfig,
   ProviderType,
   QuestionType,

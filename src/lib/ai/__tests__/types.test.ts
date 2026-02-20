@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { toDbQuestionType, fromDbQuestionType } from '../types'
+import type { GenerateQuestionParams, PastExamContext } from '../types'
 
 /**
  * QuestionType ↔ DbQuestionType 매핑 함수 테스트
@@ -55,5 +56,54 @@ describe('QuestionType 양방향 변환 정합성', () => {
       const backToDb = toDbQuestionType(aiType)
       expect(backToDb).toBe(dbType)
     })
+  })
+})
+
+describe('PastExamContext 타입 호환성', () => {
+  it('pastExamContext가 없는 GenerateQuestionParams가 유효해야 한다 (하위 호환)', () => {
+    const params: GenerateQuestionParams = {
+      subject: '수학',
+      grade: 10,
+      questionType: 'multiple_choice',
+      count: 5,
+      difficulty: 'medium',
+    }
+    expect(params.pastExamContext).toBeUndefined()
+  })
+
+  it('pastExamContext가 있는 GenerateQuestionParams가 유효해야 한다', () => {
+    const context: PastExamContext = {
+      pastExamId: '550e8400-e29b-41d4-a716-446655440000',
+      schoolName: '한국고등학교',
+      year: 2025,
+      semester: 1,
+      examType: 'midterm',
+      extractedContent: '1번 문제: 다음 중 올바른 것은?',
+    }
+
+    const params: GenerateQuestionParams = {
+      subject: '수학',
+      grade: 10,
+      questionType: 'multiple_choice',
+      count: 5,
+      difficulty: 'medium',
+      pastExamContext: context,
+    }
+
+    expect(params.pastExamContext).toBeDefined()
+    expect(params.pastExamContext?.schoolName).toBe('한국고등학교')
+  })
+
+  it('extractedContent가 없는 PastExamContext가 유효해야 한다', () => {
+    const context: PastExamContext = {
+      pastExamId: '550e8400-e29b-41d4-a716-446655440000',
+      schoolName: '한국고등학교',
+      year: 2025,
+      semester: 1,
+      examType: 'midterm',
+    }
+
+    expect(context.extractedContent).toBeUndefined()
+    expect(context.schoolName).toBe('한국고등학교')
   })
 })
