@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-20 (1-7 Step 1 타입 확장 + Zod 스키마 구현 완료)
+> **최종 업데이트**: 2026-02-20 (1-7 Step 2 프롬프트 빌더 구현 완료)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -29,42 +29,42 @@
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
 | 1-6 | 기출문제 조회 [F006] | ✅ 완료 (5/5 Steps, 347 tests, 빌드 성공) |
-| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 1/5 완료 (369 tests), Step 2 대기 ← 다음 작업** |
+| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 2/5 완료 (383 tests), Step 3 대기 ← 다음 작업** |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
-### 최근 세션 요약 (2026-02-20)
+### 최근 세션 요약 (2026-02-20, 세션 3)
 
-1. 1-7 Step 1 구현 완료 — TDD RED→GREEN→REFACTOR (서브스텝 a~e)
-2. PastExamContext 인터페이스 + GenerateQuestionParams 확장 (하위 호환, optional)
-3. generateQuestionsRequestSchema Zod 스키마 + MAX_QUESTION_COUNT = 10
-4. `z.enum`의 `errorMap` → `message` 파라미터로 변경 (Zod 최신 버전 호환 이슈 발견·해결)
-5. 전체 369 tests PASS, 회귀 없음
-6. 학습 리뷰 완료 (optional 이유, z.coerce vs z.number, z.coerce + 빈 문자열)
-7. **미커밋 파일**: 계획 파일 2개 + 구현 파일 5개 + HANDOFF/ROADMAP
+1. **Step 2 구현 완료** — TDD RED→GREEN→REFACTOR:
+   - `buildPastExamGenerationPrompt` 신규 구현 (97줄)
+   - 14개 테스트 전체 PASS, 전체 383개 PASS (회귀 없음)
+2. **학습 리뷰 완료** — systemInstruction vs userPrompt, lines 배열 빌더, `??` vs `||`, falsy 개념
+3. 워킹 트리: origin/main 대비 2 커밋 ahead (미푸시) + Step 2 미커밋 변경
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-7 Step 1 커밋
+### 즉시: 1-7 Step 3 계획 + 구현 (Server Action + GeminiProvider 통합)
 
-**커밋 대상 파일**:
-- `HANDOFF.md`, `ROADMAP.md` — 업데이트
-- `docs/plan/phase-1-step7-ai-question-generation.md` — 업데이트 (Step 1 ✅)
-- `docs/plan/phase-1-step7-step1-detail.md` — 업데이트 (✅ 완료)
-- `src/lib/ai/types.ts` — PastExamContext + GenerateQuestionParams 확장
-- `src/lib/ai/index.ts` — PastExamContext export 추가
-- `src/lib/ai/__tests__/types.test.ts` — PastExamContext 타입 호환성 테스트 3개
-- `src/lib/validations/generate-questions.ts` — Zod 스키마 + 상수 (신규)
-- `src/lib/validations/__tests__/generate-questions.test.ts` — 19개 테스트 (신규)
+**상위 계획**: `docs/plan/phase-1-step7-ai-question-generation.md` Step 3 섹션 참조
 
-### 이후: 1-7 Step 2~5
+**핵심 작업**:
+- `gemini.ts` pastExamContext 분기 추가 (~3줄)
+- `generate-questions.ts` Server Action 신규 (~120줄)
+- 테스트 ~21개 (Server Action 18개 + gemini 분기 3개)
 
-**전체 계획**: `docs/plan/phase-1-step7-ai-question-generation.md`
+**미커밋 파일**:
+- `src/lib/ai/prompts/past-exam-generation.ts` (Step 2 구현)
+- `src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` (Step 2 테스트)
+- `src/lib/ai/prompts/index.ts` (export 추가)
+- `docs/plan/phase-1-step7-step2-detail.md` (Step 2 상세 계획)
+- `docs/concepts/dry-principle.md` (DRY 학습 문서)
+- 각종 문서 업데이트 (ROADMAP, HANDOFF, 상위 계획)
+
+### 이후: 1-7 Step 3~5
 
 | Step | 내용 | 예상 테스트 |
 |------|------|------------|
-| Step 2 | 프롬프트 빌더 (TDD) | ~14개 |
 | Step 3 | Server Action + GeminiProvider 통합 (TDD) | ~21개 |
 | Step 4 | UI (생성 다이얼로그) | — |
 | Step 5 | 빌드 검증 + 학습 리뷰 | 전체 ~397 |
@@ -94,6 +94,8 @@
 - **DataTableServerPagination**: 공용 서버사이드 페이지네이션 (URL searchParams 기반)
 - **정적 컬럼 배열 vs 팩토리 함수**: 권한별 분기 없으면 정적, 있으면 팩토리
 - **Sequential Thinking MCP + planner 에이전트**: 복잡한 계획 수립 시 MCP로 분석 후 에이전트로 정형화
+- **DRY 판단 기준**: "같은 이유로 변경되는가?" — 우연한 중복(Accidental Duplication)은 합치지 않음
+- **프롬프트 빌더 분리 패턴**: SRP/OCP 기반 — 기존 함수 수정 대신 별도 함수 추가
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -116,11 +118,12 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (1/5 Steps 완료)** |
-| 5 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
-| 6 | `docs/PRD.md` — 기능 명세 |
-| 7 | `supabase/migrations/` — DB 스키마·RLS 정책 |
-| 8 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (2/5 Steps 완료)** |
+| 5 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
+| 6 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
+| 7 | `docs/PRD.md` — 기능 명세 |
+| 8 | `supabase/migrations/` — DB 스키마·RLS 정책 |
+| 9 | `docs/guides/architecture-reference.md` — 아키텍처 |
 
 ### 1-7 참고용: 기존 구현 패턴
 

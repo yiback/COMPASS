@@ -1,13 +1,13 @@
 # 1-7 기출 기반 AI 문제 생성 [F011] 구현 계획
 
-> **진행률**: 1/5 Steps (20%)
+> **진행률**: 2/5 Steps (40%)
 > **마지막 업데이트**: 2026-02-20
 > **상태**: 🚧 진행 중
 
 | Step | 내용 | 상태 |
 |------|------|------|
 | Step 1 | 타입 확장 + Zod 스키마 (TDD) | ✅ 완료 (369 tests PASS) |
-| Step 2 | 프롬프트 빌더 — buildPastExamGenerationPrompt (TDD) | 미시작 |
+| Step 2 | 프롬프트 빌더 — buildPastExamGenerationPrompt (TDD) | ✅ 완료 (383 tests PASS) |
 | Step 3 | Server Action + GeminiProvider 통합 (TDD) | 미시작 |
 | Step 4 | UI — 생성 다이얼로그 + 결과 표시 | 미시작 |
 | Step 5 | 빌드 검증 + 학습 리뷰 | 미시작 |
@@ -362,10 +362,12 @@ describe('buildPastExamGenerationPrompt')
 
 ### 성공 기준
 
-- [ ] `npx vitest run src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` — 전체 PASS
-- [ ] `npx vitest run src/lib/ai/__tests__/prompts/question-generation.test.ts` — 기존 회귀 없음
-- [ ] extractedContent 유무에 따른 프롬프트 분기 테스트 통과
-- [ ] temperature가 0.8로 설정됨 확인
+- [x] `npx vitest run src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` — 14개 전체 PASS
+- [x] `npx vitest run src/lib/ai/__tests__/prompts/question-generation.test.ts` — 16개 기존 회귀 없음
+- [x] extractedContent 유무에 따른 프롬프트 분기 테스트 통과
+- [x] temperature가 0.8로 설정됨 확인
+
+**완료 요약**: `buildPastExamGenerationPrompt` 함수를 신규 파일에 구현. 기존 `buildQuestionGenerationPrompt`와 별도 분리(SRP). `questionsJsonSchema` 재사용, temperature 0.8, EXAM_TYPE_LABELS 독립 정의, extractedContent 유무 분기. TDD RED→GREEN→REFACTOR 준수. 전체 383 tests PASS, 회귀 없음.
 
 ---
 
