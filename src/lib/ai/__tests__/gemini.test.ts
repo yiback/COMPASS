@@ -324,4 +324,65 @@ describe('GeminiProvider', () => {
       ).rejects.toThrow(AIServiceError)
     })
   })
+
+  // ─── 그룹 6: pastExamContext 분기 ─────────────────────────
+
+  describe('generateQuestions - pastExamContext 분기', () => {
+    it('pastExamContext가 없으면 기존 systemInstruction을 사용한다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(createValidResponse())
+
+      await provider.generateQuestions(VALID_PARAMS)
+
+      const callArgs = mockGenerateContent.mock.calls[0][0]
+      // 기존 buildQuestionGenerationPrompt의 systemInstruction은 "시험 출제 전문가"를 포함
+      expect(callArgs.config.systemInstruction).toContain('시험 출제 전문가')
+      // 기출 분석 관련 키워드는 포함하지 않음
+      expect(callArgs.config.systemInstruction).not.toContain('기출문제 분석')
+    })
+
+    it('pastExamContext가 있으면 기출 기반 systemInstruction을 사용한다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(createValidResponse())
+
+      const paramsWithContext: GenerateQuestionParams = {
+        ...VALID_PARAMS,
+        pastExamContext: {
+          pastExamId: '550e8400-e29b-41d4-a716-446655440000',
+          schoolName: '한국중학교',
+          year: 2025,
+          semester: 1,
+          examType: 'midterm',
+        },
+      }
+
+      await provider.generateQuestions(paramsWithContext)
+
+      const callArgs = mockGenerateContent.mock.calls[0][0]
+      // buildPastExamGenerationPrompt의 systemInstruction은 "기출문제 분석"을 포함
+      expect(callArgs.config.systemInstruction).toContain('기출문제 분석')
+      // 기존 프롬프트 빌더의 키워드는 포함하지 않음
+      expect(callArgs.config.systemInstruction).not.toContain('시험 출제 전문가')
+    })
+
+    it('pastExamContext가 있어도 응답 형식은 동일하다 (GeneratedQuestion[])', async () => {
+      mockGenerateContent.mockResolvedValueOnce(createValidResponse())
+
+      const paramsWithContext: GenerateQuestionParams = {
+        ...VALID_PARAMS,
+        pastExamContext: {
+          pastExamId: '550e8400-e29b-41d4-a716-446655440000',
+          schoolName: '한국중학교',
+          year: 2025,
+          semester: 1,
+          examType: 'midterm',
+        },
+      }
+
+      const result = await provider.generateQuestions(paramsWithContext)
+
+      expect(result).toHaveLength(2)
+      expect(result[0]).toHaveProperty('content')
+      expect(result[0]).toHaveProperty('type')
+      expect(result[0]).toHaveProperty('answer')
+    })
+  })
 })

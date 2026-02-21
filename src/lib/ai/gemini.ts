@@ -27,6 +27,7 @@ import { getAIConfig } from './config'
 import { withRetry } from './retry'
 import { validateGeneratedQuestions, questionsJsonSchema } from './validation'
 import { buildQuestionGenerationPrompt } from './prompts/question-generation'
+import { buildPastExamGenerationPrompt } from './prompts/past-exam-generation'
 
 // ─── SDK 에러 변환 ──────────────────────────────────────────
 
@@ -88,7 +89,9 @@ export class GeminiProvider implements AIProvider {
   async generateQuestions(
     params: GenerateQuestionParams,
   ): Promise<readonly GeneratedQuestion[]> {
-    const prompt = buildQuestionGenerationPrompt(params)
+    const prompt = params.pastExamContext
+      ? buildPastExamGenerationPrompt(params)
+      : buildQuestionGenerationPrompt(params)
 
     return withRetry(
       async () => {
