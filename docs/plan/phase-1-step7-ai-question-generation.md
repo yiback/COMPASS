@@ -1,16 +1,16 @@
 # 1-7 기출 기반 AI 문제 생성 [F011] 구현 계획
 
-> **진행률**: 2/5 Steps (40%)
-> **마지막 업데이트**: 2026-02-20
+> **진행률**: 3/5 Steps (60%)
+> **마지막 업데이트**: 2026-02-21
 > **상태**: 🚧 진행 중
 
 | Step | 내용 | 상태 |
 |------|------|------|
 | Step 1 | 타입 확장 + Zod 스키마 (TDD) | ✅ 완료 (369 tests PASS) |
 | Step 2 | 프롬프트 빌더 — buildPastExamGenerationPrompt (TDD) | ✅ 완료 (383 tests PASS) |
-| Step 3 | Server Action + GeminiProvider 통합 (TDD) | 미시작 |
+| Step 3 | Server Action + GeminiProvider 통합 (TDD) | ✅ 완료 (404 tests PASS) |
 | Step 4 | UI — 생성 다이얼로그 + 결과 표시 | 미시작 |
-| Step 5 | 빌드 검증 + 학습 리뷰 | 미시작 |
+| Step 5 | 빌드 검증 + 학습 리뷰 (~404+ tests 예상) | 미시작 |
 
 ---
 
@@ -634,11 +634,13 @@ describe('generateQuestions - pastExamContext 분기')
 
 ### 성공 기준
 
-- [ ] `npx vitest run src/lib/actions/__tests__/generate-questions.test.ts` — 전체 PASS
-- [ ] `npx vitest run src/lib/ai/__tests__/gemini.test.ts` — 기존 + 신규 전체 PASS
-- [ ] 교사/관리자만 생성 가능 확인
-- [ ] AIError 계열 에러가 사용자 친화적 메시지로 변환됨 확인
-- [ ] extracted_content 유무에 따른 정상 동작 확인
+- [x] `npx vitest run src/lib/actions/__tests__/generate-questions.test.ts` — 18개 전체 PASS
+- [x] `npx vitest run src/lib/ai/__tests__/gemini.test.ts` — 21개 전체 PASS (기존 18 + 신규 3)
+- [x] 교사/관리자만 생성 가능 확인 (테스트 4~6)
+- [x] AIError 계열 에러가 사용자 친화적 메시지로 변환됨 확인 (테스트 15~18)
+- [x] extracted_content 유무에 따른 정상 동작 확인 (테스트 13~14)
+
+**완료 요약**: gemini.ts에 pastExamContext 분기 3줄 추가 + generateQuestionsFromPastExam Server Action 신규 구현. vi.importActual 부분 mock 패턴, from() mockImplementation 테이블 분기, 조건부 스프레드 null→key부재 변환 패턴 적용. TDD RED→GREEN→REFACTOR 준수. 전체 404 tests PASS, 회귀 없음.
 
 ---
 
@@ -770,7 +772,7 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 ### 검증 명령
 
 ```bash
-npx vitest run                     # 전체 테스트 — 기존 347 + 신규 ~50 = ~397 PASS
+npx vitest run                     # 전체 테스트 — 현재 383 + Step 3 ~21 = ~404 PASS
 npm run lint                       # lint 에러 0개
 npm run build                      # Next.js 빌드 성공
 ```
@@ -806,41 +808,42 @@ npm run build                      # Next.js 빌드 성공
 
 ### 수정 (5개)
 
-| 파일 | 변경 |
-|------|------|
-| `src/lib/ai/types.ts` | PastExamContext + GenerateQuestionParams 확장 |
-| `src/lib/ai/index.ts` | PastExamContext export 추가 |
-| `src/lib/ai/gemini.ts` | pastExamContext 분기 (~3줄) |
-| `src/lib/ai/prompts/index.ts` | buildPastExamGenerationPrompt export 추가 |
-| `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` | "AI 문제 생성" 버튼 + Dialog 연동 |
+| 파일 | 변경 | 상태 |
+|------|------|------|
+| `src/lib/ai/types.ts` | PastExamContext + GenerateQuestionParams 확장 | ✅ Step 1 |
+| `src/lib/ai/index.ts` | PastExamContext export 추가 | ✅ Step 1 |
+| `src/lib/ai/gemini.ts` | pastExamContext 분기 (~3줄) | ✅ Step 3 |
+| `src/lib/ai/prompts/index.ts` | buildPastExamGenerationPrompt export 추가 | ✅ Step 2 |
+| `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` | "AI 문제 생성" 버튼 + Dialog 연동 | Step 4 |
 
 ### 새로 생성 (5개)
 
-| 파일 | 설명 |
-|------|------|
-| `src/lib/validations/generate-questions.ts` | Zod 스키마 + 상수 |
-| `src/lib/ai/prompts/past-exam-generation.ts` | 기출 기반 프롬프트 빌더 |
-| `src/lib/actions/generate-questions.ts` | Server Action |
-| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | 생성 다이얼로그 UI |
-| `docs/plan/phase-1-step7-ai-question-generation.md` | 이 계획 문서 |
+| 파일 | 설명 | 상태 |
+|------|------|------|
+| `src/lib/validations/generate-questions.ts` | Zod 스키마 + 상수 | ✅ Step 1 |
+| `src/lib/ai/prompts/past-exam-generation.ts` | 기출 기반 프롬프트 빌더 | ✅ Step 2 |
+| `src/lib/actions/generate-questions.ts` | Server Action | ✅ Step 3 |
+| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | 생성 다이얼로그 UI | Step 4 |
+| `docs/plan/phase-1-step7-ai-question-generation.md` | 이 계획 문서 | ✅ |
 
 ### 수정 (테스트, 2개)
 
-| 파일 | 변경 |
-|------|------|
-| `src/lib/ai/__tests__/types.test.ts` | PastExamContext 호환성 테스트 추가 |
-| `src/lib/ai/__tests__/gemini.test.ts` | pastExamContext 분기 테스트 추가 |
+| 파일 | 변경 | 상태 |
+|------|------|------|
+| `src/lib/ai/__tests__/types.test.ts` | PastExamContext 호환성 테스트 추가 | ✅ Step 1 |
+| `src/lib/ai/__tests__/gemini.test.ts` | pastExamContext 분기 테스트 추가 | Step 3 |
 
 ### 새로 생성 (테스트, 3개)
 
-| 파일 | 설명 |
-|------|------|
-| `src/lib/validations/__tests__/generate-questions.test.ts` | Zod 스키마 테스트 |
-| `src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` | 프롬프트 빌더 테스트 |
-| `src/lib/actions/__tests__/generate-questions.test.ts` | Server Action 테스트 |
+| 파일 | 설명 | 상태 |
+|------|------|------|
+| `src/lib/validations/__tests__/generate-questions.test.ts` | Zod 스키마 테스트 | ✅ Step 1 |
+| `src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` | 프롬프트 빌더 테스트 | ✅ Step 2 |
+| `src/lib/actions/__tests__/generate-questions.test.ts` | Server Action 테스트 | Step 3 |
 
 **총: 7개 수정 + 8개 생성 = 15개 파일 (테스트 포함)**
-**예상 신규 테스트: ~50개 (기존 347 + 50 = ~397개)**
+**완료: 8/15 (Step 1-2) | 남은: 7개 (Step 3-4)**
+**테스트: 현재 383개 PASS | Step 3 후 ~404개 예상**
 
 ---
 

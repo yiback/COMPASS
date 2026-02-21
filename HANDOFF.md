@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-20 (1-7 Step 2 프롬프트 빌더 구현 완료)
+> **최종 업데이트**: 2026-02-21 (1-7 Step 3 구현 완료, 404 tests)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -19,7 +19,7 @@
 - 0-1~0-4: Next.js + Supabase + 레이아웃 + 공통 UI
 - 0-5: AI 추상화 레이어 (Factory + Strategy, GeminiProvider, 94개+ 테스트)
 
-### 단계 1: 기출 기반 문제 생성 + 인증 (78% 완료)
+### 단계 1: 기출 기반 문제 생성 + 인증 (80% 완료)
 
 | 스텝 | 작업 | 상태 |
 |------|------|------|
@@ -29,45 +29,56 @@
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
 | 1-6 | 기출문제 조회 [F006] | ✅ 완료 (5/5 Steps, 347 tests, 빌드 성공) |
-| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 2/5 완료 (383 tests), Step 3 대기 ← 다음 작업** |
+| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 3/5 완료 (404 tests) ← Step 4 UI 대기** |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
-### 최근 세션 요약 (2026-02-20, 세션 3)
+### 최근 세션 요약 (2026-02-21, 세션 5)
 
-1. **Step 2 구현 완료** — TDD RED→GREEN→REFACTOR:
-   - `buildPastExamGenerationPrompt` 신규 구현 (97줄)
-   - 14개 테스트 전체 PASS, 전체 383개 PASS (회귀 없음)
-2. **학습 리뷰 완료** — systemInstruction vs userPrompt, lines 배열 빌더, `??` vs `||`, falsy 개념
-3. 워킹 트리: origin/main 대비 2 커밋 ahead (미푸시) + Step 2 미커밋 변경
+1. **1-7 Step 3 구현 완료** (Server Action + GeminiProvider 통합, TDD):
+   - Phase A: gemini.ts 분기 — 3개 테스트 추가, import 1줄 + 분기 3줄 (21 PASS)
+   - Phase B: Server Action — 18개 테스트 + ~150줄 구현 (404 전체 PASS)
+   - 핵심 Mock 패턴: `vi.importActual` (AIError instanceof), `from()` mockImplementation (테이블 분기)
+2. **학습 리뷰 완료**:
+   - 3개 핵심 개념 설명 (vi.importActual, from() mockImplementation, 조건부 스프레드)
+   - 빈칸 채우기 실습 완료 (4개 빈칸, 수정 후 18 tests PASS)
+   - 2개 스킬 추출: `~/.claude/skills/learned/vi-import-actual-partial-mock.md`, `supabase-from-mock-implementation.md`
+3. 워킹 트리: origin/main 대비 **4 커밋 ahead** (미푸시) + **미커밋 파일 있음** (구현 + 문서)
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-7 Step 3 계획 + 구현 (Server Action + GeminiProvider 통합)
+### 즉시: 1-7 Step 4 구현 (UI — 생성 다이얼로그)
 
-**상위 계획**: `docs/plan/phase-1-step7-ai-question-generation.md` Step 3 섹션 참조
+**상위 계획**: `docs/plan/phase-1-step7-ai-question-generation.md` Step 4
 
-**핵심 작업**:
-- `gemini.ts` pastExamContext 분기 추가 (~3줄)
-- `generate-questions.ts` Server Action 신규 (~120줄)
-- 테스트 ~21개 (Server Action 18개 + gemini 분기 3개)
+**구현 내용**:
+- 기출문제 상세 페이지에서 "AI 문제 생성" 버튼 추가
+- 생성 다이얼로그 UI (문제 유형, 난이도, 개수 선택)
+- `generateQuestionsFromPastExam` Server Action 호출
+- 생성 결과 표시 (DB 저장은 1-8에서)
 
-**미커밋 파일**:
-- `src/lib/ai/prompts/past-exam-generation.ts` (Step 2 구현)
-- `src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` (Step 2 테스트)
-- `src/lib/ai/prompts/index.ts` (export 추가)
-- `docs/plan/phase-1-step7-step2-detail.md` (Step 2 상세 계획)
-- `docs/concepts/dry-principle.md` (DRY 학습 문서)
-- 각종 문서 업데이트 (ROADMAP, HANDOFF, 상위 계획)
+**미커밋 파일** (Step 3 구현 + 문서):
+- `src/lib/ai/gemini.ts` (수정)
+- `src/lib/ai/__tests__/gemini.test.ts` (수정)
+- `src/lib/actions/generate-questions.ts` (신규)
+- `src/lib/actions/__tests__/generate-questions.test.ts` (신규)
+- `docs/plan/phase-1-step7-step3-detail.md` (신규)
+- `docs/plan/phase-1-step7-ai-question-generation.md` (수정)
+- `ROADMAP.md` (수정)
+- `HANDOFF.md` (수정)
 
-### 이후: 1-7 Step 3~5
+**미푸시 커밋 4개** (origin/main 대비):
+- `15b60a7` ✨ feat: 1-7 Step 1 PastExamContext 타입 확장 + Zod 스키마
+- `2124450` 📝 docs: 1-7 Step 1 완료
+- `af368d8` ✨ feat: 1-7 Step 2 프롬프트 빌더
+- `bc5b3d8` 📝 docs: 1-7 Step 2 완료
+
+### 이후: 1-7 Step 5 (빌드 검증 + 학습 리뷰)
 
 | Step | 내용 | 예상 테스트 |
 |------|------|------------|
-| Step 3 | Server Action + GeminiProvider 통합 (TDD) | ~21개 |
-| Step 4 | UI (생성 다이얼로그) | — |
-| Step 5 | 빌드 검증 + 학습 리뷰 | 전체 ~397 |
+| Step 5 | 빌드 검증 + 학습 리뷰 | 전체 ~404+ |
 
 ### 그 다음: 1-8 생성된 문제 저장 [F003]
 
@@ -118,12 +129,13 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (2/5 Steps 완료)** |
-| 5 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
-| 6 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
-| 7 | `docs/PRD.md` — 기능 명세 |
-| 8 | `supabase/migrations/` — DB 스키마·RLS 정책 |
-| 9 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (3/5 Steps 완료)** |
+| 5 | `docs/plan/phase-1-step7-step3-detail.md` — 1-7 Step 3 상세 계획 (✅ 완료) |
+| 6 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
+| 7 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
+| 8 | `docs/PRD.md` — 기능 명세 |
+| 9 | `supabase/migrations/` — DB 스키마·RLS 정책 |
+| 10 | `docs/guides/architecture-reference.md` — 아키텍처 |
 
 ### 1-7 참고용: 기존 구현 패턴
 
@@ -132,12 +144,14 @@
 | AI 추상화 레이어 (Factory + Strategy) | `src/lib/ai/index.ts` — 공개 API |
 | GeminiProvider 구현체 | `src/lib/ai/gemini.ts` |
 | 기존 프롬프트 빌더 패턴 | `src/lib/ai/prompts/question-generation.ts` |
+| **신규** 기출 기반 프롬프트 빌더 | `src/lib/ai/prompts/past-exam-generation.ts` |
 | 응답 파싱/검증 (Zod 이중 검증) | `src/lib/ai/validation.ts` |
 | 재시도 유틸리티 (지수 백오프) | `src/lib/ai/retry.ts` |
 | 기출문제 조회 액션 | `src/lib/actions/past-exams.ts` — `getPastExamList`, `getPastExamDetail` |
 | 기출문제 DataTable UI | `src/app/(dashboard)/past-exams/_components/` |
 | Server Action 인증 패턴 | `src/lib/actions/past-exams.ts` — `getCurrentUserProfile` |
 | 테스트 패턴 (Mock Supabase) | `src/lib/actions/__tests__/past-exams-list.test.ts` |
+| **신규** 문제 생성 Zod 스키마 | `src/lib/validations/generate-questions.ts` |
 
 ### ⚠️ 진행 중 이슈
 

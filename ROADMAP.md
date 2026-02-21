@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-02-20 (1-7 Step 2 프롬프트 빌더 완료)
+> **최종 업데이트**: 2026-02-21 (1-7 Step 3 Server Action + GeminiProvider 통합 완료)
 
 ## 개발 전략
 
@@ -126,8 +126,9 @@
 
 - [x] Step 1: 타입 확장 + Zod 스키마 (PastExamContext, generateQuestionsRequestSchema, 369 tests PASS)
 - [x] Step 2: 프롬프트 빌더 — buildPastExamGenerationPrompt (TDD, 14 tests, 383 tests PASS)
-- [ ] 기출 기반 유사 문제 생성
-- [ ] 기출 스타일 반영 옵션
+- [x] Step 3: Server Action + GeminiProvider 통합 (TDD, 21 tests, 404 tests PASS)
+- [ ] 기출 기반 유사 문제 생성 UI (Step 4)
+- [ ] 빌드 검증 + 학습 리뷰 (Step 5)
 
 ### 1-8. 생성된 문제 저장 [F003]
 
@@ -419,7 +420,7 @@ CREATE TABLE teacher_subjects (
 | Phase/단계 | 진행률 | 상태 |
 |-----------|--------|------|
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
-| 단계 1 (기출 기반 문제 생성 + 인증) | 80% (1-1~1-6 완료, 1-7 Step 2/5 완료, 1-8 미시작) | 🚧 진행 중 |
+| 단계 1 (기출 기반 문제 생성 + 인증) | 85% (1-1~1-6 완료, 1-7 Step 3/5 완료, 1-8 미시작) | 🚧 진행 중 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
