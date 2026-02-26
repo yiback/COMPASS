@@ -47,12 +47,6 @@ const SYSTEM_INSTRUCTION = [
   '5. 기출문제와 동일한 문제가 아닌, 출제 경향을 반영한 유사 문제를 생성하세요.',
 ].join('\n')
 
-/**
- * 기출문제 기반 문제 생성용 PromptConfig를 빌드한다.
- *
- * @param params - 과목, 학년, 문제유형, 난이도 등 생성 조건 + pastExamContext
- * @returns Gemini API에 전달할 PromptConfig
- */
 export function buildPastExamGenerationPrompt(
   params: GenerateQuestionParams,
 ): PromptConfig {
@@ -68,6 +62,7 @@ export function buildPastExamGenerationPrompt(
     lines.push(`연도: ${ctx.year}년 ${ctx.semester}학기`)
     lines.push(`시험 유형: ${examTypeLabel}`)
 
+    // extractedContent 유무에 따른 프롬프트 분기
     if (ctx.extractedContent) {
       lines.push('')
       lines.push('=== 기출문제 내용 (참고) ===')
