@@ -1,7 +1,7 @@
 # 1-7 기출 기반 AI 문제 생성 [F011] 구현 계획
 
-> **진행률**: 3/5 Steps (60%)
-> **마지막 업데이트**: 2026-02-21
+> **진행률**: 4/5 Steps (80%)
+> **마지막 업데이트**: 2026-02-26
 > **상태**: 🚧 진행 중
 
 | Step | 내용 | 상태 |
@@ -9,7 +9,7 @@
 | Step 1 | 타입 확장 + Zod 스키마 (TDD) | ✅ 완료 (369 tests PASS) |
 | Step 2 | 프롬프트 빌더 — buildPastExamGenerationPrompt (TDD) | ✅ 완료 (383 tests PASS) |
 | Step 3 | Server Action + GeminiProvider 통합 (TDD) | ✅ 완료 (404 tests PASS) |
-| Step 4 | UI — 생성 다이얼로그 + 결과 표시 | 미시작 |
+| Step 4 | UI — 생성 다이얼로그 + 결과 표시 | ✅ 완료 (404 tests PASS, 빌드 성공) |
 | Step 5 | 빌드 검증 + 학습 리뷰 (~404+ tests 예상) | 미시작 |
 
 ---
@@ -758,12 +758,14 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 
 ### 성공 기준
 
-- [ ] "AI 문제 생성" 버튼이 교사/관리자에게만 표시
-- [ ] 생성 옵션 선택 후 생성 버튼 클릭 시 AI 호출
-- [ ] 로딩 상태 표시 (버튼 disabled + "생성 중...")
-- [ ] 생성 결과가 카드 형태로 표시
-- [ ] 에러 시 toast 알림
-- [ ] 기존 Sheet 기능(상세 조회, 이미지 미리보기) 회귀 없음
+- [x] "AI 문제 생성" 버튼이 교사/관리자에게만 표시
+- [x] 생성 옵션 선택 후 생성 버튼 클릭 시 AI 호출
+- [x] 로딩 상태 표시 (버튼 disabled + "생성 중...")
+- [x] 생성 결과가 카드 형태로 표시
+- [x] 에러 시 toast 알림
+- [x] 기존 Sheet 기능(상세 조회, 이미지 미리보기) 회귀 없음
+
+**완료 요약**: 팩토리 함수 패턴(`createPastExamColumns`)으로 callerRole 전달, `GenerateQuestionsDialog` 신규 생성(~250줄), `PastExamDetailSheet`에 버튼+Dialog 연동. 404 tests PASS, 빌드 성공. 학습 리뷰 완료 (팩토리 함수+클로저, Dialog+Sheet 중첩, z.coerce.number).
 
 ---
 
@@ -814,7 +816,7 @@ npm run build                      # Next.js 빌드 성공
 | `src/lib/ai/index.ts` | PastExamContext export 추가 | ✅ Step 1 |
 | `src/lib/ai/gemini.ts` | pastExamContext 분기 (~3줄) | ✅ Step 3 |
 | `src/lib/ai/prompts/index.ts` | buildPastExamGenerationPrompt export 추가 | ✅ Step 2 |
-| `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` | "AI 문제 생성" 버튼 + Dialog 연동 | Step 4 |
+| `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` | "AI 문제 생성" 버튼 + Dialog 연동 | ✅ Step 4 |
 
 ### 새로 생성 (5개)
 
@@ -823,7 +825,7 @@ npm run build                      # Next.js 빌드 성공
 | `src/lib/validations/generate-questions.ts` | Zod 스키마 + 상수 | ✅ Step 1 |
 | `src/lib/ai/prompts/past-exam-generation.ts` | 기출 기반 프롬프트 빌더 | ✅ Step 2 |
 | `src/lib/actions/generate-questions.ts` | Server Action | ✅ Step 3 |
-| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | 생성 다이얼로그 UI | Step 4 |
+| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | 생성 다이얼로그 UI | ✅ Step 4 |
 | `docs/plan/phase-1-step7-ai-question-generation.md` | 이 계획 문서 | ✅ |
 
 ### 수정 (테스트, 2개)
@@ -831,7 +833,7 @@ npm run build                      # Next.js 빌드 성공
 | 파일 | 변경 | 상태 |
 |------|------|------|
 | `src/lib/ai/__tests__/types.test.ts` | PastExamContext 호환성 테스트 추가 | ✅ Step 1 |
-| `src/lib/ai/__tests__/gemini.test.ts` | pastExamContext 분기 테스트 추가 | Step 3 |
+| `src/lib/ai/__tests__/gemini.test.ts` | pastExamContext 분기 테스트 추가 | ✅ Step 3 |
 
 ### 새로 생성 (테스트, 3개)
 
@@ -839,11 +841,11 @@ npm run build                      # Next.js 빌드 성공
 |------|------|------|
 | `src/lib/validations/__tests__/generate-questions.test.ts` | Zod 스키마 테스트 | ✅ Step 1 |
 | `src/lib/ai/__tests__/prompts/past-exam-generation.test.ts` | 프롬프트 빌더 테스트 | ✅ Step 2 |
-| `src/lib/actions/__tests__/generate-questions.test.ts` | Server Action 테스트 | Step 3 |
+| `src/lib/actions/__tests__/generate-questions.test.ts` | Server Action 테스트 | ✅ Step 3 |
 
 **총: 7개 수정 + 8개 생성 = 15개 파일 (테스트 포함)**
-**완료: 8/15 (Step 1-2) | 남은: 7개 (Step 3-4)**
-**테스트: 현재 383개 PASS | Step 3 후 ~404개 예상**
+**완료: 15/15 (Step 1-4) | 남은: Step 5 빌드 검증**
+**테스트: 404개 PASS | 빌드 성공**
 
 ---
 

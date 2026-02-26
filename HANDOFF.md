@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-21 (1-7 Step 3 구현 완료, 404 tests)
+> **최종 업데이트**: 2026-02-26 (1-7 Step 4 UI 구현 완료, 404 tests)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -29,58 +29,34 @@
 | 1-4 | 학원 관리 CRUD [F007] | ✅ 완료 |
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
 | 1-6 | 기출문제 조회 [F006] | ✅ 완료 (5/5 Steps, 347 tests, 빌드 성공) |
-| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 3/5 완료 (404 tests) ← Step 4 UI 대기** |
+| **1-7** | **기출 기반 AI 문제 생성 [F011]** | **🚧 Step 4/5 완료 (404 tests) ← Step 5 빌드 검증 대기** |
 | 1-8 | 생성된 문제 저장 [F003] | 미시작 |
 
-### 최근 세션 요약 (2026-02-21, 세션 5)
+### 최근 세션 요약 (2026-02-26, 세션 6)
 
-1. **1-7 Step 3 구현 완료** (Server Action + GeminiProvider 통합, TDD):
-   - Phase A: gemini.ts 분기 — 3개 테스트 추가, import 1줄 + 분기 3줄 (21 PASS)
-   - Phase B: Server Action — 18개 테스트 + ~150줄 구현 (404 전체 PASS)
-   - 핵심 Mock 패턴: `vi.importActual` (AIError instanceof), `from()` mockImplementation (테이블 분기)
+1. **1-7 Step 4 구현 완료** (UI — 생성 다이얼로그 + 결과 표시):
+   - Phase A: `pastExamColumns` 정적 배열 → `createPastExamColumns(callerRole)` 팩토리 함수 변환 + page.tsx 연동
+   - Phase B: `generate-questions-dialog.tsx` 신규 생성 (~250줄) — 폼 + 로딩 + 결과 카드
+   - Phase C: `past-exam-detail-sheet.tsx`에 callerRole prop + "AI 문제 생성" 버튼 + Dialog 연동
+   - 404 tests PASS (회귀 없음), npm run build 성공
 2. **학습 리뷰 완료**:
-   - 3개 핵심 개념 설명 (vi.importActual, from() mockImplementation, 조건부 스프레드)
-   - 빈칸 채우기 실습 완료 (4개 빈칸, 수정 후 18 tests PASS)
-   - 2개 스킬 추출: `~/.claude/skills/learned/vi-import-actual-partial-mock.md`, `supabase-from-mock-implementation.md`
-3. 워킹 트리: origin/main 대비 **4 커밋 ahead** (미푸시) + **미커밋 파일 있음** (구현 + 문서)
+   - 팩토리 함수 + 클로저 개념 설명 + 이해도 질문 3개 (z.coerce.number, Dialog 배치)
+   - 개념 문서 생성: `docs/concepts/factory-closure.md` (634줄, 연습 문제 포함)
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-7 Step 4 구현 (UI — 생성 다이얼로그)
+### 즉시: 1-7 Step 5 (빌드 검증 + 학습 리뷰)
 
-**상위 계획**: `docs/plan/phase-1-step7-ai-question-generation.md` Step 4
+**상위 계획**: `docs/plan/phase-1-step7-ai-question-generation.md` Step 5
 
-**구현 내용**:
-- 기출문제 상세 페이지에서 "AI 문제 생성" 버튼 추가
-- 생성 다이얼로그 UI (문제 유형, 난이도, 개수 선택)
-- `generateQuestionsFromPastExam` Server Action 호출
-- 생성 결과 표시 (DB 저장은 1-8에서)
+**내용**:
+- 전체 빌드 검증 (`npx vitest run`, `npm run build`)
+- 1-7 전체 학습 리뷰 (Factory+Strategy 실전 적용, 프롬프트 엔지니어링 등)
+- 이해도 질문 5개 답변
 
-**미커밋 파일** (Step 3 구현 + 문서):
-- `src/lib/ai/gemini.ts` (수정)
-- `src/lib/ai/__tests__/gemini.test.ts` (수정)
-- `src/lib/actions/generate-questions.ts` (신규)
-- `src/lib/actions/__tests__/generate-questions.test.ts` (신규)
-- `docs/plan/phase-1-step7-step3-detail.md` (신규)
-- `docs/plan/phase-1-step7-ai-question-generation.md` (수정)
-- `ROADMAP.md` (수정)
-- `HANDOFF.md` (수정)
-
-**미푸시 커밋 4개** (origin/main 대비):
-- `15b60a7` ✨ feat: 1-7 Step 1 PastExamContext 타입 확장 + Zod 스키마
-- `2124450` 📝 docs: 1-7 Step 1 완료
-- `af368d8` ✨ feat: 1-7 Step 2 프롬프트 빌더
-- `bc5b3d8` 📝 docs: 1-7 Step 2 완료
-
-### 이후: 1-7 Step 5 (빌드 검증 + 학습 리뷰)
-
-| Step | 내용 | 예상 테스트 |
-|------|------|------------|
-| Step 5 | 빌드 검증 + 학습 리뷰 | 전체 ~404+ |
-
-### 그 다음: 1-8 생성된 문제 저장 [F003]
+### 이후: 1-8 생성된 문제 저장 [F003]
 
 **핵심 설계 결정 (확정)**:
 1. Gemini Vision → Phase 3 연기 (MVP: 텍스트 기반만)
@@ -129,13 +105,14 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (3/5 Steps 완료)** |
-| 5 | `docs/plan/phase-1-step7-step3-detail.md` — 1-7 Step 3 상세 계획 (✅ 완료) |
-| 6 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
-| 7 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
-| 8 | `docs/PRD.md` — 기능 명세 |
-| 9 | `supabase/migrations/` — DB 스키마·RLS 정책 |
-| 10 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (4/5 Steps 완료)** |
+| 5 | `docs/plan/phase-1-step7-step4-detail.md` — 1-7 Step 4 상세 계획 (✅ 완료) |
+| 6 | `docs/plan/phase-1-step7-step3-detail.md` — 1-7 Step 3 상세 계획 (✅ 완료) |
+| 7 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
+| 8 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
+| 9 | `docs/PRD.md` — 기능 명세 |
+| 10 | `supabase/migrations/` — DB 스키마·RLS 정책 |
+| 11 | `docs/guides/architecture-reference.md` — 아키텍처 |
 
 ### 1-7 참고용: 기존 구현 패턴
 
@@ -152,6 +129,10 @@
 | Server Action 인증 패턴 | `src/lib/actions/past-exams.ts` — `getCurrentUserProfile` |
 | 테스트 패턴 (Mock Supabase) | `src/lib/actions/__tests__/past-exams-list.test.ts` |
 | **신규** 문제 생성 Zod 스키마 | `src/lib/validations/generate-questions.ts` |
+| **신규** AI 문제 생성 Server Action | `src/lib/actions/generate-questions.ts` |
+| **신규** 생성 다이얼로그 UI | `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` |
+| **수정** 컬럼 팩토리 함수 | `src/app/(dashboard)/past-exams/_components/past-exam-columns.tsx` — `createPastExamColumns` |
+| **수정** Sheet + Dialog 연동 | `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` |
 
 ### ⚠️ 진행 중 이슈
 
