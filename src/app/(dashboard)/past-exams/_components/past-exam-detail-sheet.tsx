@@ -9,8 +9,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Sparkles } from 'lucide-react'
 import { getPastExamDetail } from '@/lib/actions/past-exams'
 import type { PastExamDetail } from '@/lib/actions/past-exams'
+import { GenerateQuestionsDialog } from './generate-questions-dialog'
 import {
   EXAM_TYPE_LABELS,
   EXAM_TYPE_BADGE_VARIANT,
@@ -23,6 +26,7 @@ interface PastExamDetailSheetProps {
   readonly open: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly examId: string
+  readonly callerRole?: string // 1-7 추가: 교사/관리자만 AI 문제 생성 버튼 표시
 }
 
 // ─── 정보 행 컴포넌트 ─────────────────────────────────
@@ -54,10 +58,17 @@ export function PastExamDetailSheet({
   open,
   onOpenChange,
   examId,
+  callerRole,
 }: PastExamDetailSheetProps) {
   const [detail, setDetail] = useState<PastExamDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false) // 1-7 추가: Dialog 열림 상태
+
+  // 교사/관리자 여부 (AI 문제 생성 버튼 표시 조건)
+  const isTeacherOrAbove = ['teacher', 'admin', 'system_admin'].includes(
+    callerRole ?? '',
+  )
 
   // Sheet 열릴 때 상세 데이터 패칭 (race condition 방지: cancelled 플래그)
   useEffect(() => {
@@ -177,10 +188,31 @@ export function PastExamDetailSheet({
                   )}
                 </div>
               )}
+
+              {/* AI 문제 생성 버튼 — 교사/관리자만 (1-7 추가) */}
+              {isTeacherOrAbove && (
+                <Button
+                  onClick={() => setDialogOpen(true)}
+                  className="w-full"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI 문제 생성
+                </Button>
+              )}
             </>
           )}
         </div>
       </SheetContent>
+
+      {/* AI 문제 생성 Dialog — Sheet 외부에 배치 (1-7 추가) */}
+      {isTeacherOrAbove && (
+        <GenerateQuestionsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          pastExamId={examId}
+          pastExamDetail={detail}
+        />
+      )}
     </Sheet>
   )
 }

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { getPastExamList } from '@/lib/actions/past-exams'
 import type { PastExamListItem } from '@/lib/actions/past-exams'
 import { createClient } from '@/lib/supabase/server'
-import { pastExamColumns } from './_components/past-exam-columns'
+import { createPastExamColumns } from './_components/past-exam-columns'
 import { PastExamsToolbar } from './_components/past-exams-toolbar'
 
 interface PastExamsPageProps {
@@ -81,6 +81,9 @@ export default async function PastExamsPage({
     callerRole
   )
 
+  // callerRole 기반 컬럼 생성 (AI 문제 생성 버튼 조건부 표시)
+  const columns = createPastExamColumns(callerRole)
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -101,7 +104,7 @@ export default async function PastExamsPage({
       </div>
 
       <DataTable
-        columns={pastExamColumns}
+        columns={columns}
         data={exams}
         toolbar={<PastExamsToolbar />}
         noResultsMessage="등록된 기출문제가 없습니다."

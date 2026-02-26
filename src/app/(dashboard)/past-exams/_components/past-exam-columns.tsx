@@ -15,9 +15,13 @@ import {
 import { PastExamDetailSheet } from './past-exam-detail-sheet'
 
 // ─── 기출문제 DataTable 컬럼 정의 (9개) ──────────────────
-// 조회 전용이므로 정적 배열 (팩토리 함수 불필요)
+// 팩토리 함수: callerRole을 PastExamDetailSheet에 전달 (AI 문제 생성 버튼 조건부 표시)
+// @see user-columns.tsx createUserColumns — 동일 패턴
 
-export const pastExamColumns: ColumnDef<PastExamListItem>[] = [
+export function createPastExamColumns(
+  callerRole: string,
+): ColumnDef<PastExamListItem>[] {
+  return [
   // 1. 학교
   {
     accessorKey: 'schoolName',
@@ -114,9 +118,11 @@ export const pastExamColumns: ColumnDef<PastExamListItem>[] = [
             open={sheetOpen}
             onOpenChange={setSheetOpen}
             examId={exam.id}
+            callerRole={callerRole}
           />
         </>
       )
     },
   },
-]
+  ]
+}
