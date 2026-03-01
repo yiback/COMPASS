@@ -6,10 +6,8 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import {
-  generateQuestionsRequestSchema,
-  MAX_QUESTION_COUNT,
-} from '../generate-questions'
+import { generateQuestionsRequestSchema } from '../generate-questions'
+import { MAX_QUESTION_COUNT } from '@/lib/constants/questions'
 
 // 모든 테스트에서 스프레드로 재사용 — 불변이므로 공유 안전
 const validInput = {

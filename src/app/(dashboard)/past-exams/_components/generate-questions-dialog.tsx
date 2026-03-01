@@ -5,12 +5,12 @@
  *
  * 기출문제 상세 Sheet에서 "AI 문제 생성" 버튼 클릭 시 열린다.
  * 문제 유형/난이도/문제 수를 선택하고, generateQuestionsFromPastExam Server Action을 호출한다.
- * 결과는 카드 형태로 표시하며, DB 저장은 1-8에서 구현한다.
+ * 결과는 Accordion 형태로 표시하며, 체크박스로 선택 후 DB에 저장할 수 있다.
  *
  * UI 상태 흐름: [폼] → [로딩] → [결과 or 에러] → [다시 생성 → 폼]
  */
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -27,15 +27,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { Sparkles, RotateCcw } from 'lucide-react'
 import { generateQuestionsFromPastExam } from '@/lib/actions/generate-questions'
+import { saveGeneratedQuestions } from '@/lib/actions/save-questions'
 import type { GeneratedQuestion } from '@/lib/ai'
 import type { PastExamDetail } from '@/lib/actions/past-exams'
-import { MAX_QUESTION_COUNT } from '@/lib/validations/generate-questions'
+import { MAX_QUESTION_COUNT } from '@/lib/constants/questions'
 
 // ─── Props ──────────────────────────────────────────────
 
@@ -86,32 +93,58 @@ const DIFFICULTY_BADGE_VARIANT: Record<
   hard: 'destructive',
 }
 
-// ─── 결과 카드 컴포넌트 ─────────────────────────────────
+// ─── 결과 카드 컴포넌트 (Accordion 기반) ────────────────
 
 interface QuestionCardProps {
   readonly question: GeneratedQuestion
   readonly index: number
+  // --- Step 3에서 추가 ---
+  readonly isSelected: boolean
+  readonly isSaved: boolean
+  readonly onToggle: (index: number) => void
 }
 
-function QuestionCard({ question, index }: QuestionCardProps) {
+function QuestionCard({ question, index, isSelected, isSaved, onToggle }: QuestionCardProps) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-base">문제 {index + 1}</CardTitle>
-          <Badge variant="outline">
-            {QUESTION_TYPE_LABELS[question.type] ?? question.type}
-          </Badge>
-          <Badge
-            variant={
-              DIFFICULTY_BADGE_VARIANT[question.difficulty] ?? 'secondary'
-            }
-          >
-            {DIFFICULTY_LABELS[question.difficulty] ?? question.difficulty}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <AccordionItem
+      value={`question-${index}`}
+      className={isSaved ? 'opacity-60' : ''}
+    >
+      <div className="flex items-center gap-3">
+        {/* 체크박스 — AccordionTrigger 밖에 위치 (클릭 이벤트 분리) */}
+        <Checkbox
+          checked={isSelected || isSaved}
+          disabled={isSaved}
+          onCheckedChange={() => onToggle(index)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`문제 ${index + 1} 선택`}
+        />
+
+        {/* Accordion 트리거 — 클릭 시 접기/펼치기 */}
+        <AccordionTrigger className="flex-1 py-2 hover:no-underline">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">문제 {index + 1}</span>
+            <Badge variant="outline" className="text-xs">
+              {QUESTION_TYPE_LABELS[question.type] ?? question.type}
+            </Badge>
+            <Badge
+              variant={DIFFICULTY_BADGE_VARIANT[question.difficulty] ?? 'secondary'}
+              className="text-xs"
+            >
+              {DIFFICULTY_LABELS[question.difficulty] ?? question.difficulty}
+            </Badge>
+            {/* 저장됨 표시 */}
+            {isSaved && (
+              <Badge variant="secondary" className="text-xs">
+                ✓ 저장됨
+              </Badge>
+            )}
+          </div>
+        </AccordionTrigger>
+      </div>
+
+      {/* 펼쳐지는 내용 */}
+      <AccordionContent className="pl-9 space-y-3">
         {/* 문제 내용 */}
         <p className="whitespace-pre-wrap text-sm">{question.content}</p>
 
@@ -138,13 +171,11 @@ function QuestionCard({ question, index }: QuestionCardProps) {
         {question.explanation && (
           <div>
             <p className="text-xs font-medium text-muted-foreground">해설</p>
-            <p className="whitespace-pre-wrap text-sm">
-              {question.explanation}
-            </p>
+            <p className="whitespace-pre-wrap text-sm">{question.explanation}</p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </AccordionContent>
+    </AccordionItem>
   )
 }
 
@@ -169,8 +200,32 @@ export function GenerateQuestionsDialog({
   // 로딩 상태
   const [isPending, startTransition] = useTransition()
 
+  // 저장 관련 상태 — 불변 패턴: Set 업데이트 시 new Set([...prev]) 사용
+  const [savedIndices, setSavedIndices] = useState<Set<number>>(new Set())
+  const [isSaving, setIsSaving] = useState(false)
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set())
+
+  // 별도 state 불필요 — 기존 Set에서 계산 (Single Source of Truth)
+  const allSaved =
+    savedIndices.size === generatedQuestions.length && generatedQuestions.length > 0
+  const savableCount = [...selectedIndices].filter((i) => !savedIndices.has(i)).length
+
+  // 파생 상태: 전체 선택/해제 체크박스에 사용
+  const unsavedIndices = generatedQuestions
+    .map((_, i) => i)
+    .filter((i) => !savedIndices.has(i))
+  const allUnsavedSelected =
+    unsavedIndices.length > 0 && unsavedIndices.every((i) => selectedIndices.has(i))
+
   // 폼 유효성
   const isFormValid = questionType !== '' && difficulty !== '' && count !== ''
+
+  // 문제 생성 완료 시 모든 문제를 선택 상태로 초기화
+  useEffect(() => {
+    if (generatedQuestions.length > 0) {
+      setSelectedIndices(new Set(generatedQuestions.map((_, i) => i)))
+    }
+  }, [generatedQuestions])
 
   // ─── 핸들러 ─────────────────────────────────────────
 
@@ -195,9 +250,82 @@ export function GenerateQuestionsDialog({
     })
   }
 
+  /** 선택된 문제 중 아직 저장 안 된 것만 DB에 저장 */
+  async function handleSave() {
+    if (!generatedQuestions || !pastExamId) return
+
+    // 선택됐지만 아직 저장 안 된 인덱스만 추림
+    const indicesToSave = [...selectedIndices].filter((i) => !savedIndices.has(i))
+    if (indicesToSave.length === 0) return
+
+    setIsSaving(true)
+    try {
+      const questionsToSave = indicesToSave.map((i) => generatedQuestions[i])
+      const result = await saveGeneratedQuestions({
+        pastExamId,
+        questions: questionsToSave,
+      })
+
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        // 저장 성공 → savedIndices에 추가, selectedIndices에서 제거
+        setSavedIndices((prev) => new Set([...prev, ...indicesToSave]))
+        setSelectedIndices((prev) => {
+          const next = new Set(prev)
+          indicesToSave.forEach((i) => next.delete(i))
+          return next
+        })
+        toast.success(`${questionsToSave.length}개 문제가 저장되었습니다.`)
+      }
+    } catch {
+      toast.error('저장 중 오류가 발생했습니다.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  /** 개별 문제 선택/해제 (저장 완료된 문제는 토글 불가) */
+  function toggleQuestion(index: number) {
+    if (savedIndices.has(index)) return // 저장 완료 → 변경 불가
+
+    setSelectedIndices((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
+
+  /** 저장 안 된 문제 전체 선택/해제 토글 */
+  function toggleAll() {
+    // 아직 저장되지 않은 인덱스만 대상
+    const currentUnsaved = generatedQuestions
+      .map((_, i) => i)
+      .filter((i) => !savedIndices.has(i))
+
+    // 미저장 문제가 모두 선택돼 있으면 → 전체 해제, 아니면 → 전체 선택
+    const currentAllUnsavedSelected = currentUnsaved.every((i) => selectedIndices.has(i))
+
+    if (currentAllUnsavedSelected) {
+      setSelectedIndices((prev) => {
+        const next = new Set(prev)
+        currentUnsaved.forEach((i) => next.delete(i))
+        return next
+      })
+    } else {
+      setSelectedIndices((prev) => new Set([...prev, ...currentUnsaved]))
+    }
+  }
+
   /** "다시 생성" — 결과 초기화 후 폼으로 복귀 */
   function handleRetry() {
     setGeneratedQuestions([])
+    setSavedIndices(new Set())
+    setSelectedIndices(new Set())
   }
 
   /** Dialog 닫힐 때 상태 초기화 */
@@ -207,6 +335,8 @@ export function GenerateQuestionsDialog({
       setDifficulty('')
       setCount('')
       setGeneratedQuestions([])
+      setSavedIndices(new Set())
+      setSelectedIndices(new Set())
     }
     onOpenChange(nextOpen)
   }
@@ -314,9 +444,15 @@ export function GenerateQuestionsDialog({
         {/* 결과 영역 */}
         {hasResults && !isPending && (
           <div className="space-y-3">
+            {/* 헤더: 문제 수 + 저장됨 카운트 + 다시 생성 버튼 */}
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">
                 생성된 문제 {generatedQuestions.length}개
+                {savedIndices.size > 0 && (
+                  <span className="ml-1 text-muted-foreground">
+                    ({savedIndices.size}개 저장됨)
+                  </span>
+                )}
               </p>
               <Button variant="outline" size="sm" onClick={handleRetry}>
                 <RotateCcw className="mr-1 h-4 w-4" />
@@ -324,15 +460,43 @@ export function GenerateQuestionsDialog({
               </Button>
             </div>
 
-            <div className="max-h-96 space-y-3 overflow-y-auto pr-1">
+            {/* 전체 선택 + 저장 버튼 행 — 모두 저장됐으면 숨김 */}
+            {!allSaved && (
+              <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                <div
+                  className="flex cursor-pointer items-center gap-2"
+                  onClick={toggleAll}
+                >
+                  <Checkbox
+                    checked={allUnsavedSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="전체 선택/해제"
+                  />
+                  <span className="text-sm">전체 선택/해제</span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={savableCount === 0 || isSaving}
+                >
+                  {isSaving ? '저장 중...' : `선택 저장 (${savableCount})`}
+                </Button>
+              </div>
+            )}
+
+            {/* 문제 목록 (Accordion — 여러 개 동시 펼침 가능) */}
+            <Accordion type="multiple" className="max-h-96 overflow-y-auto pr-1">
               {generatedQuestions.map((question, index) => (
                 <QuestionCard
                   key={index}
                   question={question}
                   index={index}
+                  isSelected={selectedIndices.has(index)}
+                  isSaved={savedIndices.has(index)}
+                  onToggle={toggleQuestion}
                 />
               ))}
-            </div>
+            </Accordion>
           </div>
         )}
 

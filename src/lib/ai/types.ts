@@ -47,6 +47,55 @@ export function fromDbQuestionType(type: DbQuestionType): QuestionType {
   return DB_TO_AI_MAP[type]
 }
 
+// ─── 난이도 매핑 ─────────────────────────────────────────
+
+/** AI 프롬프트에서 사용하는 난이도 레벨 */
+export type DifficultyLevel = 'easy' | 'medium' | 'hard'
+
+/**
+ * AI 난이도 문자열 → DB 정수 매핑
+ *
+ * DB 스키마: 1(매우쉬움) ~ 5(매우어려움)
+ * AI 생성 문제는 2(쉬움), 3(보통), 4(어려움) 범위를 사용한다.
+ *
+ * `as const`: 리터럴 타입 고정 (number가 아닌 2 | 3 | 4 타입)
+ * `satisfies Record<DifficultyLevel, number>`: 키 누락 시 컴파일 에러
+ */
+const DIFFICULTY_TO_NUMBER = {
+  easy: 2,
+  medium: 3,
+  hard: 4,
+} as const satisfies Record<DifficultyLevel, number>
+
+/**
+ * DB 정수 → AI 난이도 문자열 역매핑
+ *
+ * `as const`를 사용하지 않는 이유:
+ * - 키가 number 타입 → TypeScript가 Record<number, DifficultyLevel>로 추론
+ * - 특정 리터럴(2 | 3 | 4) 타입이 필요하지 않으므로 `satisfies`만 사용
+ */
+const NUMBER_TO_DIFFICULTY: Record<number, DifficultyLevel> = {
+  2: 'easy',
+  3: 'medium',
+  4: 'hard',
+}
+
+/** AI 난이도 문자열 → DB 정수 변환 */
+export function toDifficultyNumber(difficulty: DifficultyLevel): number {
+  return DIFFICULTY_TO_NUMBER[difficulty]
+}
+
+/**
+ * DB 정수 → AI 난이도 문자열 변환
+ *
+ * 매핑에 없는 정수(1, 5 등)는 'medium'을 반환한다.
+ * throw하지 않는 이유: DB에 1이나 5가 저장되어 있어도
+ * UI가 중단되지 않아야 하며, 'medium'은 안전한 폴백이다.
+ */
+export function fromDifficultyNumber(num: number): DifficultyLevel {
+  return NUMBER_TO_DIFFICULTY[num] ?? 'medium'
+}
+
 // ─── AI Provider 인터페이스 (Strategy 패턴) ─────────────
 
 /** 모든 AI 제공자가 구현해야 할 인터페이스 */

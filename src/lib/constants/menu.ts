@@ -6,6 +6,7 @@ import {
   Users,
   GraduationCap,
   Settings,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -38,6 +39,12 @@ export const MENU_ITEMS: MenuItem[] = [
     href: '/generate',
     icon: Sparkles,
     description: 'AI 기반 문제 생성',
+  },
+  {
+    title: '문제 관리',
+    href: '/questions',
+    icon: BookOpen,
+    description: '저장된 문제 조회 및 관리',
   },
   {
     title: '학원 관리',

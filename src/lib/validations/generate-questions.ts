@@ -1,12 +1,10 @@
 /**
  * AI 문제 생성 요청 검증
- * Zod 스키마 + MAX_QUESTION_COUNT 상수
+ * Zod 스키마 — MAX_QUESTION_COUNT는 공통 상수 파일에서 import
  */
 
 import { z } from 'zod'
-
-/** 문제 생성 요청 최대 문제 수 (API 비용 관리) */
-export const MAX_QUESTION_COUNT = 10
+import { MAX_QUESTION_COUNT } from '@/lib/constants/questions'
 
 export const generateQuestionsRequestSchema = z.object({
   pastExamId: z.string().uuid('기출문제 ID가 유효하지 않습니다.'),
