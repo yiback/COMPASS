@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-02-26 (1-7 전체 완료 — 5/5 Steps, 404 tests, 빌드 성공)
+> **최종 업데이트**: 2026-03-01 (세션 15: 1-8 Step 1~5 전체 구현 완료)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -19,7 +19,7 @@
 - 0-1~0-4: Next.js + Supabase + 레이아웃 + 공통 UI
 - 0-5: AI 추상화 레이어 (Factory + Strategy, GeminiProvider, 94개+ 테스트)
 
-### 단계 1: 기출 기반 문제 생성 + 인증 (93% 완료)
+### 단계 1: 기출 기반 문제 생성 + 인증 (100% 완료 ✅)
 
 | 스텝 | 작업 | 상태 |
 |------|------|------|
@@ -30,57 +30,84 @@
 | 1-5 | 사용자 관리 CRUD [F009] | ✅ 완료 |
 | 1-6 | 기출문제 조회 [F006] | ✅ 완료 (5/5 Steps, 347 tests, 빌드 성공) |
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | ✅ 완료 (5/5 Steps, 404 tests, 빌드 성공) |
-| **1-8** | **생성된 문제 저장 [F003]** | **미시작 ← 다음** |
+| 1-8 | 생성된 문제 저장 [F003] | ✅ 완료 (5/5 Steps, 535 tests, 빌드 성공) |
 
-### 최근 세션 요약 (2026-02-26, 세션 8)
+### 현재 세션 요약 (2026-03-01, 세션 15)
 
-1. **1-7 Step 5 빌드 검증 완료**:
-   - `npx vitest run` — 404 tests 전체 PASS
-   - `npm run lint` — 에러 0개 (경고 6개)
-   - `npm run build` — 빌드 성공
-2. **학습 리뷰 완료**:
-   - 5개 핵심 개념 설명 (Factory+Strategy, 프롬프트 엔지니어링, Server Action AI 호출, useTransition, Zod+AI 타입)
-   - 이해도 질문 5개 답변 + 피드백 (SRP/하위호환/관심사분리 부족 → 추가 설명)
-3. **직접 구현 완료**:
-   - 프롬프트 빌더(🔴) 빈칸 채우기 5곳 → 14 tests PASS
-   - trailing comma 학습 (JS/TS 문법)
-4. **1-7 전체 완료** — 5/5 Steps, 404 tests, 빌드 성공
+**1-8 Step 1~5 전체 구현 완료** — 3-Wave 병렬 실행:
 
-### 이전 세션 요약 (2026-02-26, 세션 7)
+| Wave | Steps | 결과 |
+|------|-------|------|
+| Wave 1 (병렬) | Step 1 (타입 매핑) + Step 4 (문제 목록) | 504 tests PASS |
+| Wave 2 (병렬) | Step 2 (저장 Action) + Step 5 (문제 상세) | 추가 31 tests PASS |
+| Wave 3 | Step 3 (저장 UI + Accordion) | 빌드 성공 |
 
-1. **문서 상태 확인 + 누락 수정**:
-   - 계획 문서 하단 "전체 파일 변경 요약" 테이블에서 Step 3/4 완료 표시 누락 발견
-   - 5개 항목 `Step 3`/`Step 4` → `✅ Step 3`/`✅ Step 4`로 수정
-   - 요약 라인: `완료: 8/15 (Step 1-2)` → `완료: 15/15 (Step 1-4)`
-2. **커밋 2개 생성** (feat/docs 분리 패턴):
-   - `9de843c` ✨ feat: 1-7 Step 4 UI — 생성 다이얼로그 + 결과 표시
-   - `9048924` 📝 docs: 1-7 Step 4 완료 — HANDOFF/ROADMAP/계획 문서 업데이트
-3. **origin/main 대비 8 커밋 ahead** (미푸시):
-   - Step 1~4 각각 feat + docs = 8 커밋
+**최종 결과**: 31 test files, 535 tests ALL PASS, Next.js 빌드 성공, `/questions` 라우트 등록
 
-### 이전 세션 요약 (2026-02-26, 세션 6)
+### 이전 세션 (세션 11-14)
 
-1. **1-7 Step 4 구현 완료** (UI — 생성 다이얼로그 + 결과 표시):
-   - Phase A: `pastExamColumns` 정적 배열 → `createPastExamColumns(callerRole)` 팩토리 함수 변환 + page.tsx 연동
-   - Phase B: `generate-questions-dialog.tsx` 신규 생성 (~250줄) — 폼 + 로딩 + 결과 카드
-   - Phase C: `past-exam-detail-sheet.tsx`에 callerRole prop + "AI 문제 생성" 버튼 + Dialog 연동
-   - 404 tests PASS (회귀 없음), npm run build 성공
-2. **학습 리뷰 완료**:
-   - 팩토리 함수 + 클로저 개념 설명 + 이해도 질문 3개 (z.coerce.number, Dialog 배치)
-   - 개념 문서 생성: `docs/concepts/factory-closure.md` (634줄, 연습 문제 포함)
+- 세션 14: 1-8 계획 문서 NOTE 4개 리뷰 + 수정 완료
+- 세션 13: TypeScript 학습 (`as const`, `satisfies`, `z.infer`) + 개념 문서 생성
+- 세션 12: NOTE 12/12 리뷰 완료 + 계획 문서 수정 완료
+- 세션 11: 학습 리뷰 6개 + NOTE 12개 순차 리뷰 + 사용자 결정 확정 2건
 
 ---
 
 ## 3. 다음 작업
 
-### 즉시: 1-8 생성된 문제 저장 [F003]
+### 즉시 해야 할 일
 
-**핵심 설계 결정 (확정)**:
-1. Gemini Vision → Phase 3 연기 (MVP: 텍스트 기반만)
-2. `GenerateQuestionParams`에 optional `pastExamContext` 추가 (하위 호환)
-3. 생성 결과 화면 표시만, DB 저장은 1-8
-4. 교사/관리자만 문제 생성 가능
-5. `MAX_QUESTION_COUNT = 10` (API 비용 관리)
+1. **학습 리뷰 완료** — 세션 15에서 제시한 이해도 질문 5개 답변 대기 중
+2. **커밋** — 1-8 구현 결과물 커밋 (미커밋 상태)
+3. **ROADMAP.md 업데이트** — 1-8 완료 반영
+
+### 이후 작업
+
+1. **단계 1 통합 테스트** — E2E 테스트로 전체 플로우 검증
+2. **단계 2 시작** — 다음 Phase 계획 수립
+
+### 세션 15에서 구현된 파일 목록
+
+**Step 1 — 타입 매핑 + Zod 스키마** (10 files, 37 tests)
+| 파일 | 상태 |
+|------|------|
+| `src/lib/constants/questions.ts` | NEW — MAX_QUESTION_COUNT 공통 상수 |
+| `src/lib/ai/types.ts` | MODIFIED — DifficultyLevel, 매핑 함수 |
+| `src/lib/ai/index.ts` | MODIFIED — 새 export 추가 |
+| `src/lib/validations/save-questions.ts` | NEW — 저장 Zod 스키마 |
+| `src/lib/validations/generate-questions.ts` | MODIFIED — import 경로 변경 |
+| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | MODIFIED — import 경로 변경 |
+
+**Step 2 — 저장 Server Action** (2 files, 23 tests)
+| 파일 | 상태 |
+|------|------|
+| `src/lib/actions/save-questions.ts` | NEW — saveGeneratedQuestions Action |
+| `src/lib/actions/__tests__/save-questions.test.ts` | NEW — 23 tests |
+
+**Step 3 — 저장 UI (Accordion + Checkbox)** (2 files)
+| 파일 | 상태 |
+|------|------|
+| `src/components/ui/accordion.tsx` | NEW — shadcn Accordion |
+| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | MODIFIED — 351→516 lines |
+
+**Step 4 — 문제 목록 DataTable** (9 files, 63 tests)
+| 파일 | 상태 |
+|------|------|
+| `src/lib/utils/grade-filter-utils.ts` | NEW — schoolType 연동 학년 필터 |
+| `src/lib/validations/questions.ts` | NEW — 필터 스키마 |
+| `src/lib/actions/questions.ts` | NEW — getQuestionList Action |
+| `src/app/(dashboard)/questions/page.tsx` | NEW — 문제 목록 페이지 |
+| `src/app/(dashboard)/questions/_components/constants.ts` | NEW — UI 상수 |
+| `src/app/(dashboard)/questions/_components/question-columns.tsx` | NEW — DataTable 컬럼 |
+| `src/app/(dashboard)/questions/_components/questions-toolbar.tsx` | NEW — 필터 툴바 |
+| `src/lib/constants/menu.ts` | MODIFIED — "문제 관리" 메뉴 추가 |
+
+**Step 5 — 문제 상세 Sheet** (3 files, 8 tests)
+| 파일 | 상태 |
+|------|------|
+| `src/lib/actions/questions.ts` | MODIFIED — getQuestionDetail 추가 |
+| `src/lib/actions/__tests__/questions-detail.test.ts` | NEW — 8 tests |
+| `src/app/(dashboard)/questions/_components/question-detail-sheet.tsx` | NEW — 상세 Sheet |
 
 ---
 
@@ -100,11 +127,19 @@
 - **Sequential Thinking MCP + planner 에이전트**: 복잡한 계획 수립 시 MCP로 분석 후 에이전트로 정형화
 - **DRY 판단 기준**: "같은 이유로 변경되는가?" — 우연한 중복(Accidental Duplication)은 합치지 않음
 - **프롬프트 빌더 분리 패턴**: SRP/OCP 기반 — 기존 함수 수정 대신 별도 함수 추가
+- **NOTE 순차 리뷰 방식**: 계획 문서 리뷰 시 한 번에 전체 반영하지 않고, NOTE 하나씩 설명 → 승인 → 다음 진행
+- **공통 상수 분리**: 여러 모듈에서 공유하는 상수는 `src/lib/constants/`에 정의, 각 모듈에서 import
+- **3-Wave 병렬 구현**: 의존성 그래프 분석 → 독립 Step 병렬 실행 (Step1+4 → Step2+5 → Step3)
+- **`as const satisfies Record<K,V>`**: 리터럴 타입 + 형태 검증 동시 달성
+- **Set<number> 부분 저장 추적**: savedIndices로 개별 문제 저장 상태 관리 + 파생 상태(allSaved, savableCount)
+- **Accordion UI 패턴**: 긴 문제 카드 접기/펼치기 — `type="multiple"` + `e.stopPropagation()`
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
 - **사용자 수준**: JavaScript 기초(`const`, `await`)부터 설명 필요. 간결하게
 - **에이전트 커맨드 준수**: `/plan`, `/tdd` 등 명시된 경우 반드시 해당 서브에이전트 실행
+- **Supabase `.or()` 문법**: `.or('col1.eq.val,col2.eq.val')` — 함수가 아닌 문자열 패턴
+- **개념 문서 방식 학습**: `docs/concepts/` 폴더에 개념별 상세 문서 작성
 
 ### 실패한 접근 (반복하지 말 것)
 - **계획 파일 없이 코드 작성**: 반드시 `docs/plan/` 파일 먼저 생성
@@ -122,38 +157,30 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step7-ai-question-generation.md` — **1-7 전체 계획 (5/5 Steps 완료)** |
-| 5 | `docs/plan/phase-1-step7-step4-detail.md` — 1-7 Step 4 상세 계획 (✅ 완료) |
-| 6 | `docs/plan/phase-1-step7-step3-detail.md` — 1-7 Step 3 상세 계획 (✅ 완료) |
-| 7 | `docs/plan/phase-1-step7-step2-detail.md` — 1-7 Step 2 상세 계획 (✅ 완료) |
-| 8 | `docs/plan/phase-1-step7-step1-detail.md` — 1-7 Step 1 상세 계획 (✅ 완료) |
-| 9 | `docs/PRD.md` — 기능 명세 |
-| 10 | `supabase/migrations/` — DB 스키마·RLS 정책 |
-| 11 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-step8-save-generated-questions.md` — 1-8 전체 계획 (5/5 Steps 완료) |
+| 5 | `docs/plan/phase-1-step7-ai-question-generation.md` — 1-7 전체 계획 (5/5 Steps 완료) |
+| 6 | `docs/PRD.md` — 기능 명세 |
+| 7 | `supabase/migrations/00001_initial_schema.sql` — DB 스키마 (questions 테이블 포함) |
+| 8 | `supabase/migrations/00002_rls_policies.sql` — RLS 정책 |
+| 9 | `docs/guides/architecture-reference.md` — 아키텍처 |
 
-### 1-7 참고용: 기존 구현 패턴
+### 1-8 구현 완료 — 주요 파일 참조
 
-| 재사용 대상 | 출처 파일 |
-|------------|----------|
-| AI 추상화 레이어 (Factory + Strategy) | `src/lib/ai/index.ts` — 공개 API |
-| GeminiProvider 구현체 | `src/lib/ai/gemini.ts` |
-| 기존 프롬프트 빌더 패턴 | `src/lib/ai/prompts/question-generation.ts` |
-| **신규** 기출 기반 프롬프트 빌더 | `src/lib/ai/prompts/past-exam-generation.ts` |
-| 응답 파싱/검증 (Zod 이중 검증) | `src/lib/ai/validation.ts` |
-| 재시도 유틸리티 (지수 백오프) | `src/lib/ai/retry.ts` |
-| 기출문제 조회 액션 | `src/lib/actions/past-exams.ts` — `getPastExamList`, `getPastExamDetail` |
-| 기출문제 DataTable UI | `src/app/(dashboard)/past-exams/_components/` |
-| Server Action 인증 패턴 | `src/lib/actions/past-exams.ts` — `getCurrentUserProfile` |
-| 테스트 패턴 (Mock Supabase) | `src/lib/actions/__tests__/past-exams-list.test.ts` |
-| **신규** 문제 생성 Zod 스키마 | `src/lib/validations/generate-questions.ts` |
-| **신규** AI 문제 생성 Server Action | `src/lib/actions/generate-questions.ts` |
-| **신규** 생성 다이얼로그 UI | `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` |
-| **수정** 컬럼 팩토리 함수 | `src/app/(dashboard)/past-exams/_components/past-exam-columns.tsx` — `createPastExamColumns` |
-| **수정** Sheet + Dialog 연동 | `src/app/(dashboard)/past-exams/_components/past-exam-detail-sheet.tsx` |
+| 기능 | 파일 |
+|------|------|
+| 저장 Server Action | `src/lib/actions/save-questions.ts` |
+| 저장 Zod 스키마 | `src/lib/validations/save-questions.ts` |
+| 생성 다이얼로그 (저장 UI 포함) | `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` |
+| 난이도 매핑 함수 | `src/lib/ai/types.ts` — `toDifficultyNumber`/`fromDifficultyNumber` |
+| 문제 목록 페이지 | `src/app/(dashboard)/questions/page.tsx` |
+| 문제 목록 Action | `src/lib/actions/questions.ts` — `getQuestionList`/`getQuestionDetail` |
+| 문제 상세 Sheet | `src/app/(dashboard)/questions/_components/question-detail-sheet.tsx` |
+| 학년 필터 유틸 | `src/lib/utils/grade-filter-utils.ts` |
+| 공통 상수 | `src/lib/constants/questions.ts` — `MAX_QUESTION_COUNT` |
 
 ### ⚠️ 진행 중 이슈
 
 - Supabase placeholder 타입: `as any` + `eslint-disable`로 우회 중 (`supabase gen types`로 해결 가능)
 - 마이그레이션 00004, 00005: Supabase Cloud에 **미적용** (로컬 파일만 존재)
 - `await cookies()` 필수 (Next.js 16 비동기)
-- origin/main 대비 **8 커밋 미푸시** (Step 1~4, 각 feat+docs)
+- origin/main과 동기화 완료 (세션 9에서 푸시) — 세션 15 변경사항은 **미커밋/미푸시**

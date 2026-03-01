@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-02-26 (1-7 Step 5 빌드 검증 + 학습 리뷰 완료, 1-7 전체 완료)
+> **최종 업데이트**: 2026-03-01 (1-8 Step 1~5 전체 구현 완료, 535 tests PASS, 단계 1 완료)
 
 ## 개발 전략
 
@@ -130,10 +130,13 @@
 - ✅ Step 4: UI — 생성 다이얼로그 + 결과 표시 (팩토리 함수 + Dialog, 404 tests PASS, 빌드 성공)
 - ✅ Step 5: 빌드 검증 + 학습 리뷰 (404 tests PASS, lint 0 errors, build 성공)
 
-### 1-8. 생성된 문제 저장 [F003]
+### 1-8. 생성된 문제 저장 [F003] ✅
 
-- [ ] 문제 저장 및 관리
-- [ ] 문제 목록/상세 조회
+- ✅ Step 1: 타입 매핑 유틸 + 저장 Zod 스키마 (DifficultyLevel, as const satisfies, 37 tests)
+- ✅ Step 2: 저장 Server Action — saveGeneratedQuestions (TDD, 23 tests)
+- ✅ Step 3: UI — Accordion + Checkbox 저장 UI (savedIndices Set 패턴, 빌드 성공)
+- ✅ Step 4: 문제 목록 DataTable + 사이드바 메뉴 (schoolType-grade 연동, 63 tests)
+- ✅ Step 5: 문제 상세 Sheet + 빌드 검증 (race condition 방지, 8 tests, 535 tests PASS)
 
 ### 단계 1 통합 테스트
 
@@ -420,7 +423,7 @@ CREATE TABLE teacher_subjects (
 | Phase/단계 | 진행률 | 상태 |
 |-----------|--------|------|
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
-| 단계 1 (기출 기반 문제 생성 + 인증) | 93% (1-1~1-7 완료, 1-8 미시작) | 🚧 진행 중 |
+| 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-8 완료, 535 tests) | ✅ 완료 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
