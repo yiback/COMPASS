@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-03-01 (세션 15: 1-8 Step 1~5 전체 구현 완료)
+> **최종 업데이트**: 2026-03-05 (세션 17: 학년 필터링 계획 학습 리뷰 — 파생 상태 설명 완료)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -32,20 +32,19 @@
 | 1-7 | 기출 기반 AI 문제 생성 [F011] | ✅ 완료 (5/5 Steps, 404 tests, 빌드 성공) |
 | 1-8 | 생성된 문제 저장 [F003] | ✅ 완료 (5/5 Steps, 535 tests, 빌드 성공) |
 
-### 현재 세션 요약 (2026-03-01, 세션 15)
+### 현재 세션 요약 (2026-03-05, 세션 17)
 
-**1-8 Step 1~5 전체 구현 완료** — 3-Wave 병렬 실행:
+**학년 필터링 계획 학습 리뷰** — 코드 변경 없음:
 
-| Wave | Steps | 결과 |
-|------|-------|------|
-| Wave 1 (병렬) | Step 1 (타입 매핑) + Step 4 (문제 목록) | 504 tests PASS |
-| Wave 2 (병렬) | Step 2 (저장 Action) + Step 5 (문제 상세) | 추가 31 tests PASS |
-| Wave 3 | Step 3 (저장 UI + Accordion) | 빌드 성공 |
+1. **계획 문서 애니메이션 설명**: 6 Steps 전체를 ASCII 다이어그램으로 시각화
+2. **학습 리뷰 질문 1번 설명 완료**: "파생 상태(Derived State)" — `schoolType`을 `useState`가 아닌 `schools.find()`로 파생하는 이유 (Single Source of Truth)
+3. **학습 리뷰 질문 2, 3번 미완료**: grade 우선 원칙, Defense in Depth
 
-**최종 결과**: 31 test files, 535 tests ALL PASS, Next.js 빌드 성공, `/questions` 라우트 등록
+### 이전 세션 (세션 11-16)
 
-### 이전 세션 (세션 11-14)
+- 세션 16: 학년 필터링 버그 연구 + 구현 계획 완료 (Approach B 채택, 6 Steps)
 
+- 세션 15: 1-8 Step 1~5 전체 구현 완료 (3-Wave 병렬, 535 tests, 빌드 성공)
 - 세션 14: 1-8 계획 문서 NOTE 4개 리뷰 + 수정 완료
 - 세션 13: TypeScript 학습 (`as const`, `satisfies`, `z.infer`) + 개념 문서 생성
 - 세션 12: NOTE 12/12 리뷰 완료 + 계획 문서 수정 완료
@@ -55,59 +54,41 @@
 
 ## 3. 다음 작업
 
-### 즉시 해야 할 일
+### 즉시 해야 할 일 (우선순위순)
 
-1. **학습 리뷰 완료** — 세션 15에서 제시한 이해도 질문 5개 답변 대기 중
-2. **커밋** — 1-8 구현 결과물 커밋 (미커밋 상태)
-3. **ROADMAP.md 업데이트** — 1-8 완료 반영
+1. **학년 필터링 버그 구현** — `docs/plan/phase-1-grade-filter-by-school-type.md` 계획대로 6 Steps 실행
+   - Step 1: `getGradeRange()` 공통 유틸 추가 + TDD
+   - Step 2: pastExamFilterSchema에 schoolType 추가 + TDD
+   - Step 3: Server Action 범위 필터 + 교차 검증 + questions.ts 리팩터
+   - Step 4-5: UI 수정 (업로드 폼 + 필터 Toolbar) — 병렬 가능
+   - Step 6: 빌드 검증
+2. **단계 1 통합 테스트** — E2E 테스트로 전체 플로우 검증
+3. **단계 2 계획 수립** — ROADMAP.md 참조하여 2-1 RBAC 시스템부터 시작
 
-### 이후 작업
+### 완료된 항목 (세션 17)
 
-1. **단계 1 통합 테스트** — E2E 테스트로 전체 플로우 검증
-2. **단계 2 시작** — 다음 Phase 계획 수립
+- ✅ 계획 문서 6 Steps 전체 애니메이션 설명
+- ✅ 학습 리뷰 질문 1/3 완료: 파생 상태 (Derived State) + Single Source of Truth
 
-### 세션 15에서 구현된 파일 목록
+### 미완료 학습 리뷰 질문 (다음 세션에서 계속)
 
-**Step 1 — 타입 매핑 + Zod 스키마** (10 files, 37 tests)
-| 파일 | 상태 |
-|------|------|
-| `src/lib/constants/questions.ts` | NEW — MAX_QUESTION_COUNT 공통 상수 |
-| `src/lib/ai/types.ts` | MODIFIED — DifficultyLevel, 매핑 함수 |
-| `src/lib/ai/index.ts` | MODIFIED — 새 export 추가 |
-| `src/lib/validations/save-questions.ts` | NEW — 저장 Zod 스키마 |
-| `src/lib/validations/generate-questions.ts` | MODIFIED — import 경로 변경 |
-| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | MODIFIED — import 경로 변경 |
+- ❌ 질문 2: `getPastExamList`에서 grade가 있을 때 schoolType 범위 필터를 적용하지 않는 이유
+- ❌ 질문 3: UI 동적 옵션 방어 후에도 Server Action 교차 검증이 필요한 이유 (Defense in Depth)
 
-**Step 2 — 저장 Server Action** (2 files, 23 tests)
-| 파일 | 상태 |
-|------|------|
-| `src/lib/actions/save-questions.ts` | NEW — saveGeneratedQuestions Action |
-| `src/lib/actions/__tests__/save-questions.test.ts` | NEW — 23 tests |
+### 학년 필터링 구현 계획 — 수정 대상 파일
 
-**Step 3 — 저장 UI (Accordion + Checkbox)** (2 files)
-| 파일 | 상태 |
-|------|------|
-| `src/components/ui/accordion.tsx` | NEW — shadcn Accordion |
-| `src/app/(dashboard)/past-exams/_components/generate-questions-dialog.tsx` | MODIFIED — 351→516 lines |
-
-**Step 4 — 문제 목록 DataTable** (9 files, 63 tests)
-| 파일 | 상태 |
-|------|------|
-| `src/lib/utils/grade-filter-utils.ts` | NEW — schoolType 연동 학년 필터 |
-| `src/lib/validations/questions.ts` | NEW — 필터 스키마 |
-| `src/lib/actions/questions.ts` | NEW — getQuestionList Action |
-| `src/app/(dashboard)/questions/page.tsx` | NEW — 문제 목록 페이지 |
-| `src/app/(dashboard)/questions/_components/constants.ts` | NEW — UI 상수 |
-| `src/app/(dashboard)/questions/_components/question-columns.tsx` | NEW — DataTable 컬럼 |
-| `src/app/(dashboard)/questions/_components/questions-toolbar.tsx` | NEW — 필터 툴바 |
-| `src/lib/constants/menu.ts` | MODIFIED — "문제 관리" 메뉴 추가 |
-
-**Step 5 — 문제 상세 Sheet** (3 files, 8 tests)
-| 파일 | 상태 |
-|------|------|
-| `src/lib/actions/questions.ts` | MODIFIED — getQuestionDetail 추가 |
-| `src/lib/actions/__tests__/questions-detail.test.ts` | NEW — 8 tests |
-| `src/app/(dashboard)/questions/_components/question-detail-sheet.tsx` | NEW — 상세 Sheet |
+| Step | 파일 | 변경 |
+|------|------|------|
+| 1 | `src/lib/utils/grade-filter-utils.ts` | `getGradeRange()` 함수 추가 |
+| 1 | `src/lib/utils/__tests__/grade-filter-utils.test.ts` | 테스트 추가 |
+| 2 | `src/lib/validations/past-exams.ts` | schoolType 필드 추가 |
+| 2 | `src/lib/validations/__tests__/past-exams-filter.test.ts` | 테스트 추가 |
+| 3 | `src/lib/actions/past-exams.ts` | schoolType 범위 필터 + 교차 검증 |
+| 3 | `src/lib/actions/questions.ts` | ranges 하드코딩 → `getGradeRange()` 리팩터 |
+| 3 | `src/lib/actions/__tests__/past-exams-list.test.ts` | 테스트 추가 |
+| 4 | `src/app/(dashboard)/past-exams/upload/upload-form.tsx` | controlled + 동적 학년 |
+| 5 | `src/app/(dashboard)/past-exams/_components/past-exams-toolbar.tsx` | schoolType 셀렉트 + 동적 학년 |
+| 5 | `src/app/(dashboard)/past-exams/_components/constants.ts` | GRADE_OPTIONS 제거 |
 
 ---
 
@@ -133,6 +114,8 @@
 - **`as const satisfies Record<K,V>`**: 리터럴 타입 + 형태 검증 동시 달성
 - **Set<number> 부분 저장 추적**: savedIndices로 개별 문제 저장 상태 관리 + 파생 상태(allSaved, savableCount)
 - **Accordion UI 패턴**: 긴 문제 카드 접기/펼치기 — `type="multiple"` + `e.stopPropagation()`
+- **getGradeRange() 공통 분리**: GRADE_RANGES 내부 상수를 캡슐화 — prefix 노출 없이 min/max만 반환 (관심사 분리)
+- **Approach A vs B 비교**: FK JOIN(직접 쿼리) vs grade 범위 변환(추론) — 테이블에 FK 없으면 B만 가능
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -157,12 +140,24 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/phase-1-step8-save-generated-questions.md` — 1-8 전체 계획 (5/5 Steps 완료) |
-| 5 | `docs/plan/phase-1-step7-ai-question-generation.md` — 1-7 전체 계획 (5/5 Steps 완료) |
-| 6 | `docs/PRD.md` — 기능 명세 |
-| 7 | `supabase/migrations/00001_initial_schema.sql` — DB 스키마 (questions 테이블 포함) |
-| 8 | `supabase/migrations/00002_rls_policies.sql` — RLS 정책 |
-| 9 | `docs/guides/architecture-reference.md` — 아키텍처 |
+| 4 | `docs/plan/phase-1-grade-filter-by-school-type.md` — 학년 필터링 버그 수정 계획 (6 Steps, 미구현) |
+| 5 | `docs/research/grade-filter-by-school-type.md` — 학년 필터링 버그 연구 문서 |
+| 6 | `docs/plan/phase-1-step8-save-generated-questions.md` — 1-8 전체 계획 (5/5 Steps 완료) |
+| 7 | `docs/plan/phase-1-step7-ai-question-generation.md` — 1-7 전체 계획 (5/5 Steps 완료) |
+| 8 | `docs/PRD.md` — 기능 명세 |
+| 9 | `supabase/migrations/00001_initial_schema.sql` — DB 스키마 (questions 테이블 포함) |
+| 10 | `supabase/migrations/00002_rls_policies.sql` — RLS 정책 |
+| 11 | `docs/guides/architecture-reference.md` — 아키텍처 |
+
+### 학년 필터링 — 핵심 기술 결정
+
+| 항목 | 결정 |
+|------|------|
+| 접근법 | **Approach B**: schoolType → grade 범위 변환 (`getGradeRange()`) |
+| 이유 | questions.ts와 일관성 유지 (questions 테이블에 school_id FK 없음) |
+| 공통 분리 | `getGradeRange()` → `grade-filter-utils.ts`에 추가, 두 Action에서 재사용 |
+| DB 구조 | schoolType은 `schools` 테이블에만 존재, `past_exam_questions`에서 `school_id` FK JOIN |
+| 레퍼런스 | `questions-toolbar.tsx` — 이미 올바르게 구현된 동적 학년 필터 |
 
 ### 1-8 구현 완료 — 주요 파일 참조
 
@@ -183,4 +178,5 @@
 - Supabase placeholder 타입: `as any` + `eslint-disable`로 우회 중 (`supabase gen types`로 해결 가능)
 - 마이그레이션 00004, 00005: Supabase Cloud에 **미적용** (로컬 파일만 존재)
 - `await cookies()` 필수 (Next.js 16 비동기)
-- origin/main과 동기화 완료 (세션 9에서 푸시) — 세션 15 변경사항은 **미커밋/미푸시**
+- origin/main과 동기화 완료 (세션 15에서 push — `61cd43e`)
+- 학년 필터링 버그: 연구+계획 완료, **구현 미시작** (unstaged 상태: 연구 문서 + 계획 문서)
