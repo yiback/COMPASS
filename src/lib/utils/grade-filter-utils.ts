@@ -53,6 +53,16 @@ export function formatGradeLabel(grade: number): string {
 }
 
 /**
+ * 학교유형의 학년 범위(min, max) 반환
+ * Server Action에서 schoolType → grade 범위 필터에 사용
+ * @example getGradeRange('high') → { min: 10, max: 12 }
+ */
+export function getGradeRange(schoolType: SchoolType): { min: number; max: number } {
+  const { min, max } = GRADE_RANGES[schoolType]
+  return { min, max }
+}
+
+/**
  * 주어진 학년이 해당 학교유형에 유효한지 검사
  * schoolType 변경 시 현재 선택된 grade가 유효한지 확인할 때 사용
  */

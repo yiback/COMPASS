@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getGradeOptions,
+  getGradeRange,
   formatGradeLabel,
   isValidGradeForSchoolType,
   type SchoolType,
@@ -113,6 +114,20 @@ describe('isValidGradeForSchoolType', () => {
 
   it('high에서 12는 유효하다', () => {
     expect(isValidGradeForSchoolType(12, 'high')).toBe(true)
+  })
+})
+
+describe('getGradeRange', () => {
+  it('elementary → { min: 1, max: 6 }', () => {
+    expect(getGradeRange('elementary')).toEqual({ min: 1, max: 6 })
+  })
+
+  it('middle → { min: 7, max: 9 }', () => {
+    expect(getGradeRange('middle')).toEqual({ min: 7, max: 9 })
+  })
+
+  it('high → { min: 10, max: 12 }', () => {
+    expect(getGradeRange('high')).toEqual({ min: 10, max: 12 })
   })
 })
 

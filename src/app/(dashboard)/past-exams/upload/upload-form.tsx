@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   uploadPastExamAction,
@@ -28,6 +28,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  getGradeOptions,
+  formatGradeLabel,
+  type SchoolType,
+} from '@/lib/utils/grade-filter-utils'
 
 // ─── 타입 ───────────────────────────────────────────────
 
@@ -60,6 +65,21 @@ export function UploadForm({ schools }: UploadFormProps) {
     PastExamActionResult | null,
     FormData
   >(uploadPastExamAction, null)
+
+  // 학교 + 학년 controlled state
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('')
+  const [selectedGrade, setSelectedGrade] = useState<string>('')
+
+  // 파생 상태: schoolType은 selectedSchoolId에서 계산 (Single Source of Truth)
+  const selectedSchool = schools.find((s) => s.id === selectedSchoolId)
+  const schoolType = selectedSchool?.school_type as SchoolType | undefined
+  const gradeOptions = schoolType ? getGradeOptions(schoolType) : []
+
+  // 학교 변경 시 학년 초기화
+  function handleSchoolChange(schoolId: string) {
+    setSelectedSchoolId(schoolId)
+    setSelectedGrade('')
+  }
 
   // 성공 시 목록으로 이동
   useEffect(() => {
@@ -106,14 +126,20 @@ export function UploadForm({ schools }: UploadFormProps) {
             <Label htmlFor="schoolId">
               학교 <span className="text-destructive">*</span>
             </Label>
-            <Select name="schoolId" required disabled={isPending}>
+            <Select
+              name="schoolId"
+              required
+              disabled={isPending}
+              value={selectedSchoolId}
+              onValueChange={handleSchoolChange}
+            >
               <SelectTrigger id="schoolId">
                 <SelectValue placeholder="학교를 선택하세요" />
               </SelectTrigger>
               <SelectContent>
                 {schools.map((school) => (
                   <SelectItem key={school.id} value={school.id}>
-                    {school.name} ({school.school_type})
+                    {school.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -125,14 +151,26 @@ export function UploadForm({ schools }: UploadFormProps) {
             <Label htmlFor="grade">
               학년 <span className="text-destructive">*</span>
             </Label>
-            <Select name="grade" required disabled={isPending}>
+            <Select
+              name="grade"
+              required
+              disabled={isPending || !selectedSchoolId}
+              value={selectedGrade}
+              onValueChange={setSelectedGrade}
+            >
               <SelectTrigger id="grade">
-                <SelectValue placeholder="학년을 선택하세요" />
+                <SelectValue
+                  placeholder={
+                    selectedSchoolId
+                      ? '학년을 선택하세요'
+                      : '학교를 먼저 선택하세요'
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((grade) => (
+                {gradeOptions.map((grade) => (
                   <SelectItem key={grade} value={String(grade)}>
-                    {grade}학년
+                    {formatGradeLabel(grade)}
                   </SelectItem>
                 ))}
               </SelectContent>

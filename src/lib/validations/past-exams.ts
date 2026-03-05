@@ -86,6 +86,10 @@ export function validateFile(file: unknown): FileValidationResult {
 
 export const pastExamFilterSchema = z.object({
   school: z.string().optional(),
+  schoolType: z
+    .enum(['elementary', 'middle', 'high', 'all'])
+    .optional()
+    .default('all'),
   grade: z.coerce.number().int().min(1).max(12).optional(),
   subject: z.string().optional(),
   examType: z

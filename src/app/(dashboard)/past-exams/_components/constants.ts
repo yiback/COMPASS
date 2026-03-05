@@ -41,5 +41,4 @@ export const SEMESTER_LABELS: Record<string, string> = {
 export const CURRENT_YEAR = new Date().getFullYear()
 export const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - i)
 
-// 필터용 학년 배열
-export const GRADE_OPTIONS = Array.from({ length: 12 }, (_, i) => i + 1)
+// GRADE_OPTIONS 제거 — grade-filter-utils.ts의 getGradeOptions()로 대체

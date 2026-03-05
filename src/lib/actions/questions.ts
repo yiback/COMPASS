@@ -14,6 +14,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { questionFilterSchema } from '@/lib/validations/questions'
+import { getGradeRange, type SchoolType } from '@/lib/utils/grade-filter-utils'
 
 // ─── 타입 정의 ────────────────────────────────────────
 
@@ -225,15 +226,8 @@ export async function getQuestionList(
 
   // schoolType → grade 범위 필터 (grade가 없을 때만 적용)
   if (filters.schoolType && filters.schoolType !== 'all' && !filters.grade) {
-    const ranges: Record<string, { min: number; max: number }> = {
-      elementary: { min: 1, max: 6 },
-      middle: { min: 7, max: 9 },
-      high: { min: 10, max: 12 },
-    }
-    const range = ranges[filters.schoolType]
-    if (range) {
-      query = query.gte('grade', range.min).lte('grade', range.max)
-    }
+    const range = getGradeRange(filters.schoolType as SchoolType)
+    query = query.gte('grade', range.min).lte('grade', range.max)
   }
 
   // 5. 페이지네이션 + 실행

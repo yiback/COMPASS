@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { DataTable, DataTableServerPagination } from '@/components/data-table'
+import { DataTableServerPagination } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
 import { getPastExamList } from '@/lib/actions/past-exams'
 import type { PastExamListItem } from '@/lib/actions/past-exams'
 import { createClient } from '@/lib/supabase/server'
-import { createPastExamColumns } from './_components/past-exam-columns'
-import { PastExamsToolbar } from './_components/past-exams-toolbar'
+import { PastExamsTable } from './_components/past-exams-table'
 
 interface PastExamsPageProps {
   searchParams: Promise<{
     school?: string
+    schoolType?: string
     subject?: string
     grade?: string
     examType?: string
@@ -54,6 +54,7 @@ export default async function PastExamsPage({
   // 2. 기출문제 목록 조회
   const result = await getPastExamList({
     school: params.school,
+    schoolType: params.schoolType ?? 'all',
     grade: params.grade,
     subject: params.subject,
     examType: params.examType ?? 'all',
@@ -81,9 +82,6 @@ export default async function PastExamsPage({
     callerRole
   )
 
-  // callerRole 기반 컬럼 생성 (AI 문제 생성 버튼 조건부 표시)
-  const columns = createPastExamColumns(callerRole)
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -103,13 +101,7 @@ export default async function PastExamsPage({
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={exams}
-        toolbar={<PastExamsToolbar />}
-        noResultsMessage="등록된 기출문제가 없습니다."
-        showPagination={false}
-      />
+      <PastExamsTable data={exams} callerRole={callerRole} />
 
       <DataTableServerPagination
         total={total}

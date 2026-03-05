@@ -59,6 +59,27 @@ describe('pastExamFilterSchema', () => {
     })
   })
 
+  // ─── schoolType 필터 ──────────────────────────────────
+
+  describe('schoolType 필터', () => {
+    it('기본값이 "all"이다', () => {
+      const result = pastExamFilterSchema.parse({})
+      expect(result.schoolType).toBe('all')
+    })
+
+    it.each(['elementary', 'middle', 'high', 'all'])(
+      '유효한 학교유형 "%s"를 허용한다',
+      (type) => {
+        const result = pastExamFilterSchema.parse({ schoolType: type })
+        expect(result.schoolType).toBe(type)
+      }
+    )
+
+    it('유효하지 않은 학교유형을 거부한다', () => {
+      expect(() => pastExamFilterSchema.parse({ schoolType: 'university' })).toThrow()
+    })
+  })
+
   // ─── subject 필터 ─────────────────────────────────────
 
   describe('subject 필터', () => {
@@ -149,6 +170,7 @@ describe('pastExamFilterSchema', () => {
     it('모든 필터를 동시에 적용할 수 있다', () => {
       const input = {
         school: '한국고',
+        schoolType: 'high',
         grade: '10',
         subject: '수학',
         examType: 'midterm',
@@ -160,6 +182,7 @@ describe('pastExamFilterSchema', () => {
       const result = pastExamFilterSchema.parse(input)
 
       expect(result.school).toBe('한국고')
+      expect(result.schoolType).toBe('high')
       expect(result.grade).toBe(10)
       expect(result.subject).toBe('수학')
       expect(result.examType).toBe('midterm')

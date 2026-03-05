@@ -16,6 +16,11 @@ import {
   validateFile,
   getFileExtension,
 } from '@/lib/validations/past-exams'
+import {
+  getGradeRange,
+  isValidGradeForSchoolType,
+  type SchoolType,
+} from '@/lib/utils/grade-filter-utils'
 
 // ─── 업로드 반환 타입 ─────────────────────────────────────
 
@@ -211,12 +216,24 @@ export async function uploadPastExamAction(
     }
   }
 
-  // 5. Storage 경로 생성
+  // 5. school_type ↔ grade 교차 검증 (Defense in Depth)
+  const { data: school } = await supabase
+    .from('schools')
+    .select('school_type')
+    .eq('id', parsed.data.schoolId)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성
+    .single() as { data: { school_type: string } | null; error: unknown }
+
+  if (school && !isValidGradeForSchoolType(parsed.data.grade, school.school_type as SchoolType)) {
+    return { error: '선택한 학교 유형에 맞지 않는 학년입니다.' }
+  }
+
+  // 6. Storage 경로 생성
   const ext = getFileExtension(validFile.name)
   const fileId = crypto.randomUUID()
   const storagePath = `${profile.academy_id}/${parsed.data.schoolId}/${parsed.data.year}-${parsed.data.semester}-${parsed.data.examType}/${fileId}.${ext}`
 
-  // 6. Storage 업로드 (admin 클라이언트 -> RLS 우회)
+  // 7. Storage 업로드 (admin 클라이언트 -> RLS 우회)
   const admin = createAdminClient()
   const { error: uploadError } = await admin.storage
     .from('past-exams')
@@ -278,7 +295,7 @@ export async function getPastExamList(
     return { error: '잘못된 필터 값입니다.' }
   }
 
-  const { school, grade, subject, examType, year, semester, page } = parsed.data
+  const { school, schoolType, grade, subject, examType, year, semester, page } = parsed.data
   const pageSize = 10
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
@@ -307,6 +324,11 @@ export async function getPastExamList(
     }
     if (grade) {
       query = query.eq('grade', grade)
+    }
+    // schoolType → grade 범위 필터 (grade가 없을 때만 적용)
+    if (schoolType && schoolType !== 'all' && !grade) {
+      const range = getGradeRange(schoolType as SchoolType)
+      query = query.gte('grade', range.min).lte('grade', range.max)
     }
     if (subject) {
       query = query.ilike('subject', `%${subject}%`)

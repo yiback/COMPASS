@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetUser = vi.fn()
 const mockSelectProfiles = vi.fn()
 const mockInsertPastExamQuestions = vi.fn()
+const mockSelectSchools = vi.fn()
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
@@ -24,6 +25,15 @@ vi.mock('@/lib/supabase/server', () => ({
           select: () => ({
             eq: () => ({
               single: () => mockSelectProfiles(),
+            }),
+          }),
+        }
+      }
+      if (table === 'schools') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: () => mockSelectSchools(),
             }),
           }),
         }
@@ -84,6 +94,11 @@ function createMockFile(name: string, size: number, type: string): File {
 describe('uploadPastExamAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // 기본: 학교 조회 → 고등학교 (grade 10 테스트와 호환)
+    mockSelectSchools.mockResolvedValue({
+      data: { school_type: 'high' },
+      error: null,
+    })
   })
 
   it('비인증 사용자에게 에러를 반환한다', async () => {

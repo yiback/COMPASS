@@ -109,6 +109,8 @@ function mockPastExamListQuery(items: any[], count: number) {
     range: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
     then: vi.fn().mockImplementation((resolve: any) =>
       resolve({ data: items, error: null, count })
     ),
@@ -320,6 +322,60 @@ describe('getPastExamList', () => {
       await getPastExamList({ school: '' })
 
       expect(listQuery.ilike).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('schoolType 필터', () => {
+    it('schoolType="high" + grade 없음 → gte(10), lte(12) 호출', async () => {
+      const profileQuery = mockAuthAs('student')
+      const listQuery = mockPastExamListQuery([], 0)
+      mockSupabaseClient.from
+        .mockReturnValueOnce(profileQuery)
+        .mockReturnValueOnce(listQuery)
+
+      await getPastExamList({ schoolType: 'high' })
+
+      expect(listQuery.gte).toHaveBeenCalledWith('grade', 10)
+      expect(listQuery.lte).toHaveBeenCalledWith('grade', 12)
+    })
+
+    it('schoolType="elementary" + grade 없음 → gte(1), lte(6) 호출', async () => {
+      const profileQuery = mockAuthAs('student')
+      const listQuery = mockPastExamListQuery([], 0)
+      mockSupabaseClient.from
+        .mockReturnValueOnce(profileQuery)
+        .mockReturnValueOnce(listQuery)
+
+      await getPastExamList({ schoolType: 'elementary' })
+
+      expect(listQuery.gte).toHaveBeenCalledWith('grade', 1)
+      expect(listQuery.lte).toHaveBeenCalledWith('grade', 6)
+    })
+
+    it('schoolType="high" + grade=10 → gte/lte 미호출 (grade 우선)', async () => {
+      const profileQuery = mockAuthAs('student')
+      const listQuery = mockPastExamListQuery([], 0)
+      mockSupabaseClient.from
+        .mockReturnValueOnce(profileQuery)
+        .mockReturnValueOnce(listQuery)
+
+      await getPastExamList({ schoolType: 'high', grade: 10 })
+
+      expect(listQuery.eq).toHaveBeenCalledWith('grade', 10)
+      expect(listQuery.gte).not.toHaveBeenCalled()
+    })
+
+    it('schoolType="all" → gte/lte 미호출', async () => {
+      const profileQuery = mockAuthAs('student')
+      const listQuery = mockPastExamListQuery([], 0)
+      mockSupabaseClient.from
+        .mockReturnValueOnce(profileQuery)
+        .mockReturnValueOnce(listQuery)
+
+      await getPastExamList({ schoolType: 'all' })
+
+      expect(listQuery.gte).not.toHaveBeenCalled()
+      expect(listQuery.lte).not.toHaveBeenCalled()
     })
   })
 
