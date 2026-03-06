@@ -1,8 +1,7 @@
-import { DataTable, DataTableServerPagination } from '@/components/data-table'
+import { DataTableServerPagination } from '@/components/data-table'
 import { getQuestionList } from '@/lib/actions/questions'
 import type { QuestionListItem } from '@/lib/actions/questions'
-import { questionColumns } from './_components/question-columns'
-import { QuestionsToolbar } from './_components/questions-toolbar'
+import { QuestionsTable } from './_components/questions-table'
 
 interface QuestionsPageProps {
   searchParams: Promise<{
@@ -64,13 +63,7 @@ export default async function QuestionsPage({
         </div>
       </div>
 
-      <DataTable
-        columns={questionColumns}
-        data={questions}
-        toolbar={<QuestionsToolbar />}
-        noResultsMessage="저장된 문제가 없습니다."
-        showPagination={false}
-      />
+      <QuestionsTable data={questions} />
 
       <DataTableServerPagination
         total={total}

@@ -1,9 +1,7 @@
-import { DataTable } from '@/components/data-table'
 import { getUserList } from '@/lib/actions/users'
 import type { UserProfile } from '@/lib/actions/users'
-import { createUserColumns } from './_components/user-columns'
-import { UsersToolbar } from './_components/users-toolbar'
 import { createClient } from '@/lib/supabase/server'
+import { UsersTable } from './_components/users-table'
 
 interface UsersPageProps {
   searchParams: Promise<{
@@ -68,7 +66,6 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 
   const users = (result.data ?? []) as UserProfile[]
   const total = result.meta?.total ?? 0
-  const columns = createUserColumns(callerRole, callerId)
 
   return (
     <div className="space-y-4">
@@ -79,12 +76,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         </p>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={users}
-        toolbar={<UsersToolbar />}
-        noResultsMessage="등록된 사용자가 없습니다."
-      />
+      <UsersTable data={users} callerRole={callerRole} callerId={callerId} />
     </div>
   )
 }
