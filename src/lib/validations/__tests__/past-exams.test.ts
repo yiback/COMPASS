@@ -28,10 +28,10 @@ describe('pastExamUploadSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('잘못된 UUID 형식의 schoolId를 거부한다', () => {
+  it('빈 문자열 schoolId를 거부한다', () => {
     const result = pastExamUploadSchema.safeParse({
       ...validData,
-      schoolId: 'not-a-uuid',
+      schoolId: '',
     })
     expect(result.success).toBe(false)
   })

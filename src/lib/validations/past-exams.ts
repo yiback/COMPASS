@@ -21,7 +21,7 @@ export const EXAM_TYPES = ['midterm', 'final', 'mock', 'diagnostic'] as const
 // ─── 메타데이터 스키마 ────────────────────────────────────
 
 export const pastExamUploadSchema = z.object({
-  schoolId: z.string().uuid('학교를 선택해주세요.'),
+  schoolId: z.string().min(1, '학교를 선택해주세요.'),
   year: z.coerce
     .number()
     .int()

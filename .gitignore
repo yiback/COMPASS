@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-store/
 
+# Obsidian
+.obsidian/
+
 # Build outputs
 .next/
 out/

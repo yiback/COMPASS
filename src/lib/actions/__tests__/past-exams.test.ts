@@ -248,7 +248,7 @@ describe('uploadPastExamAction', () => {
     const file = createMockFile('exam.jpg', 1024 * 1024, 'image/jpeg')
     const formData = createFormData({
       file,
-      schoolId: 'invalid-uuid', // 잘못된 UUID
+      schoolId: '', // 빈 문자열
       year: 2024,
       semester: 1,
       examType: 'midterm',

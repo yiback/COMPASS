@@ -209,6 +209,7 @@ export async function uploadPastExamAction(
     grade: formData.get('grade'),
     subject: formData.get('subject'),
   }
+
   const parsed = pastExamUploadSchema.safeParse(raw)
   if (!parsed.success) {
     return {
@@ -265,7 +266,6 @@ export async function uploadPastExamAction(
     .single()
 
   if (dbError || !inserted) {
-    // DB 실패 시 업로드된 파일 정리
     await admin.storage.from('past-exams').remove([storagePath])
     return { error: '기출문제 저장에 실패했습니다. 다시 시도해주세요.' }
   }

@@ -66,20 +66,13 @@ export function UploadForm({ schools }: UploadFormProps) {
     FormData
   >(uploadPastExamAction, null)
 
-  // 학교 + 학년 controlled state
+  // 학교 선택 추적 (동적 학년 옵션용 — FormData는 uncontrolled Select가 처리)
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>('')
-  const [selectedGrade, setSelectedGrade] = useState<string>('')
 
   // 파생 상태: schoolType은 selectedSchoolId에서 계산 (Single Source of Truth)
   const selectedSchool = schools.find((s) => s.id === selectedSchoolId)
   const schoolType = selectedSchool?.school_type as SchoolType | undefined
   const gradeOptions = schoolType ? getGradeOptions(schoolType) : []
-
-  // 학교 변경 시 학년 초기화
-  function handleSchoolChange(schoolId: string) {
-    setSelectedSchoolId(schoolId)
-    setSelectedGrade('')
-  }
 
   // 성공 시 목록으로 이동
   useEffect(() => {
@@ -130,8 +123,7 @@ export function UploadForm({ schools }: UploadFormProps) {
               name="schoolId"
               required
               disabled={isPending}
-              value={selectedSchoolId}
-              onValueChange={handleSchoolChange}
+              onValueChange={setSelectedSchoolId}
             >
               <SelectTrigger id="schoolId">
                 <SelectValue placeholder="학교를 선택하세요" />
@@ -152,11 +144,10 @@ export function UploadForm({ schools }: UploadFormProps) {
               학년 <span className="text-destructive">*</span>
             </Label>
             <Select
+              key={selectedSchoolId}
               name="grade"
               required
               disabled={isPending || !selectedSchoolId}
-              value={selectedGrade}
-              onValueChange={setSelectedGrade}
             >
               <SelectTrigger id="grade">
                 <SelectValue
