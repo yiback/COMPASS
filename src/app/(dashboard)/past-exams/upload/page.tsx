@@ -41,7 +41,7 @@ export default async function PastExamUploadPage() {
       <div className="rounded-lg border bg-card p-6">
         <h1 className="text-2xl font-bold">기출문제 업로드</h1>
         <p className="mt-1 text-muted-foreground">
-          학교별 기출문제를 업로드하세요.
+          시험지 이미지를 업로드하고 순서를 확인하세요.
         </p>
       </div>
 

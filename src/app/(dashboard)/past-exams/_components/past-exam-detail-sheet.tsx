@@ -109,8 +109,11 @@ export function PastExamDetailSheet({
       }
     : null
 
+  // 첫 번째 이미지 Signed URL (기존 UI 호환)
+  const firstSignedImageUrl = detail?.signedImageUrls?.[0] ?? null
+
   // PDF 파일 여부 판단
-  const isPdf = detail?.signedImageUrl?.toLowerCase().includes('.pdf')
+  const isPdf = firstSignedImageUrl?.toLowerCase().includes('.pdf')
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -170,8 +173,8 @@ export function PastExamDetailSheet({
                 {new Date(detail.createdAt).toLocaleDateString('ko-KR')}
               </InfoRow>
 
-              {/* 이미지 미리보기 */}
-              {detail.signedImageUrl && (
+              {/* 이미지 미리보기 (첫 번째 이미지) */}
+              {firstSignedImageUrl && (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">원본 이미지</p>
                   {isPdf ? (
@@ -181,7 +184,7 @@ export function PastExamDetailSheet({
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={detail.signedImageUrl}
+                      src={firstSignedImageUrl}
                       alt="기출문제 원본"
                       className="max-h-[400px] w-full rounded-md border object-contain"
                     />

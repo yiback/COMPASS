@@ -4,3 +4,4 @@
 
 export { buildQuestionGenerationPrompt } from './question-generation'
 export { buildPastExamGenerationPrompt } from './past-exam-generation'
+export { buildExtractionPrompt, buildReanalyzePrompt } from './question-extraction'

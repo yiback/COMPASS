@@ -129,7 +129,7 @@ function mockPastExamDetailQuery(item: any | null) {
   }
 }
 
-/** FK JOIN DB Row Mock (목록용) */
+/** FK JOIN DB Row Mock (목록용 — past_exams 테이블 기준) */
 const mockDbRow = {
   id: 'exam-uuid-1',
   year: 2024,
@@ -137,17 +137,32 @@ const mockDbRow = {
   exam_type: 'midterm',
   grade: 10,
   subject: '수학',
-  source_image_url: 'academy-uuid-1/school-uuid-1/2024-1-midterm/file.jpg',
   extraction_status: 'pending',
   created_at: '2024-01-15T00:00:00Z',
   schools: { name: '한국고등학교', school_type: 'high' },
   profiles: { name: '김교사' },
 }
 
-/** FK JOIN DB Row Mock (상세용, extracted_content 포함) */
+/** FK JOIN DB Row Mock (상세용 — past_exam_images + past_exam_details JOIN) */
 const mockDbDetailRow = {
   ...mockDbRow,
-  extracted_content: '문제 내용...',
+  past_exam_images: [
+    {
+      id: 'image-uuid-1',
+      page_number: 1,
+      source_image_url: 'academy-uuid-1/school-uuid-1/2024-1-midterm/file.jpg',
+    },
+  ],
+  past_exam_details: [
+    {
+      id: 'detail-uuid-1',
+      question_number: 1,
+      question_text: '문제 내용...',
+      question_type: 'multiple_choice',
+      confidence: 0.95,
+      is_confirmed: false,
+    },
+  ],
 }
 
 // ============================================================================
@@ -402,7 +417,6 @@ describe('getPastExamList', () => {
         subject: '수학',
         extractionStatus: 'pending',
         uploadedByName: '김교사',
-        sourceImageUrl: 'academy-uuid-1/school-uuid-1/2024-1-midterm/file.jpg',
         createdAt: '2024-01-15T00:00:00Z',
       })
     })
@@ -434,7 +448,7 @@ describe('getPastExamDetail', () => {
   })
 
   describe('조회', () => {
-    it('유효 ID → 상세 데이터 + signedImageUrl 반환', async () => {
+    it('유효 ID → 상세 데이터 + signedImageUrls 배열 반환', async () => {
       const profileQuery = mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(mockDbDetailRow)
       mockCreateSignedUrl.mockResolvedValue({
@@ -450,9 +464,11 @@ describe('getPastExamDetail', () => {
 
       expect(result.error).toBeUndefined()
       expect(result.data).toBeDefined()
-      expect(result.data?.signedImageUrl).toBe('https://signed.url/file.jpg')
+      expect(result.data?.signedImageUrls).toEqual(['https://signed.url/file.jpg'])
       expect(result.data?.schoolName).toBe('한국고등학교')
-      expect(result.data?.extractedContent).toBe('문제 내용...')
+      expect(result.data?.images).toHaveLength(1)
+      expect(result.data?.details).toHaveLength(1)
+      expect(result.data?.details?.[0]?.questionText).toBe('문제 내용...')
     })
 
     it('존재하지 않는 ID → 에러 "기출문제를 찾을 수 없습니다."', async () => {
@@ -469,10 +485,10 @@ describe('getPastExamDetail', () => {
       expect(result.data).toBeUndefined()
     })
 
-    it('source_image_url 없으면 signedImageUrl = null (createSignedUrl 미호출)', async () => {
-      const rowWithoutImage = { ...mockDbDetailRow, source_image_url: null }
+    it('past_exam_images 빈 배열 → signedImageUrls 빈 배열 (createSignedUrl 미호출)', async () => {
+      const rowWithoutImages = { ...mockDbDetailRow, past_exam_images: [] }
       const profileQuery = mockAuthAs('student')
-      const detailQuery = mockPastExamDetailQuery(rowWithoutImage)
+      const detailQuery = mockPastExamDetailQuery(rowWithoutImages)
 
       mockSupabaseClient.from
         .mockReturnValueOnce(profileQuery)
@@ -481,13 +497,13 @@ describe('getPastExamDetail', () => {
       const result = await getPastExamDetail('exam-uuid-1')
 
       expect(result.error).toBeUndefined()
-      expect(result.data?.signedImageUrl).toBeNull()
+      expect(result.data?.signedImageUrls).toEqual([])
       expect(mockCreateSignedUrl).not.toHaveBeenCalled()
     })
   })
 
   describe('Signed URL', () => {
-    it('createSignedUrl(path, 60) 호출 확인', async () => {
+    it('이미지별 createSignedUrl(path, 60) 호출 확인', async () => {
       const profileQuery = mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(mockDbDetailRow)
       mockCreateSignedUrl.mockResolvedValue({

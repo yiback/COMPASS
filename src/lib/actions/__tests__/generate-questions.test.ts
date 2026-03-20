@@ -80,7 +80,7 @@ const MOCK_PAST_EXAM_ROW = {
   exam_type: 'midterm',
   grade: 10,
   subject: '수학',
-  extracted_content: null as string | null,
+  past_exam_details: [] as { question_text: string }[],
   schools: { name: '한국고등학교' },
 }
 
@@ -187,13 +187,13 @@ describe('generateQuestionsFromPastExam', () => {
     // 🔴 빈칸 2: from() mockImplementation 테이블 분기를 작성하세요.
     // 요구사항:
     //   - 'profiles' → mockProfileQuery 반환
-    //   - 'past_exam_questions' → mockPastExamQuery 반환
+    //   - 'past_exams' → mockPastExamQuery 반환
     //   - 그 외 테이블 → Error throw
     //
     // TODO: mockSupabaseClient.from.mockImplementation(...) 작성
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if(table === 'profiles') return mockProfileQuery
-      if(table === 'past_exam_questions') return mockPastExamQuery
+      if(table === 'past_exams') return mockPastExamQuery
       
       throw new Error (`예산치 못한 테이블: ${table}`)
     })
@@ -330,11 +330,13 @@ describe('generateQuestionsFromPastExam', () => {
       })
     })
 
-    it('extracted_content가 있으면 pastExamContext.extractedContent에 포함', async () => {
+    it('past_exam_details에 question_text가 있으면 pastExamContext.extractedContent에 포함', async () => {
       mockAuthAs('teacher')
       mockPastExamFound({
         ...MOCK_PAST_EXAM_ROW,
-        extracted_content: '1번 문제: 이차방정식 x²+2x+1=0의 해를 구하시오.',
+        past_exam_details: [
+          { question_text: '1번 문제: 이차방정식 x²+2x+1=0의 해를 구하시오.' },
+        ],
       })
       mockAISuccess()
 
@@ -346,7 +348,7 @@ describe('generateQuestionsFromPastExam', () => {
       })
     })
 
-    it('extracted_content가 null이면 pastExamContext.extractedContent 없음', async () => {
+    it('past_exam_details가 빈 배열이면 pastExamContext.extractedContent 없음', async () => {
       mockFullSuccess()
 
       await generateQuestionsFromPastExam(VALID_INPUT)

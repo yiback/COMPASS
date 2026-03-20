@@ -96,6 +96,71 @@ export function fromDifficultyNumber(num: number): DifficultyLevel {
   return NUMBER_TO_DIFFICULTY[num] ?? 'medium'
 }
 
+// ─── 이미지 / 추출 관련 타입 ────────────────────────────
+
+/** 이미지 데이터 (base64 인코딩) */
+export interface ImagePart {
+  readonly mimeType: string
+  readonly data: string // base64
+}
+
+/**
+ * 그래프/그림 crop 정보
+ *
+ * 기출 추출 + 향후 AI 문제 생성(Phase 2) 통합 인터페이스.
+ * - 기출 추출: sharp crop → Storage 업로드 → url 저장
+ * - AI 문제 생성 (Phase 2): AI SVG → sharp PNG 변환 → Storage 업로드 → url 저장
+ */
+export interface FigureInfo {
+  readonly url: string | null // Storage 경로 (crop 후), 실패 시 null
+  readonly description: string // AI가 생성한 설명
+  readonly boundingBox: {
+    readonly x: number // 좌상단 x (normalized 0~1)
+    readonly y: number // 좌상단 y (normalized 0~1)
+    readonly width: number // 폭 (normalized 0~1)
+    readonly height: number // 높이 (normalized 0~1)
+  }
+  readonly pageNumber: number // 원본 이미지 page_number
+  readonly confidence: number // bounding box 정확도
+}
+
+/** AI가 이미지에서 추출한 개별 문제 */
+export interface ExtractedQuestion {
+  readonly questionNumber: number
+  readonly questionText: string
+  readonly questionType: QuestionType
+  readonly options?: readonly string[]
+  readonly answer?: string
+  readonly confidence: number // 0.0 ~ 1.0
+  readonly hasFigure: boolean
+  readonly figures?: readonly FigureInfo[]
+}
+
+/** 추출 요청 — Action에서 base64 변환 완료 후 imageParts로 전달 */
+export interface ExtractQuestionParams {
+  readonly imageParts: readonly ImagePart[]
+  readonly subject: string
+  readonly grade: number
+  readonly examType?: string
+}
+
+/** 추출 결과 */
+export interface ExtractQuestionResult {
+  readonly questions: readonly ExtractedQuestion[]
+  readonly totalQuestions: number
+  readonly overallConfidence: number
+}
+
+/** 재분석 요청 */
+export interface ReanalyzeQuestionParams {
+  readonly imageParts: readonly ImagePart[]
+  readonly questionNumber: number
+  readonly currentQuestion: ExtractedQuestion
+  readonly userFeedback?: string
+  readonly subject: string
+  readonly grade: number
+}
+
 // ─── AI Provider 인터페이스 (Strategy 패턴) ─────────────
 
 /** 모든 AI 제공자가 구현해야 할 인터페이스 */
@@ -113,6 +178,12 @@ export interface AIProvider {
 
   /** 기출 경향 분석 (Phase 3 구현 예정) */
   analyzeTrends(params: AnalyzeTrendsParams): Promise<ExamTrendAnalysis>
+
+  /** 기출 시험지 이미지에서 문제 추출 */
+  extractQuestions(params: ExtractQuestionParams): Promise<ExtractQuestionResult>
+
+  /** 특정 문제 재분석 (사용자 피드백 반영) */
+  reanalyzeQuestion(params: ReanalyzeQuestionParams): Promise<ExtractedQuestion>
 }
 
 // ─── 프롬프트 설정 ──────────────────────────────────────
@@ -123,6 +194,7 @@ export interface PromptConfig {
   readonly responseSchema: unknown
   readonly temperature: number
   readonly maxOutputTokens: number
+  readonly imageParts?: readonly ImagePart[] // 이미지 포함 요청 시
 }
 
 // ─── 기출 컨텍스트 (1-7 추가) ────────────────────────────

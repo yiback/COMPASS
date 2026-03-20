@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { GenerateQuestionParams } from '../types'
+import type {
+  GenerateQuestionParams,
+  ExtractQuestionParams,
+  ReanalyzeQuestionParams,
+  ExtractedQuestion,
+} from '../types'
 
 // ─── 모킹 ────────────────────────────────────────────────
 
@@ -40,6 +45,33 @@ const VALID_PARAMS: GenerateQuestionParams = {
   difficulty: 'medium',
 }
 
+/** 추출용 파라미터 */
+const EXTRACTION_PARAMS: ExtractQuestionParams = {
+  imageParts: [
+    { mimeType: 'image/png', data: 'base64data1' },
+    { mimeType: 'image/jpeg', data: 'base64data2' },
+  ],
+  subject: '수학',
+  grade: 2,
+}
+
+const CURRENT_QUESTION: ExtractedQuestion = {
+  questionNumber: 3,
+  questionText: '다음 중 옳은 것은?',
+  questionType: 'multiple_choice',
+  options: ['보기1', '보기2', '보기3'],
+  confidence: 0.7,
+  hasFigure: false,
+}
+
+const REANALYZE_PARAMS: ReanalyzeQuestionParams = {
+  imageParts: EXTRACTION_PARAMS.imageParts,
+  questionNumber: 3,
+  currentQuestion: CURRENT_QUESTION,
+  subject: '수학',
+  grade: 2,
+}
+
 /** Gemini API 정상 응답 픽스처 */
 function createValidResponse() {
   return {
@@ -60,6 +92,51 @@ function createValidResponse() {
           difficulty: 'medium',
           questionType: 'multiple_choice',
           options: ['2', '3', '4', '5', '6'],
+        },
+      ],
+    }),
+  }
+}
+
+/** 추출 정상 응답 (2문제) */
+function createValidExtractionResponse() {
+  return {
+    text: JSON.stringify({
+      questions: [
+        {
+          questionNumber: 1,
+          questionText: '다음 중 올바른 것은?',
+          questionType: 'multiple_choice',
+          options: ['A', 'B', 'C', 'D'],
+          answer: 'B',
+          confidence: 0.95,
+          hasFigure: false,
+        },
+        {
+          questionNumber: 2,
+          questionText: '$x + 1 = 3$의 해를 구하시오.',
+          questionType: 'short_answer',
+          answer: 'x = 2',
+          confidence: 0.9,
+          hasFigure: false,
+        },
+      ],
+    }),
+  }
+}
+
+/** 추출 정상 응답 (1문제 — 재분석용) */
+function createSingleExtractionResponse() {
+  return {
+    text: JSON.stringify({
+      questions: [
+        {
+          questionNumber: 3,
+          questionText: '재분석된 문제',
+          questionType: 'short_answer',
+          answer: 'x = -1',
+          confidence: 0.95,
+          hasFigure: false,
         },
       ],
     }),
@@ -383,6 +460,185 @@ describe('GeminiProvider', () => {
       expect(result[0]).toHaveProperty('content')
       expect(result[0]).toHaveProperty('type')
       expect(result[0]).toHaveProperty('answer')
+    })
+  })
+
+  // ─── 그룹 7: buildContents 분기 ───────────────────────────
+
+  describe('buildContents 분기', () => {
+    it('imageParts가 없으면 contents가 문자열이다 (기존 동작 유지)', async () => {
+      mockGenerateContent.mockResolvedValueOnce(createValidResponse())
+
+      await provider.generateQuestions(VALID_PARAMS)
+
+      const callArgs = mockGenerateContent.mock.calls[0][0]
+      expect(typeof callArgs.contents).toBe('string')
+    })
+
+    it('imageParts가 있으면 contents가 배열이며 마지막 요소에 text가 있다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(
+        createValidExtractionResponse(),
+      )
+
+      await provider.extractQuestions(EXTRACTION_PARAMS)
+
+      const callArgs = mockGenerateContent.mock.calls[0][0]
+      expect(Array.isArray(callArgs.contents)).toBe(true)
+      const contentsArr = callArgs.contents as Array<Record<string, unknown>>
+      // 마지막 요소에 text 포함
+      expect(contentsArr[contentsArr.length - 1]).toHaveProperty('text')
+      // 이미지 요소에 inlineData 포함
+      expect(contentsArr[0]).toHaveProperty('inlineData')
+    })
+  })
+
+  // ─── 그룹 8: extractQuestions ─────────────────────────────
+
+  describe('extractQuestions', () => {
+    it('multi-image 정상 응답 시 ExtractQuestionResult를 반환한다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(
+        createValidExtractionResponse(),
+      )
+
+      const result = await provider.extractQuestions(EXTRACTION_PARAMS)
+
+      expect(result.totalQuestions).toBe(2)
+      expect(result.questions).toHaveLength(2)
+      expect(result.questions[0].questionNumber).toBe(1)
+      expect(result.questions[1].questionNumber).toBe(2)
+      expect(result.overallConfidence).toBeCloseTo(0.925)
+    })
+
+    it('imageParts가 있으면 inlineData Part 배열로 구성한다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(
+        createValidExtractionResponse(),
+      )
+
+      await provider.extractQuestions(EXTRACTION_PARAMS)
+
+      const callArgs = mockGenerateContent.mock.calls[0][0]
+      const contentsArr = callArgs.contents as Array<Record<string, unknown>>
+      // 2개 이미지 + 1개 text = 3개 요소
+      expect(contentsArr).toHaveLength(3)
+      expect(
+        (contentsArr[0] as Record<string, Record<string, string>>).inlineData
+          .mimeType,
+      ).toBe('image/png')
+    })
+
+    it('AI 빈 응답이면 AIValidationError를 던진다', async () => {
+      mockGenerateContent.mockResolvedValueOnce({ text: undefined })
+
+      await expect(
+        provider.extractQuestions(EXTRACTION_PARAMS),
+      ).rejects.toThrow(AIValidationError)
+    })
+
+    it('JSON 파싱 실패 시 AIValidationError를 던진다', async () => {
+      mockGenerateContent.mockResolvedValueOnce({ text: '이것은 JSON이 아닙니다' })
+
+      await expect(
+        provider.extractQuestions(EXTRACTION_PARAMS),
+      ).rejects.toThrow(AIValidationError)
+    })
+
+    it('Zod 검증 실패 시 AIValidationError를 던진다', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        text: JSON.stringify({ questions: [{ invalid: true }] }),
+      })
+
+      await expect(
+        provider.extractQuestions(EXTRACTION_PARAMS),
+      ).rejects.toThrow(AIValidationError)
+    })
+
+    it('SDK 429 에러 시 AIRateLimitError를 던진다', async () => {
+      vi.useFakeTimers()
+      mockGenerateContent.mockRejectedValue(
+        createApiError(429, 'Too Many Requests'),
+      )
+
+      const promise = provider.extractQuestions(EXTRACTION_PARAMS)
+      const assertion = expect(promise).rejects.toThrow(AIRateLimitError)
+      await vi.advanceTimersByTimeAsync(1000)
+      await vi.advanceTimersByTimeAsync(2000)
+      await assertion
+      vi.useRealTimers()
+    })
+
+    it('SDK 500 에러 시 AIServiceError를 던진다', async () => {
+      vi.useFakeTimers()
+      mockGenerateContent.mockRejectedValue(
+        createApiError(500, 'Internal Server Error'),
+      )
+
+      const promise = provider.extractQuestions(EXTRACTION_PARAMS)
+      const errorPromise = promise.catch((e: unknown) => e)
+      await vi.advanceTimersByTimeAsync(1000)
+      await vi.advanceTimersByTimeAsync(2000)
+
+      const error = await errorPromise
+      expect(error).toBeInstanceOf(AIServiceError)
+      vi.useRealTimers()
+    })
+
+    it('재시도 후 성공한다', async () => {
+      vi.useFakeTimers()
+      mockGenerateContent
+        .mockRejectedValueOnce(createApiError(500, 'Server Error'))
+        .mockResolvedValueOnce(createValidExtractionResponse())
+
+      const promise = provider.extractQuestions(EXTRACTION_PARAMS)
+      await vi.advanceTimersByTimeAsync(1000)
+
+      const result = await promise
+      expect(result.totalQuestions).toBe(2)
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2)
+      vi.useRealTimers()
+    })
+  })
+
+  // ─── 그룹 9: reanalyzeQuestion ───────────────────────────
+
+  describe('reanalyzeQuestion', () => {
+    it('단일 문제 반환 시 ExtractedQuestion을 반환한다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(
+        createSingleExtractionResponse(),
+      )
+
+      const result = await provider.reanalyzeQuestion(REANALYZE_PARAMS)
+
+      expect(result.questionNumber).toBe(3)
+      expect(result.questionText).toBe('재분석된 문제')
+    })
+
+    it('2개 문제 반환 시 AIValidationError를 던진다', async () => {
+      mockGenerateContent.mockResolvedValueOnce(
+        createValidExtractionResponse(), // 2개 문제 반환
+      )
+
+      const error = await provider
+        .reanalyzeQuestion(REANALYZE_PARAMS)
+        .catch((e: unknown) => e)
+
+      expect(error).toBeInstanceOf(AIValidationError)
+      expect((error as AIValidationError).message).toContain('1개 기대')
+    })
+
+    it('SDK 에러 시 AIServiceError를 던진다', async () => {
+      vi.useFakeTimers()
+      mockGenerateContent.mockRejectedValue(
+        createApiError(500, 'Internal Server Error'),
+      )
+
+      const promise = provider.reanalyzeQuestion(REANALYZE_PARAMS)
+      const errorPromise = promise.catch((e: unknown) => e)
+      await vi.advanceTimersByTimeAsync(1000)
+      await vi.advanceTimersByTimeAsync(2000)
+
+      const error = await errorPromise
+      expect(error).toBeInstanceOf(AIServiceError)
+      vi.useRealTimers()
     })
   })
 })

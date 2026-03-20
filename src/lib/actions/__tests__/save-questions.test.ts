@@ -4,7 +4,7 @@
  *
  * 테스트 대상: saveGeneratedQuestions
  * Mock 전략:
- * - Supabase: from() mockImplementation 테이블명 분기 (profiles / past_exam_questions / questions)
+ * - Supabase: from() mockImplementation 테이블명 분기 (profiles / past_exams / questions)
  * - 인증 헬퍼: generate-questions.test.ts와 동일 패턴 재사용
  */
 
@@ -19,7 +19,7 @@ const mockProfileQuery = {
   single: vi.fn(),
 }
 
-/** past_exam_questions 테이블 쿼리 체인 Mock */
+/** past_exams 테이블 쿼리 체인 Mock */
 const mockPastExamQuery = {
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
@@ -205,7 +205,7 @@ describe('saveGeneratedQuestions', () => {
     // from() 테이블 분기 — 3개 테이블
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === 'profiles') return mockProfileQuery
-      if (table === 'past_exam_questions') return mockPastExamQuery
+      if (table === 'past_exams') return mockPastExamQuery
       if (table === 'questions') return mockQuestionsQuery
       throw new Error(`예상치 못한 테이블: ${table}`)
     })

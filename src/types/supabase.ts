@@ -499,6 +499,114 @@ export type Database = {
           },
         ]
       }
+      past_exam_details: {
+        Row: {
+          academy_id: string
+          answer: string | null
+          confidence: number | null
+          created_at: string | null
+          figures: Json | null
+          has_figure: boolean | null
+          id: string
+          is_confirmed: boolean | null
+          options: Json | null
+          past_exam_id: string
+          question_number: number
+          question_text: string
+          question_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          academy_id: string
+          answer?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          figures?: Json | null
+          has_figure?: boolean | null
+          id?: string
+          is_confirmed?: boolean | null
+          options?: Json | null
+          past_exam_id: string
+          question_number: number
+          question_text: string
+          question_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          academy_id?: string
+          answer?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          figures?: Json | null
+          has_figure?: boolean | null
+          id?: string
+          is_confirmed?: boolean | null
+          options?: Json | null
+          past_exam_id?: string
+          question_number?: number
+          question_text?: string
+          question_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "past_exam_details_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "past_exam_details_past_exam_id_fkey"
+            columns: ["past_exam_id"]
+            isOneToOne: false
+            referencedRelation: "past_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      past_exam_images: {
+        Row: {
+          academy_id: string
+          created_at: string | null
+          id: string
+          page_number: number
+          past_exam_id: string
+          source_image_url: string
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string | null
+          id?: string
+          page_number: number
+          past_exam_id: string
+          source_image_url: string
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string | null
+          id?: string
+          page_number?: number
+          past_exam_id?: string
+          source_image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "past_exam_images_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "past_exam_images_past_exam_id_fkey"
+            columns: ["past_exam_id"]
+            isOneToOne: false
+            referencedRelation: "past_exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       past_exam_questions: {
         Row: {
           academy_id: string
@@ -588,6 +696,76 @@ export type Database = {
             columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      past_exams: {
+        Row: {
+          academy_id: string
+          created_at: string | null
+          created_by: string | null
+          exam_type: string
+          extraction_status: string | null
+          grade: number
+          id: string
+          raw_ai_response: string | null
+          school_id: string
+          semester: number
+          subject: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          academy_id: string
+          created_at?: string | null
+          created_by?: string | null
+          exam_type: string
+          extraction_status?: string | null
+          grade: number
+          id?: string
+          raw_ai_response?: string | null
+          school_id: string
+          semester: number
+          subject: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          academy_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          exam_type?: string
+          extraction_status?: string | null
+          grade?: number
+          id?: string
+          raw_ai_response?: string | null
+          school_id?: string
+          semester?: number
+          subject?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "past_exams_academy_id_fkey"
+            columns: ["academy_id"]
+            isOneToOne: false
+            referencedRelation: "academies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "past_exams_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "past_exams_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]

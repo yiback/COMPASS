@@ -16,6 +16,11 @@ import type {
   OCRResult,
   AnalyzeTrendsParams,
   ExamTrendAnalysis,
+  ExtractQuestionParams,
+  ExtractQuestionResult,
+  ReanalyzeQuestionParams,
+  ExtractedQuestion,
+  PromptConfig,
 } from './types'
 import {
   AIError,
@@ -28,6 +33,8 @@ import { withRetry } from './retry'
 import { validateGeneratedQuestions, questionsJsonSchema } from './validation'
 import { buildQuestionGenerationPrompt } from './prompts/question-generation'
 import { buildPastExamGenerationPrompt } from './prompts/past-exam-generation'
+import { validateExtractedQuestions } from './extraction-validation'
+import { buildExtractionPrompt, buildReanalyzePrompt } from './prompts/question-extraction'
 
 // ─── SDK 에러 변환 ──────────────────────────────────────────
 
@@ -86,6 +93,28 @@ export class GeminiProvider implements AIProvider {
     this.maxRetries = config.maxRetries
   }
 
+  /**
+   * PromptConfig로부터 Gemini SDK의 contents를 구성한다.
+   *
+   * imageParts가 있으면 Part 배열 (이미지 + 텍스트),
+   * 없으면 기존 동작 유지 (문자열).
+   */
+  private buildContents(
+    prompt: PromptConfig,
+  ): string | Array<Record<string, unknown>> {
+    if (!prompt.imageParts || prompt.imageParts.length === 0) {
+      return prompt.userPrompt // 기존 동작 유지
+    }
+
+    // imageParts가 있으면 Part 배열로 구성
+    return [
+      ...prompt.imageParts.map((img) => ({
+        inlineData: { mimeType: img.mimeType, data: img.data },
+      })),
+      { text: prompt.userPrompt },
+    ]
+  }
+
   async generateQuestions(
     params: GenerateQuestionParams,
   ): Promise<readonly GeneratedQuestion[]> {
@@ -98,7 +127,7 @@ export class GeminiProvider implements AIProvider {
         try {
           const response = await this.client.models.generateContent({
             model: this.model,
-            contents: prompt.userPrompt,
+            contents: this.buildContents(prompt),
             config: {
               systemInstruction: prompt.systemInstruction,
               responseMimeType: 'application/json',
@@ -125,6 +154,107 @@ export class GeminiProvider implements AIProvider {
           return validateGeneratedQuestions(parsed)
         } catch (error) {
           // AIError 계열은 재변환 방지 — 그대로 re-throw
+          if (error instanceof AIError) {
+            throw error
+          }
+          throw convertSdkError(error)
+        }
+      },
+      { maxRetries: this.maxRetries },
+    )
+  }
+
+  async extractQuestions(
+    params: ExtractQuestionParams,
+  ): Promise<ExtractQuestionResult> {
+    const prompt = buildExtractionPrompt(params)
+
+    return withRetry(
+      async () => {
+        try {
+          const response = await this.client.models.generateContent({
+            model: this.model,
+            contents: this.buildContents(prompt),
+            config: {
+              systemInstruction: prompt.systemInstruction,
+              responseMimeType: 'application/json',
+              responseJsonSchema: prompt.responseSchema,
+              temperature: prompt.temperature,
+              maxOutputTokens: prompt.maxOutputTokens,
+            },
+          })
+
+          const text = response.text
+          if (text === undefined || text === null) {
+            throw new AIValidationError('Gemini 응답에 텍스트가 없습니다')
+          }
+
+          let parsed: unknown
+          try {
+            parsed = JSON.parse(text)
+          } catch {
+            throw new AIValidationError(
+              'Gemini 응답을 JSON으로 파싱할 수 없습니다',
+            )
+          }
+
+          return validateExtractedQuestions(parsed)
+        } catch (error) {
+          if (error instanceof AIError) {
+            throw error
+          }
+          throw convertSdkError(error)
+        }
+      },
+      { maxRetries: this.maxRetries },
+    )
+  }
+
+  async reanalyzeQuestion(
+    params: ReanalyzeQuestionParams,
+  ): Promise<ExtractedQuestion> {
+    const prompt = buildReanalyzePrompt(params)
+
+    return withRetry(
+      async () => {
+        try {
+          const response = await this.client.models.generateContent({
+            model: this.model,
+            contents: this.buildContents(prompt),
+            config: {
+              systemInstruction: prompt.systemInstruction,
+              responseMimeType: 'application/json',
+              responseJsonSchema: prompt.responseSchema,
+              temperature: prompt.temperature,
+              maxOutputTokens: prompt.maxOutputTokens,
+            },
+          })
+
+          const text = response.text
+          if (text === undefined || text === null) {
+            throw new AIValidationError('Gemini 응답에 텍스트가 없습니다')
+          }
+
+          let parsed: unknown
+          try {
+            parsed = JSON.parse(text)
+          } catch {
+            throw new AIValidationError(
+              'Gemini 응답을 JSON으로 파싱할 수 없습니다',
+            )
+          }
+
+          const result = validateExtractedQuestions(parsed)
+
+          // 재분석은 1개 문제만 반환해야 함
+          if (result.questions.length !== 1) {
+            throw new AIValidationError(
+              `재분석 결과에 ${result.questions.length}개 문제가 반환됨 (1개 기대)`,
+            )
+          }
+
+          return result.questions[0]
+        } catch (error) {
           if (error instanceof AIError) {
             throw error
           }

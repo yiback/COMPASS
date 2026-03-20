@@ -97,14 +97,15 @@ export async function generateQuestionsFromPastExam(
 
   const { pastExamId, questionType, difficulty, count } = parsed.data
 
-  // 3. 기출문제 조회
+  // 3. 기출문제 조회 (past_exams + past_exam_details JOIN)
   const supabase = await createClient()
   const { data: pastExam, error: dbError } = (await supabase
-    .from('past_exam_questions')
+    .from('past_exams')
     .select(
       `
-      id, year, semester, exam_type, grade, subject, extracted_content,
-      schools!inner ( name )
+      id, year, semester, exam_type, grade, subject,
+      schools!inner ( name ),
+      past_exam_details ( question_text )
     `,
     )
     .eq('id', pastExamId)
@@ -116,7 +117,7 @@ export async function generateQuestionsFromPastExam(
       exam_type: string
       grade: number
       subject: string
-      extracted_content: string | null
+      past_exam_details: { question_text: string }[]
       schools: { name: string }
     } | null
     error: unknown
@@ -127,24 +128,24 @@ export async function generateQuestionsFromPastExam(
   }
 
   // 4. PastExamContext 조립
-  // 🟡 빈칸 3: PastExamContext 객체를 조립하세요.
-  // 요구사항:
-  //   - pastExam의 필드를 PastExamContext 형태로 매핑
-  //   - extracted_content가 null이면 extractedContent key 자체가 없어야 함
-  //   - extracted_content가 있으면 extractedContent에 포함
-  //   - 힌트: 조건부 스프레드 패턴 ...(condition ? { key: value } : {})
-  //
-  // TODO: const pastExamContext: PastExamContext = { ... } 작성
+  // past_exam_details의 question_text를 '\n\n'으로 결합하여 extractedContent 생성
+  const detailTexts = (pastExam.past_exam_details ?? [])
+    .map((d) => d.question_text)
+    .filter(Boolean)
+  const extractedContent = detailTexts.length > 0
+    ? detailTexts.join('\n\n')
+    : null
+
   const pastExamContext: PastExamContext = {
-    pastExamId : pastExam.id,
-    schoolName : pastExam.schools.name,
-    year : pastExam.year,
-    semester : pastExam.semester,
-    examType : pastExam.exam_type,
-    ...(pastExam.extracted_content 
-      ? {extractedContent: pastExam.extracted_content}
+    pastExamId: pastExam.id,
+    schoolName: pastExam.schools.name,
+    year: pastExam.year,
+    semester: pastExam.semester,
+    examType: pastExam.exam_type,
+    ...(extractedContent
+      ? { extractedContent }
       : {}),
-  } 
+  }
 
   // 5. AI Provider 호출
   try {

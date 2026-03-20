@@ -20,6 +20,10 @@ export const EXAM_TYPES = ['midterm', 'final', 'mock', 'diagnostic'] as const
 
 // ─── 메타데이터 스키마 ────────────────────────────────────
 
+/**
+ * @deprecated Step 6 이후 삭제 예정. createPastExamSchema로 대체.
+ * past_exam_questions 테이블에 직접 INSERT하는 레거시 업로드 스키마.
+ */
 export const pastExamUploadSchema = z.object({
   schoolId: z.string().min(1, '학교를 선택해주세요.'),
   year: z.coerce

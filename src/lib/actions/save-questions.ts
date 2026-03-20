@@ -175,7 +175,7 @@ export async function saveGeneratedQuestions(
   //    클라이언트를 신뢰하지 않음 — pastExamId로 서버에서 직접 조회 (Defense in Depth)
   const supabase = await createClient()
   const { data: pastExam, error: dbError } = (await supabase
-    .from('past_exam_questions')
+    .from('past_exams')
     .select('id, subject, grade, year, semester, exam_type, school_id, schools!inner ( name )')
     .eq('id', pastExamId)
     .single()) as {
