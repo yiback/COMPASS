@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: '6mb', // 기출문제 이미지/PDF 업로드 (최대 5MB + 메타데이터)
+      bodySizeLimit: '100mb', // 다중 이미지 업로드 (최대 20장 x 5MB = 100MB)
     },
   },
 }
