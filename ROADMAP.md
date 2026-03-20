@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-03-01 (1-8 Step 1~5 전체 구현 완료, 535 tests PASS, 단계 1 완료)
+> **최종 업데이트**: 2026-03-20 (기출문제 추출 구현 완료, 1238 tests PASS)
 
 ## 개발 전략
 
@@ -138,9 +138,23 @@
 - ✅ Step 4: 문제 목록 DataTable + 사이드바 메뉴 (schoolType-grade 연동, 63 tests)
 - ✅ Step 5: 문제 상세 Sheet + 빌드 검증 (race condition 방지, 8 tests, 535 tests PASS)
 
+### 1-9. 기출문제 이미지 → 개별 문제 추출 ✅
+
+- ✅ Step 1: 3계층 스키마 마이그레이션 (past_exams + past_exam_images + past_exam_details + RLS 12개 + 인덱스 12개)
+- ✅ Step 2: 기존 코드 리팩토링 (past_exam_questions → 3계층, 17개 파일)
+- ✅ Step 3: AI 타입 + 프롬프트 빌더 + GeminiProvider 확장 (extractQuestions, reanalyzeQuestion)
+- ✅ Step 4: 시험 생성 + 이미지 업로드 Action (5개 Action + Zod + 롤백)
+- ✅ Step 5: 추출 + crop + 재추출 + 재분석 Action (Optimistic Lock + sharp + isCompleted/try/finally)
+- ✅ Step 6: 업로드 UI (다중 이미지 + @dnd-kit DnD 순서 변경)
+- ✅ Step 7: 편집 UI (리뷰 + AI 재분석 + 전체 재추출 + 확정 저장)
+- ✅ Step 8: 빌드 검증 (1238 tests PASS, 빌드 성공)
+- ✅ 코드 리뷰 MUST FIX 4건 수정 (IDOR 방어 + MIME 검증 + crop 캐싱 + Signed URL 병렬화)
+- 계획: `docs/plan/20260308-past-exam-extraction.md` (v9) + Step별 상세 8개
+
 ### 단계 1 통합 테스트
 
 - [ ] 사용자 로그인 → 기출문제 업로드 → AI 문제 생성 플로우 E2E 테스트
+- [ ] 시험 생성 → 이미지 업로드 → AI 추출 → 편집 → 재분석 → 확정 E2E 테스트
 
 ---
 
@@ -423,7 +437,7 @@ CREATE TABLE teacher_subjects (
 | Phase/단계 | 진행률 | 상태 |
 |-----------|--------|------|
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
-| 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-8 완료, 535 tests) | ✅ 완료 |
+| 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-9 완료, 1238 tests) | ✅ 완료 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
