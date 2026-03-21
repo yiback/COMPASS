@@ -7,7 +7,7 @@
  * 상태별 분기: pending → 자동 추출, completed → 카드 편집, failed → 재시도
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Accordion } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
@@ -127,13 +127,17 @@ export function ExtractionEditor({
 
   // ─── useEffect: 자동 추출 (pending 상태) ─────────────────
 
+  // useRef로 guard — isExtracting을 dependency에 넣으면 자기 취소(self-cancellation) 발생
+  const extractingRef = useRef(false)
+
   useEffect(() => {
     if (extractionStatus !== 'pending') return
-    if (isExtracting) return
+    if (extractingRef.current) return
 
     let cancelled = false
+    extractingRef.current = true
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- race condition 방지 패턴: cancelled 플래그와 함께 사용
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- UI 로딩 표시용
     setIsExtracting(true)
 
     extractQuestionsAction(examMeta.id)
@@ -155,13 +159,15 @@ export function ExtractionEditor({
         }
       })
       .finally(() => {
+        extractingRef.current = false
         if (!cancelled) setIsExtracting(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [extractionStatus, examMeta.id, router, isExtracting])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- extractingRef guard 대체: isExtracting을 dependency에 넣으면 자기 취소 발생
+  }, [extractionStatus, examMeta.id, router])
 
   // ─── 핸들러: 편집 ────────────────────────────────────────
 

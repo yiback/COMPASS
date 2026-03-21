@@ -377,6 +377,14 @@ export async function extractQuestionsAction(
       .eq('academy_id', profile.academyId)
 
     isCompleted = true
+  } catch (error) {
+    // AI 에러(Rate Limit 등)를 throw 대신 { error } 반환 — 클라이언트 .then()에서 처리 가능
+    console.error('[extractQuestionsAction] 추출 실패:', error)
+    const message =
+      error instanceof Error
+        ? error.message
+        : '문제 추출 중 오류가 발생했습니다.'
+    return { error: message }
   } finally {
     // 실패 시 extraction_status = 'failed' 롤백 보장
     // academy_id 필터: 타 학원 시험 상태 변조 방지 (IDOR 방어)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Sheet,
   SheetContent,
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Pencil } from 'lucide-react'
 import { getPastExamDetail } from '@/lib/actions/past-exams'
 import type { PastExamDetail } from '@/lib/actions/past-exams'
 import { GenerateQuestionsDialog } from './generate-questions-dialog'
@@ -60,6 +61,7 @@ export function PastExamDetailSheet({
   examId,
   callerRole,
 }: PastExamDetailSheetProps) {
+  const router = useRouter()
   const [detail, setDetail] = useState<PastExamDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -173,6 +175,30 @@ export function PastExamDetailSheet({
                 {new Date(detail.createdAt).toLocaleDateString('ko-KR')}
               </InfoRow>
 
+              {/* 액션 버튼 — 교사/관리자만 (이미지 위에 배치하여 스크롤 없이 접근 가능) */}
+              {isTeacherOrAbove && (
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onOpenChange(false)
+                      router.push(`/past-exams/${examId}/edit`)
+                    }}
+                    className="w-full"
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    추출 문제 편집
+                  </Button>
+                  <Button
+                    onClick={() => setDialogOpen(true)}
+                    className="w-full"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI 문제 생성
+                  </Button>
+                </div>
+              )}
+
               {/* 이미지 미리보기 (첫 번째 이미지) */}
               {firstSignedImageUrl && (
                 <div className="space-y-2">
@@ -190,17 +216,6 @@ export function PastExamDetailSheet({
                     />
                   )}
                 </div>
-              )}
-
-              {/* AI 문제 생성 버튼 — 교사/관리자만 (1-7 추가) */}
-              {isTeacherOrAbove && (
-                <Button
-                  onClick={() => setDialogOpen(true)}
-                  className="w-full"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  AI 문제 생성
-                </Button>
               )}
             </>
           )}

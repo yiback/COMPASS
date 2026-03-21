@@ -124,6 +124,11 @@ async function getCurrentUserWithRole(): Promise<GetCurrentUserResult> {
 
 // ─── createPastExamAction ─────────────────────────────────
 
+/**
+ * @deprecated API Route(/api/past-exams/upload)로 대체됨.
+ * Next.js Server Action의 bodySizeLimit 제약으로 다중 이미지 업로드 실패 →
+ * Route Handler로 이전. Phase 2에서 제거 예정.
+ */
 export async function createPastExamAction(
   formData: FormData
 ): Promise<ExamManagementResult> {

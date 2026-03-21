@@ -1,19 +1,16 @@
 /**
  * 기출문제 업로드 폼 (Client Component)
  *
- * 다중 이미지 선택 + 메타데이터 입력 + createPastExamAction 제출
+ * 다중 이미지 선택 + 메타데이터 입력 + API Route(/api/past-exams/upload) 제출
+ * Server Action의 bodySizeLimit 제약 우회를 위해 fetch 사용
  * 클라이언트 이미지 검증: 20장/5MB/100MB
  * 성공 시 /past-exams/${pastExamId}/edit 리다이렉트
  */
 
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  createPastExamAction,
-  type ExamManagementResult,
-} from '@/lib/actions/exam-management'
 import {
   MAX_IMAGE_COUNT,
   MAX_IMAGE_SIZE,
@@ -108,10 +105,15 @@ function validateFilesClient(files: readonly File[]): ValidationResult {
 
 export function UploadForm({ schools }: UploadFormProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+
+  // 로딩 상태 (useTransition 대신 수동 관리 — fetch 사용)
+  const [isPending, setIsPending] = useState(false)
 
   // 서버 응답 상태
-  const [result, setResult] = useState<ExamManagementResult | null>(null)
+  const [result, setResult] = useState<{
+    readonly error?: string
+    readonly data?: { readonly pastExamId: string }
+  } | null>(null)
 
   // 선택된 파일 목록 (순서 포함 — 불변 배열)
   const [selectedFiles, setSelectedFiles] = useState<readonly File[]>([])
@@ -165,8 +167,8 @@ export function UploadForm({ schools }: UploadFormProps) {
     }
   }
 
-  // 폼 제출 핸들러
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // 폼 제출 핸들러 — API Route로 fetch (Server Action bodySizeLimit 우회)
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     if (selectedFiles.length === 0) {
@@ -183,10 +185,21 @@ export function UploadForm({ schools }: UploadFormProps) {
       formData.append('images', file)
     }
 
-    startTransition(async () => {
-      const response = await createPastExamAction(formData)
-      setResult(response)
-    })
+    setIsPending(true)
+    setResult(null)
+
+    try {
+      const response = await fetch('/api/past-exams/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const json = await response.json()
+      setResult(json)
+    } catch {
+      setResult({ error: '업로드 중 오류가 발생했습니다. 다시 시도해주세요.' })
+    } finally {
+      setIsPending(false)
+    }
   }
 
   // 에러 메시지 (서버 에러 + 클라이언트 검증 에러)
