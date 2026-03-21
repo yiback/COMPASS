@@ -64,11 +64,11 @@ npm run build
 ```
 
 **확인 사항**:
-- [ ] TypeScript 컴파일 에러 없음
-- [ ] `export const runtime = 'nodejs'` (extract-questions.ts) — sharp 호환
-- [ ] `export const maxDuration = 60` (extract-questions.ts) — Vercel Pro 기준
-- [ ] dynamic route `[id]/edit/page.tsx` 정상 빌드
-- [ ] 빌드 경고: unused imports, unused variables 없음
+- [x] TypeScript 컴파일 에러 없음
+- [x] `export const runtime = 'nodejs'` (extract-questions.ts) — sharp 호환
+- [x] `export const maxDuration = 60` (extract-questions.ts) — Vercel Pro 기준
+- [x] dynamic route `[id]/edit/page.tsx` 정상 빌드
+- [x] 빌드 경고: unused imports, unused variables 없음
 
 ---
 
@@ -79,9 +79,9 @@ npx next lint
 ```
 
 **확인 사항**:
-- [ ] eslint 에러 없음
-- [ ] `<img>` 태그 사용 시 `eslint-disable-next-line @next/next/no-img-element` 주석 존재 (Signed URL → `next/image` 부적합)
-- [ ] `console.log` 잔류 없음
+- [x] eslint 에러 없음
+- [x] `<img>` 태그 사용 시 `eslint-disable-next-line @next/next/no-img-element` 주석 존재 (Signed URL → `next/image` 부적합)
+- [x] `console.log` 잔류 없음
 
 ---
 
@@ -264,12 +264,12 @@ wc -l src/app/\(dashboard\)/past-exams/upload/image-sorter.tsx
 
 ## 완료 기준
 
-- [ ] `npm run test:run` — 전체 PASS (기존 548+ 테스트 + 신규 테스트)
-- [ ] `npm run build` — 에러 없이 빌드 성공
-- [ ] `npx next lint` — 에러 없음
-- [ ] 수동 테스트 8개 시나리오 통과
-- [ ] 기존 기능 회귀 없음 (9개 항목 확인)
-- [ ] 신규 파일 전부 800줄 이하
+- [x] `npm run test:run` — 전체 PASS (1238 tests)
+- [x] `npm run build` — 에러 없이 빌드 성공
+- [x] `npx next lint` — 에러 없음
+- [x] 수동 테스트 8개 시나리오 통과 (세션 26, Chrome DevTools MCP E2E)
+- [x] 기존 기능 회귀 없음 (9개 항목 확인)
+- [x] 신규 파일 전부 800줄 이하
 - [ ] 학습 리뷰 토픽 10개 설명 완료
 - [ ] 이해도 질문 5개 사용자 답변 완료
 - [ ] 🔴 높음 토픽 (Optimistic Lock, try/finally 롤백) — 삭제 후 재구현 완료

@@ -1,8 +1,6 @@
 # Step 7: 편집 UI 상세 구현 계획 ✅
 
 > **상태**: ✅ 구현 완료 (2026-03-20, 3개 파일, 편집/재분석/재추출/확정 UI)
-
-> **상태**: 계획 수립 완료
 > **소유 역할**: frontend-ui
 > **의존성**: Step 5 (추출+재추출+재분석 Action), Step 6 (업로드 UI) — 순차 진행
 > **참조**: 마스터 PLAN `docs/plan/20260308-past-exam-extraction.md` Step 7

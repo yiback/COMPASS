@@ -1,8 +1,6 @@
 # Step 5: 추출 + crop + 재추출 + 재분석 — 상세 구현 계획 ✅
 
 > **상태**: ✅ 구현 완료 (2026-03-20, 5개 파일, 35 테스트, IDOR 수정 + crop 캐싱 적용)
-
-> **상태**: 구현 대기
 > **소유 역할**: backend-actions
 > **의존성**: Step 1 (스키마), Step 3 (AI 타입+프롬프트+GeminiProvider), Step 4 (시험 생성 Action)
 > **Wave**: 3 (Step 1+3+4 완료 후)

@@ -1,8 +1,6 @@
 # Step 4: 시험 생성 + 이미지 업로드 상세 구현 계획 ✅
 
 > **상태**: ✅ 구현 완료 (2026-03-20, 4개 파일, 5개 Action, 64 테스트)
-
-> **상태**: 구현 대기
 > **소유 역할**: backend-actions
 > **의존성**: Step 1 (3계층 스키마 + `supabase gen types` → `src/types/supabase.ts` 업데이트 완료 필수)
 > **마스터 PLAN**: `docs/plan/20260308-past-exam-extraction.md` Step 4

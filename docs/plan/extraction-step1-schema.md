@@ -336,18 +336,18 @@ npx supabase gen types typescript --local > src/types/supabase.ts
 
 ## 완료 기준 체크리스트
 
-- [ ] 3개 테이블(past_exams, past_exam_images, past_exam_details) 생성 확인
-- [ ] 각 테이블 CHECK 제약 조건 동작 확인
-- [ ] `UNIQUE(past_exam_id, page_number)` 제약 동작 확인
-- [ ] `ON DELETE CASCADE` FK 동작 확인 (past_exams 삭제 시 하위 테이블 연쇄 삭제)
-- [ ] RLS 정책 12개 (3테이블 x 4 CRUD) 동작 확인
-- [ ] student 역할 접근 차단 확인
-- [ ] teacher가 본인 생성분만 UPDATE/DELETE 가능 확인 (past_exams)
-- [ ] admin/system_admin이 같은 academy 전체 관리 가능 확인
-- [ ] 인덱스 12개 생성 확인
-- [ ] updated_at 트리거 2개(past_exams, past_exam_details) 동작 확인
-- [ ] past_exam_questions deprecated 주석 적용 확인
-- [ ] `supabase gen types` 실행 → `src/types/supabase.ts` 업데이트 완료
+- [x] 3개 테이블(past_exams, past_exam_images, past_exam_details) 생성 확인
+- [x] 각 테이블 CHECK 제약 조건 동작 확인
+- [x] `UNIQUE(past_exam_id, page_number)` 제약 동작 확인
+- [x] `ON DELETE CASCADE` FK 동작 확인 (past_exams 삭제 시 하위 테이블 연쇄 삭제)
+- [x] RLS 정책 12개 (3테이블 x 4 CRUD) 동작 확인
+- [x] student 역할 접근 차단 확인
+- [x] teacher가 본인 생성분만 UPDATE/DELETE 가능 확인 (past_exams)
+- [x] admin/system_admin이 같은 academy 전체 관리 가능 확인
+- [x] 인덱스 12개 생성 확인
+- [x] updated_at 트리거 2개(past_exams, past_exam_details) 동작 확인
+- [x] past_exam_questions deprecated 주석 적용 확인
+- [x] `supabase gen types` 실행 → `src/types/supabase.ts` 업데이트 완료
 
 ---
 
