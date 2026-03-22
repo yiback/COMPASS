@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Badge } from '@/components/ui/badge'
+import { LatexRenderer } from '@/components/ui/latex-renderer'
 import { getQuestionDetail } from '@/lib/actions/questions'
 import type { QuestionDetail } from '@/lib/actions/questions'
 
@@ -158,11 +159,9 @@ export function QuestionDetailSheet({
 
               <InfoRow label="난이도">{detail.difficultyLabel}</InfoRow>
 
-              {/* 문제 내용 */}
+              {/* 문제 내용 — LaTeX 수식 렌더링 */}
               <InfoRow label="문제 내용">
-                <p className="whitespace-pre-wrap text-sm font-normal leading-relaxed">
-                  {detail.content}
-                </p>
+                <LatexRenderer text={detail.content} className="text-sm font-normal leading-relaxed" />
               </InfoRow>
 
               {/* 보기 (객관식만 표시) */}
@@ -171,24 +170,23 @@ export function QuestionDetailSheet({
                   <ol className="list-inside list-decimal space-y-1">
                     {detail.options.map((option, index) => (
                       <li key={index} className="text-sm font-normal">
-                        {option}
+                        {/* 보기 항목 — LaTeX 수식 렌더링 */}
+                        <LatexRenderer text={option} />
                       </li>
                     ))}
                   </ol>
                 </InfoRow>
               )}
 
-              {/* 정답 */}
+              {/* 정답 — LaTeX 수식 렌더링 */}
               <InfoRow label="정답">
-                <span className="font-semibold text-primary">{detail.answer}</span>
+                <LatexRenderer text={detail.answer} className="font-semibold text-primary" />
               </InfoRow>
 
-              {/* 해설 */}
+              {/* 해설 — LaTeX 수식 렌더링 */}
               {detail.explanation && (
                 <InfoRow label="해설">
-                  <p className="whitespace-pre-wrap text-sm font-normal leading-relaxed">
-                    {detail.explanation}
-                  </p>
+                  <LatexRenderer text={detail.explanation} className="text-sm font-normal leading-relaxed" />
                 </InfoRow>
               )}
 

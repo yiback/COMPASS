@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
+// KaTeX CSS는 latex-renderer.tsx 내부로 이동 (사용 페이지에서만 로드)
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

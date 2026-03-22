@@ -43,6 +43,7 @@ import { saveGeneratedQuestions } from '@/lib/actions/save-questions'
 import type { GeneratedQuestion } from '@/lib/ai'
 import type { PastExamDetail } from '@/lib/actions/past-exams'
 import { MAX_QUESTION_COUNT } from '@/lib/constants/questions'
+import { LatexRenderer } from '@/components/ui/latex-renderer'
 
 // ─── Props ──────────────────────────────────────────────
 
@@ -145,15 +146,15 @@ function QuestionCard({ question, index, isSelected, isSaved, onToggle }: Questi
 
       {/* 펼쳐지는 내용 */}
       <AccordionContent className="pl-9 space-y-3">
-        {/* 문제 내용 */}
-        <p className="whitespace-pre-wrap text-sm">{question.content}</p>
+        {/* 문제 내용 — LaTeX 수식 렌더링 지원 */}
+        <LatexRenderer text={question.content} className="text-sm" />
 
-        {/* 객관식 보기 */}
+        {/* 객관식 보기 — 각 보기에 LaTeX 수식 렌더링 지원 */}
         {question.options && question.options.length > 0 && (
           <div className="space-y-1 pl-2">
             {question.options.map((option, i) => (
               <p key={i} className="text-sm text-muted-foreground">
-                {i + 1}. {option}
+                {i + 1}. <LatexRenderer text={option} />
               </p>
             ))}
           </div>
@@ -161,17 +162,17 @@ function QuestionCard({ question, index, isSelected, isSaved, onToggle }: Questi
 
         <Separator />
 
-        {/* 정답 */}
+        {/* 정답 — LaTeX 수식 렌더링 지원 */}
         <div>
           <p className="text-xs font-medium text-muted-foreground">정답</p>
-          <p className="text-sm">{question.answer}</p>
+          <LatexRenderer text={question.answer} className="text-sm" />
         </div>
 
-        {/* 해설 */}
+        {/* 해설 — LaTeX 수식 렌더링 지원 */}
         {question.explanation && (
           <div>
             <p className="text-xs font-medium text-muted-foreground">해설</p>
-            <p className="whitespace-pre-wrap text-sm">{question.explanation}</p>
+            <LatexRenderer text={question.explanation} className="text-sm" />
           </div>
         )}
       </AccordionContent>

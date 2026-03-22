@@ -7,7 +7,7 @@
  * confidence 색상: 🟢>=0.8 / 🟡0.5~0.8 / 🔴<0.5
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   AccordionContent,
   AccordionItem,
@@ -33,6 +33,7 @@ import {
   Loader2,
   ImageIcon,
 } from 'lucide-react'
+import { LatexRenderer } from '@/components/ui/latex-renderer'
 import type { QuestionData, FigureData } from './page'
 
 // ─── 타입 ────────────────────────────────────────────────
@@ -156,25 +157,25 @@ interface ReadModeProps {
 function ReadMode({ question, confidenceStyle }: ReadModeProps) {
   return (
     <div className="space-y-3">
-      {/* 문제 내용 */}
-      <p className="whitespace-pre-wrap text-sm">{question.questionText}</p>
+      {/* 문제 내용 — LaTeX 수식 렌더링 */}
+      <LatexRenderer text={question.questionText} className="text-sm" />
 
-      {/* 객관식 보기 */}
+      {/* 객관식 보기 — LaTeX 수식 렌더링 */}
       {question.options && question.options.length > 0 && (
         <div className="space-y-1 pl-2">
           {question.options.map((option, i) => (
             <p key={i} className="text-sm text-muted-foreground">
-              {i + 1}. {option}
+              {i + 1}. <LatexRenderer text={option} />
             </p>
           ))}
         </div>
       )}
 
-      {/* 정답 */}
+      {/* 정답 — LaTeX 수식 렌더링 */}
       {question.answer && (
         <div>
           <p className="text-xs font-medium text-muted-foreground">정답</p>
-          <p className="text-sm">{question.answer}</p>
+          <LatexRenderer text={question.answer} className="text-sm" />
         </div>
       )}
 
@@ -204,6 +205,23 @@ function EditMode({ question, onSave, onCancel }: EditModeProps) {
     question.options ?? ['', '', '', ''],
   )
   const [answer, setAnswer] = useState(question.answer ?? '')
+
+  // LaTeX 미리보기 상태 — 300ms debounce 적용
+  const [previewText, setPreviewText] = useState(question.questionText)
+  const [focusedOptionIndex, setFocusedOptionIndex] = useState<number | null>(null)
+  const [previewAnswer, setPreviewAnswer] = useState(question.answer ?? '')
+
+  // 문제 내용 debounce — 300ms 후 미리보기 업데이트
+  useEffect(() => {
+    const timer = setTimeout(() => setPreviewText(questionText), 300)
+    return () => clearTimeout(timer)
+  }, [questionText])
+
+  // 정답 debounce — 300ms 후 미리보기 업데이트
+  useEffect(() => {
+    const timer = setTimeout(() => setPreviewAnswer(answer), 300)
+    return () => clearTimeout(timer)
+  }, [answer])
 
   // 문제 유형 변경 시 보기 배열 초기화
   function handleTypeChange(value: string) {
@@ -257,6 +275,13 @@ function EditMode({ question, onSave, onCancel }: EditModeProps) {
           rows={3}
           className="resize-none text-sm"
         />
+        {/* LaTeX 수식이 포함된 경우에만 미리보기 표시 */}
+        {previewText && previewText.includes('$') && (
+          <div className="max-h-32 overflow-y-auto rounded-md border bg-muted/30 p-2">
+            <p className="mb-1 text-xs text-muted-foreground">미리보기</p>
+            <LatexRenderer text={previewText} className="text-sm" />
+          </div>
+        )}
       </div>
 
       {/* 객관식 보기 */}
@@ -265,16 +290,27 @@ function EditMode({ question, onSave, onCancel }: EditModeProps) {
           <label className="text-xs font-medium">보기</label>
           <div className="grid grid-cols-2 gap-2">
             {options.map((opt, i) => (
-              <div key={i} className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">
-                  {i + 1}.
-                </span>
-                <Input
-                  value={opt}
-                  onChange={(e) => handleOptionChange(i, e.target.value)}
-                  className="h-8 text-sm"
-                  placeholder={`보기 ${i + 1}`}
-                />
+              <div key={i} className="flex flex-col gap-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">
+                    {i + 1}.
+                  </span>
+                  {/* onFocus/onBlur로 포커스된 보기 인덱스 추적 */}
+                  <Input
+                    value={opt}
+                    onChange={(e) => handleOptionChange(i, e.target.value)}
+                    onFocus={() => setFocusedOptionIndex(i)}
+                    onBlur={() => setFocusedOptionIndex(null)}
+                    className="h-8 text-sm"
+                    placeholder={`보기 ${i + 1}`}
+                  />
+                </div>
+                {/* 포커스된 보기에만 LaTeX 미리보기 표시 */}
+                {focusedOptionIndex === i && opt.includes('$') && (
+                  <div className="rounded-md border bg-muted/30 p-1.5">
+                    <LatexRenderer text={opt} className="text-xs" />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -290,6 +326,13 @@ function EditMode({ question, onSave, onCancel }: EditModeProps) {
           className="h-8 text-sm"
           placeholder="정답을 입력하세요"
         />
+        {/* LaTeX 수식이 포함된 경우에만 정답 미리보기 표시 */}
+        {previewAnswer && previewAnswer.includes('$') && (
+          <div className="rounded-md border bg-muted/30 p-2">
+            <p className="mb-1 text-xs text-muted-foreground">미리보기</p>
+            <LatexRenderer text={previewAnswer} className="text-sm" />
+          </div>
+        )}
       </div>
 
       {/* 그래프/그림 (읽기 전용) */}
