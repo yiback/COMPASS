@@ -4,6 +4,7 @@
 > 의존: 없음 (최초 Wave)
 > SHOULD FIX 반영: S1(figure.display 필드), S3(XSS 근거 문서화)
 > 담당: frontend-ui (리드 승인: package.json)
+> **상태: ✅ 완료** (Task 1, 2, 3 모두 완료, 빌드 성공)
 
 ---
 

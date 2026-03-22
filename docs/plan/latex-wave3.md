@@ -4,6 +4,7 @@
 > 의존: Wave 2 완료 (Task 4 — question-card.tsx 동일 파일)
 > S2 반영: useDebounce 커스텀 훅 파일 생성 **취소** → 인라인 패턴
 > 담당: frontend-ui
+> **상태: ✅ 완료** (Task 7 완료, 빌드 성공, E2E 미리보기 동작 확인)
 
 ---
 

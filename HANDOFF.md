@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-03-22 (세션 27: figure crop 제거 + figure Signed URL 버그 수정 + 문서 업데이트)
+> **최종 업데이트**: 2026-03-22 (세션 28: 단계 1.5-1 LaTeX 수식 렌더링 완료 — 31 tests, E2E 통과)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -35,7 +35,20 @@
 | 버그 | 학년 필터링 + 업로드 버그 | 완료 |
 | E2E | 단계 1 통합 테스트 | 완료 (Chrome DevTools MCP) |
 
-### 현재 세션 요약 (2026-03-22, 세션 27)
+### 현재 세션 요약 (2026-03-22, 세션 28)
+
+**단계 1.5-1 LaTeX 수식 렌더링 전체 구현 완료**:
+
+1. **리서치 (6개 주제, 15개 문서)**: LaTeX 렌더링, 편집 미리보기, 도형/그래프, 도형 위치, 텍스트 중간 도형
+2. **PLAN v2 + Wave 1~4 상세 계획**: 8 Tasks, 파일 소유권 명시, 병렬 구현 설계
+3. **PLAN 리뷰 2회**: 마스터 리뷰 + 상세 리뷰 (MUST FIX 4건 수정 후 READY)
+4. **구현**: katex 설치, parseLatexText 파서 (4종 세그먼트), LatexRenderer 컴포넌트 (React.memo + figure 폴백), ReadMode 11곳 적용, EditMode Live Preview Below
+5. **코드 리뷰**: security + perf + test 3명 리뷰, HIGH 3건 수정 (React.memo, CSS 이동, catch XSS), 테스트 6개 추가
+6. **테스트**: 31 tests ALL PASS (파서 22 + 렌더러 9)
+7. **E2E**: Chrome DevTools MCP로 ReadMode/EditMode 수식 렌더링 시각 검증
+8. **커밋 2건**: `e847cd0` feat + `a9046d3` docs
+
+### 이전 세션 요약 (2026-03-22, 세션 27)
 
 **figure crop 제거 + figure Signed URL 버그 수정 + 커밋 2건 + 문서 업데이트**:
 

@@ -8,7 +8,7 @@
 > - docs/research/figure-placement-recommendation.md (v2)
 > - docs/research/tech/figure-mid-text.md
 > - docs/research/feasibility/figure-mid-text.md
-> 상태: READY (구현 대기)
+> 상태: ✅ 완료 (2026-03-22, 31 tests, E2E 통과)
 
 ---
 

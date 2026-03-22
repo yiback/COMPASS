@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-03-22 (단계 1.5 추가 — LaTeX 수식 렌더링 + 도형/그래프 렌더링)
+> **최종 업데이트**: 2026-03-22 (단계 1.5-1 LaTeX 수식 렌더링 완료 — 31 tests, E2E 통과)
 
 ## 개발 전략
 
@@ -166,21 +166,21 @@
 > **배치 이유**: 단계 1에서 생성된 문제의 표시 품질 개선 + 단계 2 시험지 PDF 출력의 전제 조건
 > **통합 결과**: 수식(`$\frac{1}{2}$`)과 도형(`{{fig:N}}`)이 UI에서 정확하게 렌더링됨
 
-### 1.5-1. LaTeX 수식 렌더링 [F020]
+### 1.5-1. LaTeX 수식 렌더링 [F020] ✅
 
-> **계획**: `docs/plan/latex-rendering.md` (READY)
+> **계획**: `docs/plan/latex-rendering.md` (v2)
 > **리서치**: `docs/research/latex-rendering-recommendation.md`, `docs/research/latex-editor-preview-recommendation.md`
-> **작업량**: M (2-3일)
+> **작업량**: M (2-3일) → **완료** (세션 28, 31 tests, E2E 통과)
 
-- [ ] Task 1: `katex` + `@types/katex` 설치, CSS 전역 import
-- [ ] Task 2: `parseLatexText` 유틸 — `$$`/`$`/`{{fig:N}}` 세그먼트 파싱
-- [ ] Task 3: `LatexRenderer` 공통 컴포넌트 — KaTeX 렌더링, `throwOnError: false` 폴백
-- [ ] Task 4: `question-card.tsx` ReadMode 적용
-- [ ] Task 5: `generate-questions-dialog.tsx` 적용
-- [ ] Task 6: `question-detail-sheet.tsx` 적용
-- [ ] Task 7: EditMode Live Preview Below 추가 (300ms debounce)
-- [ ] Task 8: 단위 테스트 (17개 케이스 — figure 4개 포함)
-- [ ] 빌드 검증
+- [x] Task 1: `katex` + `@types/katex` 설치, CSS 전역 import
+- [x] Task 2: `parseLatexText` 유틸 — `$$`/`$`/`{{fig:N}}` 세그먼트 파싱
+- [x] Task 3: `LatexRenderer` 공통 컴포넌트 — KaTeX 렌더링, `throwOnError: false` 폴백
+- [x] Task 4: `question-card.tsx` ReadMode 적용
+- [x] Task 5: `generate-questions-dialog.tsx` 적용
+- [x] Task 6: `question-detail-sheet.tsx` 적용
+- [x] Task 7: EditMode Live Preview Below 추가 (300ms debounce)
+- [x] Task 8: 단위 테스트 (22+9=31개, 코드 리뷰 MUST FIX 포함)
+- [x] 빌드 검증 + E2E 시각적 검증 (Chrome DevTools MCP)
 
 ### 1.5-2. 도형/그래프 렌더링 [F021]
 
@@ -498,8 +498,8 @@ CREATE TABLE teacher_subjects (
 |-----------|--------|------|
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
 | 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-9 + 통합 테스트 완료, 1238 tests) | ✅ 완료 |
-| 단계 1.5-1 (LaTeX 수식 렌더링) | 0% (PLAN READY) | ⏳ 다음 |
-| 단계 1.5-2 (도형/그래프 렌더링) | 0% (리서치 완료, PLAN 미작성) | ⏸️ 대기 |
+| 단계 1.5-1 (LaTeX 수식 렌더링) | 100% (8/8 Task 완료, 31 tests) | ✅ 완료 |
+| 단계 1.5-2 (도형/그래프 렌더링) | 0% (리서치 완료, PLAN 미작성) | ⏳ 다음 |
 | 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
