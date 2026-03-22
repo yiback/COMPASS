@@ -30,6 +30,8 @@ const EXTRACTION_SYSTEM_INSTRUCTION = [
   '3. 학생의 필기, 답안 표시, 풀이 흔적은 무시하고 원본 문제만 추출하세요.',
   '4. 그래프, 그림, 도형이 있는 경우:',
   '   - bounding box 좌표를 normalized(0~1)로 반환하세요.',
+  '   - bounding box는 그림 전체를 넉넉히 포함해야 합니다. 여백을 약간 포함하세요.',
+  '   - x, y는 그림 영역의 좌상단 꼭짓점이고, width, height는 그림 영역의 전체 너비와 높이입니다.',
   '   - 그래프/그림의 내용을 상세히 설명하세요.',
   '   - hasFigure를 true로 설정하세요.',
   '5. 각 문제의 추출 신뢰도(confidence)를 0.0~1.0으로 평가하세요.',

@@ -88,6 +88,7 @@ export function ExtractionEditor({
     Record<number, string>
   >({})
 
+
   // ─── useEffect: 이미지 Signed URL 생성 ─────────────────
 
   useEffect(() => {

@@ -13,6 +13,7 @@
 // → src/app/(dashboard)/past-exams/[id]/edit/page.tsx에 설정됨.
 
 import { createClient } from '@/lib/supabase/server'
+// createAdminClient: crop 제거로 extractQuestionsAction에서 미사용, resetExtractionAction에서만 사용
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createAIProvider } from '@/lib/ai/provider'
 import {
@@ -147,10 +148,9 @@ async function buildImageParts(
  * 1. Optimistic Lock (extraction_status IN ('pending', 'failed') → 'processing')
  * 2. 이미지별 직렬 base64 변환 (메모리 방어)
  * 3. AI Provider.extractQuestions 호출
- * 4. sharp crop: normalized → pixel 변환 + 클램핑
- * 5. past_exam_details INSERT
- * 6. extraction_status = 'completed' + raw_ai_response 백업
- * 7. finally: 실패 시 extraction_status = 'failed' 롤백 보장
+ * 4. past_exam_details INSERT (figure는 AI 메타데이터만 저장, crop 제거)
+ * 5. extraction_status = 'completed' + raw_ai_response 백업
+ * 6. finally: 실패 시 extraction_status = 'failed' 롤백 보장
  */
 export async function extractQuestionsAction(
   pastExamId: string,
@@ -227,9 +227,7 @@ export async function extractQuestionsAction(
       }[]) ?? []
 
     // 5b. 이미지별 직렬 base64 변환 (메모리 방어 — for...of)
-    //     crop 단계에서 재fetch 방지를 위해 Buffer 맵도 함께 구성
     const imageParts: ImagePart[] = []
-    const imageBufferMap = new Map<number, Buffer>()
     for (const image of imageList) {
       const { data: signedUrlData } = await supabase.storage
         .from('past-exams')
@@ -238,11 +236,9 @@ export async function extractQuestionsAction(
       const response = await fetch(signedUrlData.signedUrl)
       const arrayBuffer = await response.arrayBuffer()
       const mimeType = response.headers.get('content-type') ?? 'image/jpeg'
-      const buffer = Buffer.from(arrayBuffer)
-      imageBufferMap.set(image.page_number, buffer)
       imageParts.push({
         mimeType,
-        data: buffer.toString('base64'),
+        data: Buffer.from(arrayBuffer).toString('base64'),
       })
     }
 
@@ -260,101 +256,31 @@ export async function extractQuestionsAction(
         examType: pastExam.exam_type,
       })
 
-    // 5d. 그래프 crop 처리 — sharp dynamic import (Edge Runtime 불가)
-    const sharp = (await import('sharp')).default
-    const admin = createAdminClient()
-
-    // detailId 사전 생성 맵 — crop Storage 경로에 필요하므로 INSERT 전에 할당
-    const detailEntries: Array<{
-      readonly detailId: string
-      readonly question: ExtractedQuestion
-      readonly figureUrls: Map<number, string | null>
-    }> = []
-
-    for (const question of aiResult.questions) {
-      const detailId = crypto.randomUUID()
-      const figureUrls = new Map<number, string | null>()
-
-      if (question.hasFigure && question.figures) {
-        for (let i = 0; i < question.figures.length; i++) {
-          const figure = question.figures[i]
-          try {
-            // pageNumber로 5b에서 캐싱한 Buffer 재사용 (중복 fetch 방지)
-            const imgBuffer = imageBufferMap.get(figure.pageNumber)
-            if (!imgBuffer) {
-              figureUrls.set(i, null)
-              continue
-            }
-
-            // normalized → pixel 변환 + 클램핑
-            const metadata = await sharp(imgBuffer).metadata()
-            const imgWidth = metadata.width!
-            const imgHeight = metadata.height!
-
-            let px = Math.round(figure.boundingBox.x * imgWidth)
-            let py = Math.round(figure.boundingBox.y * imgHeight)
-            let pw = Math.round(figure.boundingBox.width * imgWidth)
-            let ph = Math.round(figure.boundingBox.height * imgHeight)
-
-            // 클램핑 — 이미지 경계를 넘지 않도록 보정
-            px = Math.max(0, Math.min(px, imgWidth - 1))
-            py = Math.max(0, Math.min(py, imgHeight - 1))
-            pw = Math.min(pw, imgWidth - px)
-            ph = Math.min(ph, imgHeight - py)
-
-            if (pw <= 0 || ph <= 0) {
-              throw new Error('Invalid crop dimensions')
-            }
-
-            const croppedBuffer = await sharp(imgBuffer)
-              .extract({ left: px, top: py, width: pw, height: ph })
-              .jpeg({ quality: 85 })
-              .toBuffer()
-
-            // Storage 업로드 (admin 클라이언트 — RLS 우회)
-            const storagePath = `${pastExam.academy_id}/${pastExamId}/figures/${detailId}-${i}.jpg`
-            await admin.storage
-              .from('past-exams')
-              .upload(storagePath, croppedBuffer, {
-                contentType: 'image/jpeg',
-              })
-
-            figureUrls.set(i, storagePath)
-          } catch {
-            // crop 개별 실패 시 figure.url = null (부분 성공 허용)
-            figureUrls.set(i, null)
-          }
-        }
-      }
-
-      detailEntries.push({ detailId, question, figureUrls })
-    }
-
-    // 5e. past_exam_details INSERT (문제별 1행)
-    const details = detailEntries.map(
-      ({ detailId, question, figureUrls }) => ({
-        id: detailId,
-        past_exam_id: pastExamId,
-        academy_id: pastExam.academy_id,
-        question_number: question.questionNumber,
-        question_text: question.questionText,
-        question_type: toDbQuestionType(question.questionType),
-        options: question.options ? [...question.options] : null,
-        answer: question.answer ?? null,
-        has_figure: question.hasFigure,
-        figures: question.figures
-          ? question.figures.map((fig, i) => ({
-              url: figureUrls.get(i) ?? null,
-              description: fig.description,
-              boundingBox: { ...fig.boundingBox },
-              pageNumber: fig.pageNumber,
-              confidence: fig.confidence,
-            }))
-          : null,
-        confidence: question.confidence,
-        is_confirmed: false,
-      }),
-    )
+    // 5d. past_exam_details INSERT (문제별 1행)
+    //     figure는 AI 메타데이터(description, boundingBox)만 저장
+    //     crop은 제거 — AI bounding box 부정확 + 학생 필기 포함 문제로 Phase 2에서 재검토
+    const details = aiResult.questions.map((question) => ({
+      id: crypto.randomUUID(),
+      past_exam_id: pastExamId,
+      academy_id: pastExam.academy_id,
+      question_number: question.questionNumber,
+      question_text: question.questionText,
+      question_type: toDbQuestionType(question.questionType),
+      options: question.options ? [...question.options] : null,
+      answer: question.answer ?? null,
+      has_figure: question.hasFigure,
+      figures: question.figures
+        ? question.figures.map((fig) => ({
+            url: null, // crop 제거 — Phase 2에서 AI 도형 생성으로 대체
+            description: fig.description,
+            boundingBox: { ...fig.boundingBox },
+            pageNumber: fig.pageNumber,
+            confidence: fig.confidence,
+          }))
+        : null,
+      confidence: question.confidence,
+      is_confirmed: false,
+    }))
 
     if (details.length > 0) {
       const { error: insertError } = await supabase

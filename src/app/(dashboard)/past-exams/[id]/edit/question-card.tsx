@@ -31,7 +31,6 @@ import {
   Check,
   X,
   Loader2,
-  AlertTriangle,
   ImageIcon,
 } from 'lucide-react'
 import type { QuestionData, FigureData } from './page'
@@ -116,43 +115,30 @@ function getConfidenceStyle(confidence: number | null): {
 
 interface FigurePreviewProps {
   readonly figures: FigureData[] | null
-  readonly imageSignedUrls: Record<number, string>
 }
 
-function FigurePreview({ figures, imageSignedUrls }: FigurePreviewProps) {
+function FigurePreview({ figures }: FigurePreviewProps) {
   if (!figures || figures.length === 0) return null
+
+  // description이 있는 figure만 표시
+  const descriptiveFigures = figures.filter((fig) => fig.description)
+  if (descriptiveFigures.length === 0) return null
 
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-muted-foreground">
-        그래프/그림
+        그래프/그림 설명
       </p>
-      <div className="flex flex-wrap gap-2">
-        {figures.map((fig, i) => (
+      <div className="space-y-1">
+        {descriptiveFigures.map((fig, i) => (
           <div
             key={i}
-            className="rounded-md border p-2"
+            className="flex items-start gap-2 rounded-md border bg-muted/30 p-2"
           >
-            {fig.url ? (
-              <div className="space-y-1">
-                {/* eslint-disable-next-line @next/next/no-img-element -- Signed URL 동적 이미지 */}
-                <img
-                  src={fig.url}
-                  alt={fig.description ?? `그래프 ${i + 1}`}
-                  className="max-h-32 max-w-48 rounded object-contain"
-                />
-                {fig.description && (
-                  <p className="max-w-48 truncate text-xs text-muted-foreground">
-                    {fig.description}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-xs text-yellow-600">
-                <AlertTriangle className="h-3 w-3" />
-                <span>추출 실패</span>
-              </div>
-            )}
+            <ImageIcon className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">
+              {fig.description}
+            </p>
           </div>
         ))}
       </div>
@@ -165,10 +151,9 @@ function FigurePreview({ figures, imageSignedUrls }: FigurePreviewProps) {
 interface ReadModeProps {
   readonly question: QuestionData
   readonly confidenceStyle: ReturnType<typeof getConfidenceStyle>
-  readonly imageSignedUrls: Record<number, string>
 }
 
-function ReadMode({ question, confidenceStyle, imageSignedUrls }: ReadModeProps) {
+function ReadMode({ question, confidenceStyle }: ReadModeProps) {
   return (
     <div className="space-y-3">
       {/* 문제 내용 */}
@@ -197,7 +182,6 @@ function ReadMode({ question, confidenceStyle, imageSignedUrls }: ReadModeProps)
       {question.hasFigure && (
         <FigurePreview
           figures={question.figures}
-          imageSignedUrls={imageSignedUrls}
         />
       )}
     </div>
@@ -402,7 +386,6 @@ export function QuestionCard({
             <ReadMode
               question={question}
               confidenceStyle={confidenceStyle}
-              imageSignedUrls={{}}
             />
 
             {/* 액션 버튼 */}
