@@ -30,7 +30,7 @@ describe('getAIConfig', () => {
     const config = getAIConfig()
 
     expect(config.apiKey).toBe('test-api-key')
-    expect(config.model).toBe('gemini-2.0-flash')
+    expect(config.model).toBe('gemini-2.5-flash')
     expect(config.provider).toBe('gemini')
     expect(config.maxRetries).toBe(3)
     expect(config.timeoutMs).toBe(30_000)

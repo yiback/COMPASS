@@ -20,7 +20,7 @@ vi.mock('@google/genai', () => {
 vi.mock('../config', () => ({
   getAIConfig: vi.fn().mockReturnValue({
     apiKey: 'test-api-key',
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash',
     maxRetries: 2,
     timeoutMs: 30000,
   }),
@@ -198,7 +198,7 @@ describe('GeminiProvider', () => {
       await provider.generateQuestions(VALID_PARAMS)
 
       const callArgs = mockGenerateContent.mock.calls[0][0]
-      expect(callArgs.model).toBe('gemini-2.0-flash')
+      expect(callArgs.model).toBe('gemini-2.5-flash')
       expect(callArgs.contents).toContain('수학')
       expect(callArgs.contents).toContain('2학년')
     })

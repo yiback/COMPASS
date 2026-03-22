@@ -28,7 +28,7 @@ const coerceNumber = z
 
 const aiConfigSchema = z.object({
   apiKey: z.string().min(1, 'GEMINI_API_KEY는 필수입니다'),
-  model: z.string().default('gemini-2.0-flash'),
+  model: z.string().default('gemini-2.5-flash'),
   provider: z.string().default('gemini'),
   maxRetries: coerceNumber.pipe(z.number().int().min(1).max(10).default(3)),
   timeoutMs: coerceNumber.pipe(z.number().int().min(1000).max(120_000).default(30_000)),
