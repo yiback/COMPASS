@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { LatexRenderer } from '@/components/ui/latex-renderer'
 import { getQuestionDetail } from '@/lib/actions/questions'
 import type { QuestionDetail } from '@/lib/actions/questions'
+import type { FigureData } from '@/lib/ai/types'
 
 // ─── 타입 정의 ────────────────────────────────────────
 
@@ -19,6 +20,8 @@ interface QuestionDetailSheetProps {
   readonly open: boolean
   readonly onOpenChange: (open: boolean) => void
   readonly questionId: string
+  /** 도형 데이터 배열 — optional, 전달 시 보기 내 {{fig:N}} 구분자를 도형으로 렌더링 */
+  readonly figures?: readonly FigureData[]
 }
 
 // ─── 문제 유형 레이블 ──────────────────────────────────
@@ -85,6 +88,7 @@ export function QuestionDetailSheet({
   open,
   onOpenChange,
   questionId,
+  figures,
 }: QuestionDetailSheetProps) {
   const [detail, setDetail] = useState<QuestionDetail | null>(null)
   const [loading, setLoading] = useState(false)
@@ -170,8 +174,8 @@ export function QuestionDetailSheet({
                   <ol className="list-inside list-decimal space-y-1">
                     {detail.options.map((option, index) => (
                       <li key={index} className="text-sm font-normal">
-                        {/* 보기 항목 — LaTeX 수식 렌더링 */}
-                        <LatexRenderer text={option} />
+                        {/* 보기 항목 — LaTeX 수식 + 도형 렌더링 (figures 전달 시 {{fig:N}} 도형으로 표시) */}
+                        <LatexRenderer text={option} figures={figures} />
                       </li>
                     ))}
                   </ol>

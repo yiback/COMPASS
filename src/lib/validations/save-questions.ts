@@ -11,6 +11,7 @@
 
 import { z } from 'zod'
 import { MAX_QUESTION_COUNT } from '@/lib/constants/questions'
+import { figureDataSchema } from '@/lib/validations/figure-schema'
 
 /**
  * 저장할 개별 문제 스키마
@@ -30,6 +31,9 @@ export const questionToSaveSchema = z.object({
   answer: z.string().min(1, '정답이 비어있습니다.'),
   explanation: z.string().optional(),
   options: z.array(z.string()).optional(),
+  // 도형 렌더링 필드 — AI가 생성한 figures 배열을 저장 시 함께 전달
+  hasFigure: z.boolean().optional(),
+  figures: z.array(figureDataSchema).optional(),
 })
 
 export const saveQuestionsRequestSchema = z.object({

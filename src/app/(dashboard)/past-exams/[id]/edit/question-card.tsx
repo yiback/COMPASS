@@ -35,6 +35,8 @@ import {
 } from 'lucide-react'
 import { LatexRenderer } from '@/components/ui/latex-renderer'
 import type { QuestionData, FigureData } from './page'
+// LatexRenderer에 figures 전달 시 AI 도형 타입 사용
+import type { FigureData as AiFigureData } from '@/lib/ai/types'
 
 // ─── 타입 ────────────────────────────────────────────────
 
@@ -160,12 +162,14 @@ function ReadMode({ question, confidenceStyle }: ReadModeProps) {
       {/* 문제 내용 — LaTeX 수식 렌더링 */}
       <LatexRenderer text={question.questionText} className="text-sm" />
 
-      {/* 객관식 보기 — LaTeX 수식 렌더링 */}
+      {/* 객관식 보기 — LaTeX 수식 렌더링 (도형 포함) */}
       {question.options && question.options.length > 0 && (
         <div className="space-y-1 pl-2">
           {question.options.map((option, i) => (
             <p key={i} className="text-sm text-muted-foreground">
-              {i + 1}. <LatexRenderer text={option} />
+              {/* figures 전달 — 보기 안에 {{fig:N}} 구분자가 있으면 도형 렌더링
+                  DB의 figures 컬럼은 AI 추출 결과(AiFigureData)로 저장되어 있으므로 타입 단언 사용 */}
+              {i + 1}. <LatexRenderer text={option} figures={question.figures as unknown as readonly AiFigureData[] ?? undefined} />
             </p>
           ))}
         </div>

@@ -211,7 +211,7 @@
 - [ ] ReadMode — `$\frac{1}{2}$` 수식 렌더링 확인
 - [ ] EditMode — 입력 → debounce → 미리보기 확인
 - [ ] 잘못된 LaTeX → 에러 텍스트 표시, 크래시 없음
-- [ ] (1.5-2 완료 후) `{{fig:0}}` → FigureRenderer 렌더링 확인
+- [ ] (1.5-2 완료 후) `{{fig:1}}` → FigureRenderer 렌더링 확인
 
 ---
 

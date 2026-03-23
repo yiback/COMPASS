@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   validateExtractedQuestions,
   boundingBoxSchema,
@@ -255,6 +255,72 @@ describe('extraction-validation', () => {
 
       expect(result.questions[0].hasFigure).toBe(true)
       expect(result.questions[0].figures).toBeUndefined()
+    })
+
+    it('figures 1개인데 questionText에 {{fig:2}} 참조 → console.warn 호출, throw 안 함', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const data = {
+        questions: [
+          createEssayQuestion({
+            questionText: '{{fig:2}}를 보고 해석하시오.',
+            hasFigure: true,
+            figures: [
+              {
+                description: '그래프 1',
+                boundingBox: { x: 0.1, y: 0.2, width: 0.4, height: 0.3 },
+                pageNumber: 1,
+                confidence: 0.8,
+              },
+            ],
+          }),
+        ],
+      }
+
+      // throw 없이 정상 반환
+      const result = validateExtractedQuestions(data)
+      expect(result.questions[0].figures).toHaveLength(1)
+
+      // console.warn 호출 확인
+      expect(warnSpy).toHaveBeenCalledOnce()
+      expect(warnSpy.mock.calls[0][0]).toContain('figures 인덱스 불일치')
+
+      warnSpy.mockRestore()
+    })
+
+    it('figures 2개, questionText에 {{fig:1}}{{fig:2}} 참조 → console.warn 미호출, 정상 반환', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      const data = {
+        questions: [
+          createEssayQuestion({
+            questionText: '{{fig:1}}과 {{fig:2}}를 비교하시오.',
+            hasFigure: true,
+            figures: [
+              {
+                description: '그래프 1',
+                boundingBox: { x: 0.1, y: 0.2, width: 0.4, height: 0.3 },
+                pageNumber: 1,
+                confidence: 0.8,
+              },
+              {
+                description: '그래프 2',
+                boundingBox: { x: 0.5, y: 0.2, width: 0.4, height: 0.3 },
+                pageNumber: 1,
+                confidence: 0.85,
+              },
+            ],
+          }),
+        ],
+      }
+
+      const result = validateExtractedQuestions(data)
+      expect(result.questions[0].figures).toHaveLength(2)
+
+      // console.warn 호출 없음
+      expect(warnSpy).not.toHaveBeenCalled()
+
+      warnSpy.mockRestore()
     })
   })
 

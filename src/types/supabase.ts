@@ -831,7 +831,9 @@ export type Database = {
           created_by: string | null
           difficulty: number | null
           explanation: string | null
+          figures: Json | null
           grade: number
+          has_figure: boolean
           id: string
           is_ai_generated: boolean | null
           options: Json | null
@@ -858,7 +860,9 @@ export type Database = {
           created_by?: string | null
           difficulty?: number | null
           explanation?: string | null
+          figures?: Json | null
           grade: number
+          has_figure?: boolean
           id?: string
           is_ai_generated?: boolean | null
           options?: Json | null
@@ -885,7 +889,9 @@ export type Database = {
           created_by?: string | null
           difficulty?: number | null
           explanation?: string | null
+          figures?: Json | null
           grade?: number
+          has_figure?: boolean
           id?: string
           is_ai_generated?: boolean | null
           options?: Json | null

@@ -123,7 +123,9 @@ function toQuestionInsertRow(
 
     // === 선택 필드 ===
     explanation: question.explanation ?? null,
-    options: question.options ?? null, // Supabase가 JSONB로 자동 직렬화
+    options: question.options ?? null,    // Supabase가 JSONB로 자동 직렬화
+    has_figure: question.hasFigure ?? false,
+    figures: question.figures ?? null,    // Supabase가 JSONB로 자동 직렬화
 
     // === AI 메타데이터 ===
     is_ai_generated: true,

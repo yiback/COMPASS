@@ -11,6 +11,7 @@
 import { z } from 'zod'
 import type { ExtractedQuestion, ExtractQuestionResult } from './types'
 import { AIValidationError } from './errors'
+import { validateFigureIndices } from '@/lib/validations/figure-schema'
 
 // ─── Zod 스키마 ──────────────────────────────────────────
 
@@ -89,6 +90,15 @@ export function validateExtractedQuestions(
     }
 
     // hasFigure=true인데 figures가 없으면 경고 (에러는 아님 — 부분 성공 허용)
+
+    // figures 교차 검증 — {{fig:N}} 참조와 figures 배열 길이 불일치 시 경고만 로그
+    if (q.hasFigure && q.figures) {
+      const warnings = validateFigureIndices(q.questionText, q.figures)
+      if (warnings.length > 0) {
+        console.warn(`문제 ${q.questionNumber} figures 인덱스 불일치:`, warnings)
+      }
+    }
+
     return {
       questionNumber: q.questionNumber,
       questionText: q.questionText,

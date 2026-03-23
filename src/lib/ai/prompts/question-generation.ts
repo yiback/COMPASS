@@ -42,11 +42,33 @@ function formatQuestionType(type: QuestionType): string {
 
 // ─── 프롬프트 빌더 ─────────────────────────────────────────
 
+/**
+ * 도형 JSON 출력 규칙 (6가지 타입 정의 포함)
+ *
+ * AI가 도형을 텍스트 설명으로 대체하는 대신,
+ * 구조화된 JSON으로 출력하도록 지시한다.
+ * {{fig:N}} 구분자(1-based)를 문제 텍스트 내에 삽입하여
+ * figures 배열과 1:1 매칭한다.
+ *
+ * 토큰 비용 제어: 포인트(좌표) 최대 20개 제한 명시
+ */
+const FIGURE_OUTPUT_RULES = [
+  '2. 그래프나 도형이 필요한 문제는 다음 규칙에 따라 JSON으로 출력하세요:',
+  '   a. 문제 텍스트에서 도형이 등장할 위치에 {{fig:N}} (N은 1부터 시작)을 삽입하세요.',
+  '   b. figures 배열에 N번째 위치에 해당 도형 JSON을 추가하세요.',
+  '   c. hasFigure 필드를 true로 설정하세요.',
+  '   d. 지원 타입: coordinate_plane, function_graph, polygon, circle, vector, number_line',
+  '   e. 포인트(좌표) 개수는 최대 20개로 제한하여 토큰 낭비를 방지하세요.',
+  '   f. 모든 도형에 description 필드(폴백용 텍스트)를 반드시 포함하세요.',
+  '   g. displaySize: "large"(기본값) 또는 "small"로 크기를 지정하세요.',
+  '   h. 도형이 불필요한 경우 hasFigure를 false로 설정하고 figures를 생략하세요.',
+].join('\n')
+
 const SYSTEM_INSTRUCTION = [
   '당신은 한국 중학교 시험 출제 전문가입니다.',
   '다음 규칙을 반드시 준수하세요:',
   '1. 수식은 반드시 LaTeX 문법을 사용하세요 (인라인: $...$, 블록: $$...$$).',
-  '2. 그래프나 그림이 필요한 문제는 텍스트로 상황을 설명하여 대체하세요.',
+  FIGURE_OUTPUT_RULES,
   '3. 문제는 해당 학년 교육과정에 맞는 수준으로 출제하세요.',
   '4. 각 문제에 정답과 풀이를 반드시 포함하세요.',
 ].join('\n')

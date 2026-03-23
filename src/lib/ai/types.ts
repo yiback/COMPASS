@@ -96,6 +96,69 @@ export function fromDifficultyNumber(num: number): DifficultyLevel {
   return NUMBER_TO_DIFFICULTY[num] ?? 'medium'
 }
 
+// ─── 도형 데이터 (단계 1.5-2: AI 생성 도형) ─────────────
+
+/**
+ * AI가 생성한 구조화된 도형 데이터 (6타입 discriminated union)
+ *
+ * FigureInfo(기출 추출용 boundingBox)와는 별개 타입.
+ * - FigureInfo: 기출 추출 전용 (boundingBox + pageNumber + confidence)
+ * - FigureData: AI 생성 도형 (좌표 + SVG 렌더링용)
+ *
+ * displaySize: SVG 내부 크기 힌트 ('large' | 'small')
+ * 레이아웃(블록/인라인)은 segment.display(파서 판단)가 우선 결정
+ */
+export type FigureData =
+  | {
+      readonly type: 'coordinate_plane'
+      readonly xRange: readonly [number, number]
+      readonly yRange: readonly [number, number]
+      readonly gridStep: number
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+  | {
+      readonly type: 'function_graph'
+      readonly points: readonly (readonly [number, number])[]
+      readonly domain: readonly [number, number]
+      readonly xRange: readonly [number, number]
+      readonly yRange: readonly [number, number]
+      readonly gridStep: number
+      readonly color?: string
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+  | {
+      readonly type: 'polygon'
+      readonly vertices: readonly (readonly [number, number])[]
+      readonly labels?: readonly string[]
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+  | {
+      readonly type: 'circle'
+      readonly center: readonly [number, number]
+      readonly radius: number
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+  | {
+      readonly type: 'vector'
+      readonly from: readonly [number, number]
+      readonly to: readonly [number, number]
+      readonly label?: string
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+  | {
+      readonly type: 'number_line'
+      readonly min: number
+      readonly max: number
+      readonly points: readonly { readonly value: number; readonly label: string }[]
+      readonly displaySize: 'large' | 'small'
+      readonly description: string
+    }
+
 // ─── 이미지 / 추출 관련 타입 ────────────────────────────
 
 /** 이미지 데이터 (base64 인코딩) */
@@ -230,6 +293,8 @@ export interface GeneratedQuestion {
   readonly answer: string
   readonly explanation?: string
   readonly options?: readonly string[]
+  readonly hasFigure?: boolean
+  readonly figures?: readonly FigureData[]
 }
 
 // ─── 채점 (Phase 2 구현 예정) ───────────────────────────

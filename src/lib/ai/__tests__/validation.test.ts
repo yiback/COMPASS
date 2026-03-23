@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   generatedQuestionSchema,
   generatedQuestionsResponseSchema,
@@ -6,6 +6,35 @@ import {
   validateGeneratedQuestions,
 } from '../validation'
 import { AIValidationError } from '../errors'
+
+// ─── 도형 테스트 데이터 팩토리 ───────────────────────────
+
+/** 유효한 원 FigureData */
+function createCircleFigure(overrides = {}) {
+  return {
+    type: 'circle' as const,
+    center: [0, 0] as [number, number],
+    radius: 5,
+    displaySize: 'large' as const,
+    description: '반지름 5인 원',
+    ...overrides,
+  }
+}
+
+/** 유효한 다각형 FigureData */
+function createPolygonFigure(overrides = {}) {
+  return {
+    type: 'polygon' as const,
+    vertices: [
+      [0, 0],
+      [3, 0],
+      [0, 4],
+    ] as [number, number][],
+    displaySize: 'large' as const,
+    description: '직각삼각형',
+    ...overrides,
+  }
+}
 
 // ─── 테스트 데이터 팩토리 ────────────────────────────────
 
@@ -168,5 +197,87 @@ describe('validateGeneratedQuestions', () => {
     const data = { questions: [createEssay()] }
     const result = validateGeneratedQuestions(data)
     expect(result[0].options).toBeUndefined()
+  })
+
+  // ─── figures 관련 테스트 (H2) ─────────────────────────
+
+  it('hasFigure: true + 유효한 figures 배열 → 반환 객체에 hasFigure와 figures 포함', () => {
+    const data = {
+      questions: [
+        createShortAnswer({
+          content: '다음 그림 {{fig:1}}에서 원의 넓이를 구하시오.',
+          hasFigure: true,
+          figures: [createCircleFigure()],
+        }),
+      ],
+    }
+    const result = validateGeneratedQuestions(data)
+    expect(result).toHaveLength(1)
+    expect(result[0].hasFigure).toBe(true)
+    expect(result[0].figures).toHaveLength(1)
+  })
+
+  it('figures 배열에 유효한 FigureData 항목 → validateGeneratedQuestions 성공', () => {
+    const data = {
+      questions: [
+        createShortAnswer({
+          content: '{{fig:1}}과 {{fig:2}}를 비교하시오.',
+          hasFigure: true,
+          figures: [createCircleFigure(), createPolygonFigure()],
+        }),
+      ],
+    }
+    const result = validateGeneratedQuestions(data)
+    expect(result[0].figures).toHaveLength(2)
+  })
+
+  it('figures 배열에 type 누락된 무효한 도형 데이터 → Zod 파싱 실패 (AIValidationError)', () => {
+    const data = {
+      questions: [
+        createShortAnswer({
+          hasFigure: true,
+          figures: [
+            {
+              // type 필드 없음 — discriminated union 판별 불가
+              center: [0, 0],
+              radius: 5,
+              description: '타입 없는 도형',
+            },
+          ],
+        }),
+      ],
+    }
+    expect(() => validateGeneratedQuestions(data)).toThrow(AIValidationError)
+  })
+
+  it('{{fig:2}} 참조 + figures.length === 1 → console.warn 호출, throw 안 함', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const data = {
+      questions: [
+        createShortAnswer({
+          // {{fig:2}} 참조하지만 figures는 1개뿐
+          content: '다음 그림 {{fig:2}}에서 답을 구하시오.',
+          hasFigure: true,
+          figures: [createCircleFigure()],
+        }),
+      ],
+    }
+
+    // throw하지 않음
+    expect(() => validateGeneratedQuestions(data)).not.toThrow()
+    // console.warn이 호출됨
+    expect(warnSpy).toHaveBeenCalledOnce()
+    expect(warnSpy.mock.calls[0][0]).toContain('[validateGeneratedQuestions]')
+
+    warnSpy.mockRestore()
+  })
+
+  it('hasFigure 없음 + figures: undefined → 정상 통과 (기존 동작 유지)', () => {
+    const data = { questions: [createShortAnswer()] }
+    const result = validateGeneratedQuestions(data)
+    expect(result).toHaveLength(1)
+    expect(result[0].hasFigure).toBeUndefined()
+    expect(result[0].figures).toBeUndefined()
   })
 })
