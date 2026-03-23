@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-03-22 (단계 1.5-1 LaTeX 수식 렌더링 완료 — 31 tests, E2E 통과)
+> **최종 업데이트**: 2026-03-23 (단계 1.5-2 도형/그래프 렌더링 완료 — 6타입 SVG + 1367 tests + E2E 통과)
 
 ## 개발 전략
 
@@ -182,36 +182,34 @@
 - [x] Task 8: 단위 테스트 (22+9=31개, 코드 리뷰 MUST FIX 포함)
 - [x] 빌드 검증 + E2E 시각적 검증 (Chrome DevTools MCP)
 
-### 1.5-2. 도형/그래프 렌더링 [F021]
+### 1.5-2. 도형/그래프 렌더링 [F021] ✅
 
-> **계획**: 미작성 — 1.5-1 완료 후 PLAN 작성
+> **계획**: `docs/plan/figure-rendering.md` (v2) + `docs/plan/figure-rendering-detail.md` (v2)
 > **리서치**: `docs/research/math-figures-recommendation.md`, `docs/research/figure-placement-recommendation.md` (v2)
-> **작업량**: L (1-2주, 단계적 구현)
-> **의존성**: 1.5-1 완료 필수 (`parseLatexText`에 `{{fig:N}}` 세그먼트 통합)
+> **작업량**: L (~8-13일) → **완료** (세션 30, 1367 tests, E2E 통과)
 
-**확정된 기술 결정 (리서치 기반)**:
+- [x] Task 1: DB 마이그레이션 — `questions` 테이블 `has_figure` + `figures` 컬럼 추가
+- [x] Task 2: `FigureData` Zod 스키마 — 6타입 discriminated union + 교차 검증 유틸
+- [x] Task 3: `FigureRenderer` 기본 컴포넌트 — description 텍스트 폴백 + switch 분기
+- [x] Task 4: `LatexRenderer` figure 케이스 업데이트 — `segment.display` 우선 레이아웃
+- [x] Task 5: SVG 유틸 + `NumberLine` 렌더러 — 수직선 SVG
+- [x] Task 6: AI 추출 프롬프트 `{{fig:N}}` 삽입 지시 + 교차 검증
+- [x] Task 7a: `CoordinatePlane` + `CoordinatePlaneContent` (합성용 분리)
+- [x] Task 7b: `FunctionGraph` — 단일 `<svg>` 내 CoordinatePlaneContent + polyline 합성
+- [x] Task 8: `PolygonShape` + `CircleShape` + `VectorArrow` SVG 렌더러
+- [x] Task 9: 연속 도형 수평 배치 (`groupAdjacentFigures`) + 선택지 내 도형
+- [x] Task 10a: AI 생성 프롬프트 도형 JSON 출력 + `generatedQuestionSchema` 확장
+- [x] Task 10b: `save-questions` validation/action 확장 (`has_figure`, `figures` DB 저장)
+- [x] Task 11: 전체 테스트 103개 (Zod 32 + SVG 45 + 통합 9 + AI 검증 7 + 기타)
+- [x] 코드 리뷰 HIGH 3건 수정 (SVG 마커 ID 고유화 + validation/extraction 테스트 추가)
+- [x] 빌드 검증 + E2E 시각적 검증 (Chrome DevTools MCP)
 
-| 결정 항목 | 선택 | 근거 |
-|----------|------|------|
-| 렌더링 방식 | JSON 스키마 + 커스텀 SVG | AI SVG 직접 생성 금지 (XSS + 좌표 부정확) |
-| 도형 위치 | `{{fig:N}}` 구분자 통일 | 텍스트 중간 산재 도형 100% 커버 |
-| 렌더링 크기 | `displaySize: 'large' \| 'small'` | 블록(가운데) vs 인라인(텍스트 흐름) |
-| 함수 그래프 | `points` 배열 직접 출력 | eval 위험 회피 |
+### 단계 1.5 통합 테스트 ✅
 
-**단계적 구현**:
-
-- [ ] Phase 2a: `FigureRenderer` 컴포넌트 + description 텍스트 폴백 (S)
-- [ ] Phase 2b: AI 추출 프롬프트 `{{fig:N}}` 삽입 지시 (S)
-- [ ] Phase 2c: 커스텀 SVG 렌더러 — 수직선 → 좌표평면 → 기하도형 (M)
-- [ ] Phase 2d: 연속 도형 수평 배치 + 선택지 도형 (S)
-- [ ] Phase 3 (선택): 통계 차트 Recharts, 인터랙티브 Mafs (L)
-
-### 단계 1.5 통합 테스트
-
-- [ ] ReadMode — `$\frac{1}{2}$` 수식 렌더링 확인
-- [ ] EditMode — 입력 → debounce → 미리보기 확인
-- [ ] 잘못된 LaTeX → 에러 텍스트 표시, 크래시 없음
-- [ ] (1.5-2 완료 후) `{{fig:1}}` → FigureRenderer 렌더링 확인
+- [x] ReadMode — `$\frac{1}{2}$` 수식 렌더링 확인
+- [x] EditMode — 입력 → debounce → 미리보기 확인
+- [x] 잘못된 LaTeX → 에러 텍스트 표시, 크래시 없음
+- [x] `{{fig:1}}` → FigureRenderer 렌더링 확인 (figures 미전달 시 `[도형 N]` 플레이스홀더)
 
 ---
 
@@ -499,8 +497,8 @@ CREATE TABLE teacher_subjects (
 | Phase 0 (최소 공통 기능) | 100% (5/5 완료) | ✅ 완료 |
 | 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-9 + 통합 테스트 완료, 1238 tests) | ✅ 완료 |
 | 단계 1.5-1 (LaTeX 수식 렌더링) | 100% (8/8 Task 완료, 31 tests) | ✅ 완료 |
-| 단계 1.5-2 (도형/그래프 렌더링) | 0% (리서치 완료, PLAN 미작성) | ⏳ 다음 |
-| 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏸️ 대기 |
+| 단계 1.5-2 (도형/그래프 렌더링) | 100% (11 Task + 코드 리뷰 + E2E, 1367 tests) | ✅ 완료 |
+| 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏳ 다음 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
 

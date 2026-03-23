@@ -5,10 +5,11 @@
 > 리서치 기반:
 > - docs/research/math-figures-recommendation.md
 > - docs/research/figure-placement-recommendation.md (v2)
-> 상태: 리뷰 완료 — 사용자 승인 대기
+> 상태: ✅ **구현 완료** (2026-03-23, 1367 tests, E2E 통과)
 >
 > **변경 이력**:
 > - v1 → v2 (2026-03-23): 기술 리뷰 + 범위 리뷰 피드백 17개 전부 반영
+> - v2 → 구현 완료 (2026-03-23): 11 Task + 코드 리뷰 HIGH 3건 수정 + E2E 검증
 
 ---
 

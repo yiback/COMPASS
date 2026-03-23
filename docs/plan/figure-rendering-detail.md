@@ -3,6 +3,7 @@
 > 작성일: 2026-03-23
 > 기반 PLAN: `docs/plan/figure-rendering.md` (v2)
 > 버전: v2
+> 상태: ✅ **구현 완료** (2026-03-23, 1367 tests, E2E 통과)
 > 반영 피드백: v3 리뷰 MUST FIX 4건 + SHOULD FIX 7건 + CONSIDER 5건 전부 반영
 
 **변경 이력**:
