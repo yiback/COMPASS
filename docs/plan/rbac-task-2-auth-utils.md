@@ -1,4 +1,4 @@
-# Task 2: 공유 인증 유틸리티
+# Task 2: 공유 인증 유틸리티 ✅
 
 > 소유: backend-actions (`src/lib/auth/`)
 > 의존성: Task 1 (Role 타입)

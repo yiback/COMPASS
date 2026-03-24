@@ -1,4 +1,4 @@
-# Task 3: page.tsx 역할 체크 + Layout 수정
+# Task 3: page.tsx 역할 체크 + Layout 수정 ✅
 
 > 소유: 리드 only (layout.tsx) + frontend-ui (page.tsx 9개, unauthorized)
 > 의존성: Task 2 (requireRole, getCurrentProfile)

@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-03-23 (단계 1.5-2 도형/그래프 렌더링 완료 — 6타입 SVG + 1367 tests + E2E 통과)
+> **최종 업데이트**: 2026-03-24 (단계 2-1 RBAC 시스템 완료 — 역할 기반 라우트 보호 + 사이드바 필터링 + 1390 tests)
 
 ## 개발 전략
 
@@ -217,12 +217,19 @@
 
 > **통합 결과**: 강사가 성취기준 선택 → 문제 생성 → 시험 생성 → PDF 출력 → 학생에게 배포
 
-### 2-1. RBAC 시스템
+### 2-1. RBAC 시스템 ✅
 
-- [ ] 역할 정의 (학원장, 강사, 학생, 학부모)
-- [ ] 역할별 권한 매트릭스
-- [ ] 보호된 라우트 미들웨어
-- [ ] 역할 기반 UI 조건부 렌더링
+> **계획**: `docs/plan/rbac-system.md` (v2.1) + Task별 상세 5개
+> **리서치**: `docs/research/tech/rbac-route-protection.md`, `docs/research/feasibility/rbac-route-protection.md`
+> **작업량**: S~M (2-3일) → **완료** (세션 31, 1390 tests, E2E 통과)
+
+- [x] Role 타입 + 역할 상수 정의 (`src/lib/auth/roles.ts`)
+- [x] 역할별 권한 매트릭스 (`src/lib/auth/route-permissions.ts` 문서화 상수)
+- [x] page.tsx 역할 체크 (`requireRole()` — 9개 page 보호, React 19 `cache()` 최적화)
+- [x] 403 전용 페이지 (`/unauthorized`)
+- [x] 역할 기반 사이드바/모바일네비 메뉴 필터링 (`MenuItem.roles`, props drilling)
+- [x] system_admin 암묵 허용 + ROLES.includes 런타임 가드
+- [x] 단위 테스트 23개 (requireRole, getCurrentProfile, ROUTE_PERMISSIONS)
 
 ### 2-2. 성취기준 DB 구축 [F002]
 
@@ -498,7 +505,7 @@ CREATE TABLE teacher_subjects (
 | 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-9 + 통합 테스트 완료, 1238 tests) | ✅ 완료 |
 | 단계 1.5-1 (LaTeX 수식 렌더링) | 100% (8/8 Task 완료, 31 tests) | ✅ 완료 |
 | 단계 1.5-2 (도형/그래프 렌더링) | 100% (11 Task + 코드 리뷰 + E2E, 1367 tests) | ✅ 완료 |
-| 단계 2 (성취기준 연동 + RBAC/대시보드) | 0% | ⏳ 다음 |
+| 단계 2 (성취기준 연동 + RBAC/대시보드) | 11% (2-1 RBAC 완료, 1390 tests) | 🚧 진행 중 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
 

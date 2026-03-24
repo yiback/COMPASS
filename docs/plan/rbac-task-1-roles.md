@@ -1,4 +1,4 @@
-# Task 1: 권한 정의 모듈
+# Task 1: 권한 정의 모듈 ✅
 
 > 소유: backend-actions (`src/lib/auth/`)
 > 의존성: 없음

@@ -1,4 +1,4 @@
-# Task 5: 테스트
+# Task 5: 테스트 ✅
 
 > 소유: tester (`src/lib/auth/__tests__/`)
 > 의존성: Task 1~4 전체

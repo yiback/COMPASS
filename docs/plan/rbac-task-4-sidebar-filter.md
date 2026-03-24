@@ -1,4 +1,4 @@
-# Task 4: 사이드바 역할별 메뉴 필터링
+# Task 4: 사이드바 역할별 메뉴 필터링 ✅
 
 > 소유: frontend-ui (`src/lib/constants/`, `src/components/layout/`)
 > 의존성: Task 1 (Role 타입)
