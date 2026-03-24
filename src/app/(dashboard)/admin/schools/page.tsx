@@ -1,5 +1,6 @@
 import { DataTable } from '@/components/data-table'
 import { getSchoolList } from '@/lib/actions/schools'
+import { requireRole } from '@/lib/auth'
 import { schoolColumns } from './_components/school-columns'
 import { SchoolsToolbar } from './_components/schools-toolbar'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,9 @@ interface SchoolsPageProps {
  * Server Component: 데이터 조회 후 DataTable에 전달
  */
 export default async function SchoolsPage({ searchParams }: SchoolsPageProps) {
+  // admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin', 'teacher'])
+
   const params = await searchParams
   const result = await getSchoolList({
     search: params.search,

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentProfile } from '@/lib/auth'
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
 import { DashboardHeader } from '@/components/layout/dashboard-header'
 
@@ -9,48 +9,34 @@ interface DashboardLayoutProps {
 
 /**
  * 대시보드 레이아웃
- * Server Component: Supabase에서 사용자 정보 조회
+ * Server Component: getCurrentProfile()로 사용자 정보 조회 (React 19 cache 적용)
  * 인증 이중 보호: 미들웨어 + 레이아웃 레벨
+ * 역할 체크는 각 page.tsx의 requireRole()에서 수행
  */
 export default async function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
-  const supabase = await createClient()
+  const profile = await getCurrentProfile()
 
-  // 인증 체크 (미들웨어 이중 보호)
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-
-  if (!authUser) {
+  if (!profile) {
     redirect('/login')
   }
 
-  // 사용자 프로필 조회 (profiles 테이블)
-  const { data: userProfile } = await supabase
-    .from('profiles')
-    .select('id, name, email, avatar_url, role')
-    .eq('id', authUser.id)
-    .single()
-
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* 사이드바 (데스크톱) */}
-      <DashboardSidebar />
+      {/* 사이드바 (데스크톱) — role로 메뉴 필터링 */}
+      <DashboardSidebar role={profile.role} />
 
       {/* 메인 콘텐츠 영역 */}
       <div className="flex flex-1 flex-col overflow-hidden md:ml-64">
-        {/* 헤더 */}
+        {/* 헤더 — role을 MobileNav에 drilling */}
         <DashboardHeader
-          user={
-            userProfile
-              ? {
-                  name: userProfile.name,
-                  email: userProfile.email,
-                  avatar_url: userProfile.avatar_url ?? undefined,
-                }
-              : null
-          }
+          user={{
+            name: profile.name,
+            email: profile.email,
+            avatar_url: profile.avatarUrl ?? undefined,
+          }}
+          role={profile.role}
         />
 
         {/* 페이지 콘텐츠 */}

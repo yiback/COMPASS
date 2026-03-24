@@ -4,31 +4,15 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth'
 import { UploadForm } from './upload-form'
 
 export default async function PastExamUploadPage() {
+  // admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin', 'teacher'])
+
+  // createClient는 학교 목록 조회에 필요 — 유지
   const supabase = await createClient()
-
-  // 인증 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // 역할 확인 (교사/관리자만)
-  const { data: profile } = (await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()) as { data: { role: string } | null }
-
-  if (
-    !profile ||
-    !['teacher', 'admin', 'system_admin'].includes(profile.role)
-  ) {
-    redirect('/past-exams')
-  }
 
   // 학교 목록 조회 (select 드롭다운용)
   const { data: schools } = await supabase

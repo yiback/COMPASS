@@ -11,6 +11,7 @@ export const maxDuration = 60 // Vercel Pro 기준 (Hobby: 10초)
 
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth'
 import { ExtractionEditor } from './extraction-editor'
 
 // ─── 타입 정의 ────────────────────────────────────────────
@@ -71,31 +72,13 @@ export interface ExamMeta {
 export default async function EditPage({ params }: EditPageProps) {
   const { id: pastExamId } = await params
 
-  // 1. Supabase 서버 클라이언트 생성 (await cookies() 내부 처리)
+  // 1. 역할 검증 — admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin', 'teacher'])
+
+  // 2. Supabase 서버 클라이언트 생성 (past_exams DB 조회에 필요 — 유지)
   const supabase = await createClient()
 
-  // 2. 인증 확인
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    notFound()
-  }
-
-  // 3. 권한 확인 (teacher/admin/system_admin만)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  const role = (profile as { role: string } | null)?.role ?? 'student'
-  if (!['teacher', 'admin', 'system_admin'].includes(role)) {
-    notFound()
-  }
-
-  // 4. past_exams + past_exam_images + past_exam_details 조회
+  // 3. past_exams + past_exam_images + past_exam_details 조회
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase 생성 타입 미생성 (FK JOIN 중첩 객체)
   const { data: row, error: dbError } = (await supabase
     .from('past_exams')

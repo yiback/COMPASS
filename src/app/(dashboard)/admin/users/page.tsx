@@ -1,6 +1,6 @@
 import { getUserList } from '@/lib/actions/users'
 import type { UserProfile } from '@/lib/actions/users'
-import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth'
 import { UsersTable } from './_components/users-table'
 
 interface UsersPageProps {
@@ -21,27 +21,10 @@ interface UsersPageProps {
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const params = await searchParams
 
-  // 1. 현재 사용자 역할 조회 (Server Component에서 Supabase 직접 접근 — RLS 적용)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let callerRole = 'student'
-  let callerId = ''
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      callerRole = profile.role
-      callerId = profile.id
-    }
-  }
+  // 1. 역할 검증 — admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  const profile = await requireRole(['admin', 'teacher'])
+  const callerRole = profile.role
+  const callerId = profile.id
 
   // 2. 사용자 목록 조회
   const result = await getUserList({

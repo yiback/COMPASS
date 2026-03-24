@@ -1,4 +1,5 @@
 import { getMyAcademy } from '@/lib/actions/academies'
+import { requireRole } from '@/lib/auth'
 import {
   Card,
   CardDescription,
@@ -9,6 +10,9 @@ import { AcademyForm } from './_components/academy-form'
 import { AcademyInfoCard } from './_components/academy-info-card'
 
 export default async function AcademyPage() {
+  // admin만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin'])
+
   const result = await getMyAcademy()
 
   // 에러 처리
@@ -33,8 +37,9 @@ export default async function AcademyPage() {
     )
   }
 
-  const { role, ...academyData } = result.data
-  const canEdit = role === 'admin' || role === 'system_admin'
+  // requireRole(['admin']) 통과 = admin 이상 확정이므로 canEdit = true
+  const { role: _role, ...academyData } = result.data
+  const canEdit = true
 
   return (
     <div className="space-y-6">

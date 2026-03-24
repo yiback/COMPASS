@@ -1,4 +1,5 @@
 import { SchoolForm } from '../_components/school-form'
+import { requireRole } from '@/lib/auth'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
@@ -6,7 +7,9 @@ import { ChevronLeft } from 'lucide-react'
 /**
  * 새 학교 추가 페이지
  */
-export default function NewSchoolPage() {
+export default async function NewSchoolPage() {
+  // admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin', 'teacher'])
   return (
     <div className="space-y-6">
       <div>

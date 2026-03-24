@@ -1,6 +1,7 @@
 import { DataTableServerPagination } from '@/components/data-table'
 import { getQuestionList } from '@/lib/actions/questions'
 import type { QuestionListItem } from '@/lib/actions/questions'
+import { requireRole } from '@/lib/auth'
 import { QuestionsTable } from './_components/questions-table'
 
 interface QuestionsPageProps {
@@ -24,6 +25,9 @@ interface QuestionsPageProps {
 export default async function QuestionsPage({
   searchParams,
 }: QuestionsPageProps) {
+  // 모든 인증 역할 허용 (student 포함 읽기)
+  await requireRole(['admin', 'teacher', 'student'])
+
   const params = await searchParams
 
   const result = await getQuestionList({

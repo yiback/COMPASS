@@ -5,17 +5,31 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { MENU_ITEMS } from '@/lib/constants/menu'
 import { Separator } from '@/components/ui/separator'
+import type { Role } from '@/lib/auth'
 
 interface DashboardSidebarProps {
   className?: string
+  /** 현재 사용자 역할. undefined이면 모든 메뉴 표시 */
+  role?: Role
 }
 
 /**
  * 대시보드 사이드바 (데스크톱용)
  * Client Component: usePathname으로 활성 링크 확인
  */
-export function DashboardSidebar({ className }: DashboardSidebarProps) {
+export function DashboardSidebar({ className, role }: DashboardSidebarProps) {
   const pathname = usePathname()
+
+  /**
+   * 역할별 메뉴 필터링:
+   * - role 미전달 → 모든 항목 표시
+   * - item.roles 미설정 → 모든 역할 허용
+   * - system_admin → 모든 항목 표시
+   * - 그 외 → item.roles에 현재 역할 포함 여부로 결정
+   */
+  const visibleItems = MENU_ITEMS.filter(
+    (item) => !role || !item.roles || role === 'system_admin' || item.roles.includes(role)
+  )
 
   return (
     <aside
@@ -39,7 +53,7 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
 
         {/* 네비게이션 메뉴 */}
         <nav className="flex flex-1 flex-col gap-y-1">
-          {MENU_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
 

@@ -4,7 +4,7 @@ import { DataTableServerPagination } from '@/components/data-table'
 import { Button } from '@/components/ui/button'
 import { getPastExamList } from '@/lib/actions/past-exams'
 import type { PastExamListItem } from '@/lib/actions/past-exams'
-import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth'
 import { PastExamsTable } from './_components/past-exams-table'
 
 interface PastExamsPageProps {
@@ -31,25 +31,9 @@ export default async function PastExamsPage({
 }: PastExamsPageProps) {
   const params = await searchParams
 
-  // 1. 현재 사용자 역할 조회 (Server Component에서 Supabase 직접 접근 — RLS 적용)
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let callerRole = 'student'
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      callerRole = (profile as { role: string }).role
-    }
-  }
+  // 1. 역할 검증 — admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  const profile = await requireRole(['admin', 'teacher'])
+  const callerRole = profile.role
 
   // 2. 기출문제 목록 조회
   const result = await getPastExamList({

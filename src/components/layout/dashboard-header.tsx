@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MobileNav } from './mobile-nav'
 import { LogoutButton } from './logout-button'
+import type { Role } from '@/lib/auth'
 
 interface DashboardHeaderProps {
   user?: {
@@ -8,13 +9,15 @@ interface DashboardHeaderProps {
     email?: string
     avatar_url?: string
   } | null
+  /** 현재 사용자 역할. MobileNav에 전달하여 메뉴 필터링에 사용 */
+  role?: Role
 }
 
 /**
  * 대시보드 헤더
  * Server Component: 사용자 정보를 props로 받음
  */
-export function DashboardHeader({ user }: DashboardHeaderProps) {
+export function DashboardHeader({ user, role }: DashboardHeaderProps) {
   // 사용자 이름에서 이니셜 추출
   const getInitials = (name?: string) => {
     if (!name) return '?'
@@ -29,8 +32,8 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="flex h-16 items-center gap-4 px-4 md:px-6">
-        {/* 모바일 메뉴 버튼 */}
-        <MobileNav />
+        {/* 모바일 메뉴 버튼 — role 전달로 역할별 메뉴 필터링 */}
+        <MobileNav role={role} />
 
         {/* 여백 */}
         <div className="flex-1" />

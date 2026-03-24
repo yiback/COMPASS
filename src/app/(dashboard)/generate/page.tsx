@@ -2,7 +2,11 @@
  * 문제 생성 페이지
  * TODO: Phase 0-6에서 구현 예정
  */
-export default function GeneratePage() {
+import { requireRole } from '@/lib/auth'
+
+export default async function GeneratePage() {
+  // admin/teacher만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
+  await requireRole(['admin', 'teacher'])
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-6">
