@@ -16,6 +16,7 @@ import {
   toggleActiveSchema,
   type UserFilterInput,
 } from '@/lib/validations/users'
+import { getCurrentUser } from './helpers'
 
 // ============================================================================
 // 타입 정의
@@ -39,63 +40,6 @@ export interface UserActionResult {
     readonly total: number
     readonly page: number
     readonly pageSize: number
-  }
-}
-
-interface CurrentUserProfile {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface GetCurrentUserResult {
-  readonly error?: string
-  readonly profile?: CurrentUserProfile
-}
-
-// ============================================================================
-// 헬퍼 함수
-// ============================================================================
-
-/**
- * 현재 사용자 프로필 조회 (인증 + 프로필 확인)
- * 역할 체크는 각 Action에서 수행
- */
-async function getCurrentUserProfile(): Promise<GetCurrentUserResult> {
-  const supabase = await createClient()
-
-  // 1. 인증 확인
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  // 2. profiles 테이블에서 id, role, academy_id 조회
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  // 3. academy_id null 체크
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  return {
-    profile: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
   }
 }
 
@@ -139,10 +83,9 @@ export async function getUserList(
   const to = from + pageSize - 1
 
   // 2. 인증 + 프로필 확인
-  const { error: profileError, profile } = await getCurrentUserProfile()
-  if (profileError || !profile) {
-    return { error: profileError }
-  }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
 
   // 3. 역할 체크: student 차단
   if (!['admin', 'teacher', 'system_admin'].includes(profile.role)) {
@@ -216,10 +159,9 @@ export async function changeUserRole(
   }
 
   // 2. 인증 + 프로필 확인
-  const { error: profileError, profile: caller } = await getCurrentUserProfile()
-  if (profileError || !caller) {
-    return { error: profileError }
-  }
+  const { error, profile: caller } = await getCurrentUser()
+  if (error || !caller) return { error: error ?? '인증 실패' }
+  if (!caller.academyId) return { error: '소속 학원이 없습니다.' }
 
   // 3. 역할 체크: admin 또는 system_admin만
   if (!['admin', 'system_admin'].includes(caller.role)) {
@@ -320,10 +262,9 @@ export async function toggleUserActive(
   }
 
   // 2. 인증 + 프로필 확인
-  const { error: profileError, profile: caller } = await getCurrentUserProfile()
-  if (profileError || !caller) {
-    return { error: profileError }
-  }
+  const { error: toggleError, profile: caller } = await getCurrentUser()
+  if (toggleError || !caller) return { error: toggleError ?? '인증 실패' }
+  if (!caller.academyId) return { error: '소속 학원이 없습니다.' }
 
   // 3. 역할 체크: admin 또는 system_admin만
   if (!['admin', 'system_admin'].includes(caller.role)) {

@@ -5,25 +5,27 @@
  * 테스트 대상:
  * - getQuestionDetail(): 단건 조회 (8개)
  *
- * Mock 전략: past-exams-list.test.ts와 동일한 from() 테이블 분기 패턴
+ * Mock 전략: getCurrentUser mock으로 인증 처리
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getQuestionDetail } from '../questions'
+import { getCurrentUser } from '../helpers'
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
+}))
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
 }))
 
 // ============================================================================
@@ -32,31 +34,18 @@ vi.mock('@/lib/supabase/server', () => ({
 
 /** 인증 실패 Mock */
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  } as any)
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '인증이 필요합니다.' })
 }
 
 /** 역할별 인증 성공 Mock */
 function mockAuthAs(
   role: string,
   id = '11111111-1111-4111-8111-111111111111',
-  academyId = 'academy-uuid-1'
+  academyId: string | null = 'academy-uuid-1'
 ) {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id } },
-    error: null,
-  } as any)
-
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { id, role, academy_id: academyId },
-      error: null,
-    }),
-  }
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id, role: role as any, academyId },
+  })
 }
 
 /** 단건 조회 쿼리 Mock */
@@ -119,12 +108,9 @@ describe('getQuestionDetail', () => {
 
   // 2. 유효 ID → 상세 데이터 반환
   it('유효 ID → 상세 데이터 반환 (answer, explanation 포함)', async () => {
-    const profileQuery = mockAuthAs('student')
+    mockAuthAs('student')
     const detailQuery = mockQuestionDetailQuery(mockQuestionDbRow)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('question-uuid-1')
 
@@ -136,12 +122,9 @@ describe('getQuestionDetail', () => {
 
   // 3. 존재하지 않는 ID
   it('존재하지 않는 ID → 에러 "문제를 찾을 수 없습니다."', async () => {
-    const profileQuery = mockAuthAs('student')
+    mockAuthAs('student')
     const detailQuery = mockQuestionDetailQuery(null)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('nonexistent-uuid')
 
@@ -151,12 +134,9 @@ describe('getQuestionDetail', () => {
 
   // 4. answer, explanation 필드 존재 확인
   it('answer, explanation 포함 → QuestionDetail에 정상 매핑', async () => {
-    const profileQuery = mockAuthAs('teacher')
+    mockAuthAs('teacher')
     const detailQuery = mockQuestionDetailQuery(mockQuestionDbRow)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('question-uuid-1')
 
@@ -168,12 +148,9 @@ describe('getQuestionDetail', () => {
 
   // 5. options JSONB → TypeScript 배열 확인
   it('options JSONB → 배열로 반환', async () => {
-    const profileQuery = mockAuthAs('student')
+    mockAuthAs('student')
     const detailQuery = mockQuestionDetailQuery(mockQuestionDbRow)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('question-uuid-1')
 
@@ -184,12 +161,9 @@ describe('getQuestionDetail', () => {
 
   // 6. difficulty 숫자 → difficultyLabel 변환 확인
   it('difficulty 숫자(3) → difficultyLabel("보통") 변환', async () => {
-    const profileQuery = mockAuthAs('student')
+    mockAuthAs('student')
     const detailQuery = mockQuestionDetailQuery(mockQuestionDbRow)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('question-uuid-1')
 
@@ -199,12 +173,9 @@ describe('getQuestionDetail', () => {
 
   // 7. profiles!created_by FK JOIN → createdByName 매핑
   it('profiles!created_by FK JOIN → createdByName 정상 매핑', async () => {
-    const profileQuery = mockAuthAs('student')
+    mockAuthAs('student')
     const detailQuery = mockQuestionDetailQuery(mockQuestionDbRow)
-
-    mockSupabaseClient.from
-      .mockReturnValueOnce(profileQuery)
-      .mockReturnValueOnce(detailQuery)
+    mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
     const result = await getQuestionDetail('question-uuid-1')
 
@@ -213,8 +184,7 @@ describe('getQuestionDetail', () => {
 
   // 8. DB 에러 → 에러 메시지
   it('DB 에러 → 에러 "문제 상세 조회에 실패했습니다."', async () => {
-    const profileQuery = mockAuthAs('student')
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    mockAuthAs('student')
 
     // DB 쿼리가 throw 하도록 Mock
     mockSupabaseClient.from.mockReturnValueOnce({

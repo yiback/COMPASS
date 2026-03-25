@@ -10,15 +10,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getUserList, changeUserRole, toggleUserActive } from '../users'
+import { getCurrentUser } from '../helpers'
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
 
@@ -30,6 +28,10 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
+
 // ============================================================================
 // Mock 헬퍼 함수
 // ============================================================================
@@ -38,31 +40,16 @@ vi.mock('next/cache', () => ({
  * 인증 실패 Mock
  */
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  } as any)
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '인증이 필요합니다.' })
 }
 
 /**
  * 역할별 인증 성공 Mock (id 포함)
  */
-function mockAuthAs(role: string, id = '11111111-1111-4111-8111-111111111111', academyId = 'academy-1') {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id } },
-    error: null,
-  } as any)
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { id, role, academy_id: academyId },
-      error: null,
-    }),
-  }
-
-  return profileQuery
+function mockAuthAs(role: string, id = '11111111-1111-4111-8111-111111111111', academyId: string | null = 'academy-1') {
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id, role: role as any, academyId },
+  })
 }
 
 /**
@@ -152,8 +139,7 @@ describe('getUserList', () => {
     })
 
     it('student 접근 → 에러', async () => {
-      const profileQuery = mockAuthAs('student')
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockAuthAs('student')
 
       const result = await getUserList()
 
@@ -161,8 +147,18 @@ describe('getUserList', () => {
       expect(result.data).toBeUndefined()
     })
 
+    it('academyId null → 에러', async () => {
+      mockAuthAs('admin', undefined, null)
+      const result = await getUserList({
+        role: 'all',
+        isActive: 'all',
+        page: 1,
+      })
+      expect(result.error).toContain('학원')
+    })
+
     it('teacher 접근 → 성공', async () => {
-      const profileQuery = mockAuthAs('teacher')
+      mockAuthAs('teacher')
       const listQuery = mockUserListQuery(
         [
           {
@@ -179,9 +175,7 @@ describe('getUserList', () => {
         1
       )
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       const result = await getUserList()
 
@@ -193,7 +187,7 @@ describe('getUserList', () => {
 
   describe('정상 조회', () => {
     it('기본 필터로 목록 반환 (meta 포함)', async () => {
-      const profileQuery = mockAuthAs('admin')
+      mockAuthAs('admin')
       const listQuery = mockUserListQuery(
         [
           {
@@ -210,9 +204,7 @@ describe('getUserList', () => {
         50
       )
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       const result = await getUserList()
 
@@ -226,12 +218,10 @@ describe('getUserList', () => {
     })
 
     it('검색 필터: name 또는 email', async () => {
-      const profileQuery = mockAuthAs('admin')
+      mockAuthAs('admin')
       const listQuery = mockUserListQuery([], 0)
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getUserList({ search: '김' })
 
@@ -242,12 +232,10 @@ describe('getUserList', () => {
     })
 
     it('역할 필터: role=teacher', async () => {
-      const profileQuery = mockAuthAs('admin')
+      mockAuthAs('admin')
       const listQuery = mockUserListQuery([], 0)
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getUserList({ role: 'teacher' })
 
@@ -256,12 +244,10 @@ describe('getUserList', () => {
     })
 
     it('활성 상태 필터: isActive=false', async () => {
-      const profileQuery = mockAuthAs('admin')
+      mockAuthAs('admin')
       const listQuery = mockUserListQuery([], 0)
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getUserList({ isActive: 'false' })
 
@@ -270,12 +256,10 @@ describe('getUserList', () => {
     })
 
     it('페이지네이션: page=2', async () => {
-      const profileQuery = mockAuthAs('admin')
+      mockAuthAs('admin')
       const listQuery = mockUserListQuery([], 0)
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getUserList({ page: 2 })
 
@@ -327,8 +311,7 @@ describe('changeUserRole', () => {
     })
 
     it('teacher 접근 → 에러', async () => {
-      const profileQuery = mockAuthAs('teacher')
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockAuthAs('teacher')
 
       const result = await changeUserRole(
         '12345678-1234-4234-8234-123456789012',
@@ -338,18 +321,28 @@ describe('changeUserRole', () => {
       expect(result.error).toBe('권한이 없습니다.')
       expect(result.data).toBeUndefined()
     })
+
+    it('academyId null → 에러', async () => {
+      mockAuthAs('admin', undefined, null)
+
+      const result = await changeUserRole(
+        '12345678-1234-4234-8234-123456789012',
+        'teacher'
+      )
+
+      expect(result.error).toContain('학원')
+    })
   })
 
   describe('admin 호출자', () => {
     it('admin이 student→teacher 변경 성공', async () => {
       const callerId = '11111111-1111-4111-8111-111111111111'
       const targetId = '22222222-2222-4222-8222-222222222222'
-      const profileQuery = mockAuthAs('admin', callerId)
+      mockAuthAs('admin', callerId)
       const targetQuery = mockTargetUser({ id: targetId, role: 'student' })
       const updateQuery = mockUpdateResult({ role: 'teacher' })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -365,12 +358,11 @@ describe('changeUserRole', () => {
     })
 
     it('admin이 teacher→student 변경 성공', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'teacher' })
       const updateQuery = mockUpdateResult({ role: 'student' })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -382,12 +374,10 @@ describe('changeUserRole', () => {
     })
 
     it('admin이 student→admin 변경 시도 → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'student' })
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await changeUserRole('22222222-2222-4222-8222-222222222222', 'admin')
 
@@ -396,12 +386,10 @@ describe('changeUserRole', () => {
     })
 
     it('admin이 다른 admin 변경 시도 → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'admin' })
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await changeUserRole('22222222-2222-4222-8222-222222222222', 'student')
 
@@ -412,12 +400,11 @@ describe('changeUserRole', () => {
 
   describe('system_admin 호출자', () => {
     it('system_admin이 student→admin 변경 성공', async () => {
-      const profileQuery = mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'student' })
       const updateQuery = mockUpdateResult({ role: 'admin' })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -429,12 +416,11 @@ describe('changeUserRole', () => {
     })
 
     it('system_admin이 admin→student 변경 성공', async () => {
-      const profileQuery = mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'admin' })
       const updateQuery = mockUpdateResult({ role: 'student' })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -448,9 +434,7 @@ describe('changeUserRole', () => {
 
   describe('보안 규칙', () => {
     it('자기 자신 역할 변경 → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
-
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
 
       const result = await changeUserRole('11111111-1111-4111-8111-111111111111', 'teacher')
 
@@ -459,15 +443,13 @@ describe('changeUserRole', () => {
     })
 
     it('대상이 system_admin → 변경 불가', async () => {
-      const profileQuery = mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({
         id: '22222222-2222-4222-8222-222222222222',
         role: 'system_admin',
       })
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await changeUserRole('22222222-2222-4222-8222-222222222222', 'admin')
 
@@ -476,7 +458,7 @@ describe('changeUserRole', () => {
     })
 
     it('대상 사용자 없음 (다른 학원/미존재) → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -486,9 +468,7 @@ describe('changeUserRole', () => {
         }),
       }
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await changeUserRole('22222222-2222-4222-8222-222222222222', 'teacher')
 
@@ -499,12 +479,11 @@ describe('changeUserRole', () => {
 
   describe('성공 후 처리', () => {
     it('revalidatePath(/admin/users) 호출 확인', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', role: 'student' })
       const updateQuery = mockUpdateResult({ role: 'teacher' })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -534,16 +513,23 @@ describe('toggleUserActive', () => {
       expect(result.error).toBe('인증이 필요합니다.')
       expect(result.data).toBeUndefined()
     })
+
+    it('academyId null → 에러', async () => {
+      mockAuthAs('admin', undefined, null)
+
+      const result = await toggleUserActive('22222222-2222-4222-8222-222222222222', false)
+
+      expect(result.error).toContain('학원')
+    })
   })
 
   describe('정상 동작', () => {
     it('admin이 사용자 비활성화 성공', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({ id: '22222222-2222-4222-8222-222222222222', is_active: true })
       const updateQuery = mockUpdateResult({ is_active: false })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -555,7 +541,7 @@ describe('toggleUserActive', () => {
     })
 
     it('admin이 사용자 활성화 성공', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({
         id: '22222222-2222-4222-8222-222222222222',
         is_active: false,
@@ -563,7 +549,6 @@ describe('toggleUserActive', () => {
       const updateQuery = mockUpdateResult({ is_active: true })
 
       mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
         .mockReturnValueOnce(targetQuery)
         .mockReturnValueOnce(updateQuery)
 
@@ -577,9 +562,7 @@ describe('toggleUserActive', () => {
 
   describe('보안 규칙', () => {
     it('자기 자신 비활성화 → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
-
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
 
       const result = await toggleUserActive('11111111-1111-4111-8111-111111111111', false)
 
@@ -588,15 +571,13 @@ describe('toggleUserActive', () => {
     })
 
     it('system_admin 비활성화 → 에러', async () => {
-      const profileQuery = mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('system_admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = mockTargetUser({
         id: '22222222-2222-4222-8222-222222222222',
         role: 'system_admin',
       })
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await toggleUserActive('22222222-2222-4222-8222-222222222222', false)
 
@@ -605,7 +586,7 @@ describe('toggleUserActive', () => {
     })
 
     it('대상 없음 → 에러', async () => {
-      const profileQuery = mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
+      mockAuthAs('admin', '11111111-1111-4111-8111-111111111111')
       const targetQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -615,9 +596,7 @@ describe('toggleUserActive', () => {
         }),
       }
 
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(targetQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(targetQuery)
 
       const result = await toggleUserActive('22222222-2222-4222-8222-222222222222', false)
 

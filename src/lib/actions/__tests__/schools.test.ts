@@ -17,15 +17,17 @@ import {
   updateSchool,
   deleteSchool,
 } from '../schools'
+import { getCurrentUser } from '../helpers'
 
 // ─── Mock Setup ─────────────────────────────────────────
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
@@ -46,47 +48,20 @@ function createMockFormData(data: Record<string, string>): FormData {
 }
 
 function mockAuthAsTeacher() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'teacher-id' } },
-    error: null,
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'teacher-id', role: 'teacher', academyId: 'academy-1' },
   })
-
-  // RBAC 체크용 profiles 조회 mock (첫 번째 from 호출)
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'teacher' },
-      error: null,
-    }),
-  }
-
-  mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
 }
 
 function mockAuthAsStudent() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'student-id' } },
-    error: null,
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'student-id', role: 'student', academyId: 'academy-1' },
   })
-
-  // RBAC 체크용 profiles 조회 mock
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'student' },
-      error: null,
-    }),
-  }
-
-  mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
 }
 
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: new Error('Unauthorized'),
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    error: '인증이 필요합니다.',
   })
 }
 
@@ -380,21 +355,9 @@ describe('updateSchool', () => {
   })
 
   it('성공: 학교 정보 수정 (teacher)', async () => {
-    // 1. RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
-    // 2. 실제 update 쿼리
+    // 실제 update 쿼리
     mockSupabaseClient.from.mockReturnValueOnce({
       update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({
@@ -418,19 +381,7 @@ describe('updateSchool', () => {
   })
 
   it('실패: 권한 없음 (student)', async () => {
-    // RBAC 체크: student
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'student-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'student' },
-        error: null,
-      }),
-    })
+    mockAuthAsStudent()
 
     const formData = createMockFormData({
       name: '서울고등학교',
@@ -443,19 +394,7 @@ describe('updateSchool', () => {
   })
 
   it('실패: 필수 필드 누락', async () => {
-    // RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
     const formData = createMockFormData({
       schoolType: 'high',
@@ -468,21 +407,9 @@ describe('updateSchool', () => {
   })
 
   it('실패: DB 업데이트 에러', async () => {
-    // 1. RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
-    // 2. 실제 update 쿼리 (실패)
+    // 실제 update 쿼리 (실패)
     mockSupabaseClient.from.mockReturnValueOnce({
       update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({
@@ -510,21 +437,9 @@ describe('deleteSchool', () => {
   })
 
   it('성공: 학교 삭제 (의존성 없음)', async () => {
-    // 1. RBAC 체크 (profiles)
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
-    // 2. 의존성 체크 (students)
+    // 의존성 체크 (students)
     mockSupabaseClient.from.mockReturnValueOnce({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -534,7 +449,7 @@ describe('deleteSchool', () => {
       }),
     })
 
-    // 3. 삭제 (schools)
+    // 삭제 (schools)
     mockSupabaseClient.from.mockReturnValueOnce({
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({
@@ -550,21 +465,9 @@ describe('deleteSchool', () => {
   })
 
   it('실패: 의존성 있음 (학생 존재)', async () => {
-    // 1. RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
-    // 2. 의존성 체크: 학생 있음
+    // 의존성 체크: 학생 있음
     mockSupabaseClient.from.mockReturnValueOnce({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -580,19 +483,7 @@ describe('deleteSchool', () => {
   })
 
   it('실패: 권한 없음 (student)', async () => {
-    // RBAC 체크: student
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'student-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'student' },
-        error: null,
-      }),
-    })
+    mockAuthAsStudent()
 
     const result = await deleteSchool(validSchoolId)
 
@@ -600,19 +491,7 @@ describe('deleteSchool', () => {
   })
 
   it('실패: ID 누락', async () => {
-    // RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
     const result = await deleteSchool('')
 
@@ -620,21 +499,9 @@ describe('deleteSchool', () => {
   })
 
   it('실패: DB 삭제 에러', async () => {
-    // 1. RBAC 체크
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'teacher-id' } },
-      error: null,
-    })
-    mockSupabaseClient.from.mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'teacher' },
-        error: null,
-      }),
-    })
+    mockAuthAsTeacher()
 
-    // 2. 의존성 체크: 학생 없음
+    // 의존성 체크: 학생 없음
     mockSupabaseClient.from.mockReturnValueOnce({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -644,7 +511,7 @@ describe('deleteSchool', () => {
       }),
     })
 
-    // 3. 삭제 실패
+    // 삭제 실패
     mockSupabaseClient.from.mockReturnValueOnce({
       delete: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({

@@ -10,6 +10,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getCurrentUser } from './helpers'
 import {
   pastExamUploadSchema,
   pastExamFilterSchema,
@@ -86,62 +87,7 @@ export interface PastExamDetailResult {
   readonly data?: PastExamDetail
 }
 
-// ─── 내부 타입 ────────────────────────────────────────────
-
-interface CurrentUserProfile {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface GetCurrentUserResult {
-  readonly error?: string
-  readonly profile?: CurrentUserProfile
-}
-
 // ─── 헬퍼 함수 ────────────────────────────────────────────
-
-/**
- * 현재 사용자 프로필 조회 (인증 + 프로필 + academy_id 확인)
- * 역할 체크는 각 Action에서 수행
- */
-async function getCurrentUserProfile(): Promise<GetCurrentUserResult> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { id: string; role: string; academy_id: string | null } | null
-    error: unknown
-  }
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  return {
-    profile: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
-  }
-}
 
 /**
  * DB 응답(snake_case + FK JOIN) → PastExamListItem(camelCase) 변환
@@ -187,32 +133,15 @@ export async function uploadPastExamAction(
   _prevState: PastExamActionResult | null,
   formData: FormData
 ): Promise<PastExamActionResult> {
-  // 1. 인증 확인
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    return { error: '로그인이 필요합니다.' }
-  }
-
-  // 2. 역할 확인 (교사/관리자만)
-  const { data: profile } = (await supabase
-    .from('profiles')
-    .select('role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { role: string; academy_id: string } | null
-    error: unknown
-  }
-
-  if (!profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
+  // 1. 인증 + 역할 확인
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
   if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
     return { error: '기출문제 업로드 권한이 없습니다.' }
   }
+
+  const supabase = await createClient()
 
   // 3. 파일 검증
   const file = formData.get('file')
@@ -254,7 +183,7 @@ export async function uploadPastExamAction(
   // 6. Storage 경로 생성
   const ext = getFileExtension(validFile.name)
   const fileId = crypto.randomUUID()
-  const storagePath = `${profile.academy_id}/${parsed.data.schoolId}/${parsed.data.year}-${parsed.data.semester}-${parsed.data.examType}/${fileId}.${ext}`
+  const storagePath = `${profile.academyId}/${parsed.data.schoolId}/${parsed.data.year}-${parsed.data.semester}-${parsed.data.examType}/${fileId}.${ext}`
 
   // 7. Storage 업로드 (admin 클라이언트 -> RLS 우회)
   const admin = createAdminClient()
@@ -273,9 +202,9 @@ export async function uploadPastExamAction(
   const { data: inserted, error: dbError } = await supabase
     .from('past_exam_questions')
     .insert({
-      academy_id: profile.academy_id,
+      academy_id: profile.academyId,
       school_id: parsed.data.schoolId,
-      uploaded_by: user.id,
+      uploaded_by: profile.id,
       year: parsed.data.year,
       semester: parsed.data.semester,
       exam_type: parsed.data.examType,
@@ -305,10 +234,9 @@ export async function getPastExamList(
   rawFilters?: Record<string, unknown>
 ): Promise<PastExamListResult> {
   // 1. 인증 + 프로필 확인
-  const { error: profileError, profile } = await getCurrentUserProfile()
-  if (profileError || !profile) {
-    return { error: profileError }
-  }
+  const { error: listAuthError, profile } = await getCurrentUser()
+  if (listAuthError || !profile) return { error: listAuthError ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
 
   // 2. 빈 문자열 제거 → Zod 파싱
   const sanitized = sanitizeFilters(rawFilters ?? {})
@@ -396,10 +324,9 @@ export async function getPastExamList(
  */
 export async function getPastExamDetail(id: string): Promise<PastExamDetailResult> {
   // 1. 인증 + 프로필 확인
-  const { error: profileError, profile } = await getCurrentUserProfile()
-  if (profileError || !profile) {
-    return { error: profileError }
-  }
+  const { error: detailAuthError, profile } = await getCurrentUser()
+  if (detailAuthError || !profile) return { error: detailAuthError ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
 
   const supabase = await createClient()
 

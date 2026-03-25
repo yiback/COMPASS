@@ -6,10 +6,15 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// ─── 인증 헬퍼 모킹 ────────────────────────────────────────
+const mockGetCurrentUser = vi.fn()
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: (...args: unknown[]) => mockGetCurrentUser(...args),
+}))
+
 // ─── 모킹 ───────────────────────────────────────────────
 
-const mockGetUser = vi.fn()
-const mockSelectProfiles = vi.fn()
 const mockUpdatePastExams = vi.fn()
 const mockDeletePastExamDetails = vi.fn()
 const mockSelectPastExamImages = vi.fn()
@@ -22,19 +27,7 @@ const mockUpdatePastExamsCompleted = vi.fn()
 // academy_id 필터 추가로 .eq() 체이닝 지원 필요
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: {
-      getUser: () => mockGetUser(),
-    },
     from: (table: string) => {
-      if (table === 'profiles') {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => mockSelectProfiles(),
-            }),
-          }),
-        }
-      }
       if (table === 'past_exams') {
         return {
           update: (data: unknown) => ({
@@ -152,17 +145,8 @@ vi.stubGlobal('fetch', mockFetch)
 
 /** 인증된 teacher 프로필 모킹 */
 function mockAuthenticatedTeacher() {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: 'user-id' } },
-    error: null,
-  })
-  mockSelectProfiles.mockResolvedValue({
-    data: {
-      id: 'user-id',
-      role: 'teacher',
-      academy_id: 'academy-id',
-    },
-    error: null,
+  mockGetCurrentUser.mockResolvedValue({
+    profile: { id: 'user-id', role: 'teacher', academyId: 'academy-id' },
   })
 }
 
@@ -208,33 +192,33 @@ describe('extractQuestionsAction', () => {
   })
 
   it('비인증 사용자에게 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
+    mockGetCurrentUser.mockResolvedValue({
+      error: '인증이 필요합니다.',
     })
 
     const { extractQuestionsAction } = await import('../extract-questions')
     const result = await extractQuestionsAction('exam-id')
-    expect(result.error).toContain('로그인')
+    expect(result.error).toContain('인증')
   })
 
   it('student 역할에게 권한 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-      error: null,
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        id: 'user-id',
-        role: 'student',
-        academy_id: 'academy-id',
-      },
-      error: null,
+    mockGetCurrentUser.mockResolvedValue({
+      profile: { id: 'user-id', role: 'student', academyId: 'academy-id' },
     })
 
     const { extractQuestionsAction } = await import('../extract-questions')
     const result = await extractQuestionsAction('exam-id')
     expect(result.error).toContain('권한')
+  })
+
+  it('academyId null → 에러', async () => {
+    mockGetCurrentUser.mockResolvedValue({
+      profile: { id: 'user-id', role: 'teacher', academyId: null },
+    })
+
+    const { extractQuestionsAction } = await import('../extract-questions')
+    const result = await extractQuestionsAction('exam-id')
+    expect(result.error).toContain('학원')
   })
 
   it('유효한 pastExamId → 추출 성공 + details INSERT + status completed', async () => {
@@ -563,14 +547,13 @@ describe('resetExtractionAction', () => {
   })
 
   it('비인증 사용자에게 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
+    mockGetCurrentUser.mockResolvedValue({
+      error: '인증이 필요합니다.',
     })
 
     const { resetExtractionAction } = await import('../extract-questions')
     const result = await resetExtractionAction('exam-id')
-    expect(result.error).toContain('로그인')
+    expect(result.error).toContain('인증')
   })
 
   it('details DELETE + status pending 전이', async () => {

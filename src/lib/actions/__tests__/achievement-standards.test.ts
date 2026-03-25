@@ -19,15 +19,17 @@ import {
   deactivateAchievementStandard,
   getDistinctUnits,
 } from '../achievement-standards'
+import { getCurrentUser } from '../helpers'
 
 // ─── Mock Setup ─────────────────────────────────────────
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
@@ -47,56 +49,31 @@ function createMockFormData(data: Record<string, string>): FormData {
   return formData
 }
 
-/** system_admin 인증 mock — auth.getUser + profiles 조회 */
+/** system_admin 인증 mock */
 function mockAuthAsSystemAdmin() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'system-admin-id' } },
-    error: null,
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'system-admin-id', role: 'system_admin', academyId: null },
   })
-
-  // checkSystemAdminRole 내 profiles 조회
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'system_admin' },
-      error: null,
-    }),
-  }
-  mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
 }
 
 /** admin 인증 mock — RBAC 거부 대상 */
 function mockAuthAsAdmin() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'admin-id' } },
-    error: null,
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'admin-id', role: 'admin', academyId: 'academy-1' },
   })
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'admin' },
-      error: null,
-    }),
-  }
-  mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
 }
 
 /** 인증 실패 mock */
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: new Error('Unauthorized'),
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    error: '인증이 필요합니다.',
   })
 }
 
-/** 인증 사용자 mock (조회 작업용 — profiles 조회 없음) */
+/** 인증 사용자 mock (조회 작업용) */
 function mockAuthAsUser() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'user-id' } },
-    error: null,
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'user-id', role: 'teacher', academyId: 'academy-1' },
   })
 }
 

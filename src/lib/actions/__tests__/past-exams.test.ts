@@ -1,34 +1,24 @@
 /**
  * 기출문제 업로드 Server Action 테스트
  *
- * Supabase 클라이언트를 모킹하여 Server Action 로직만 테스트
+ * getCurrentUser mock으로 인증 처리, Supabase 클라이언트는 DB/Storage만 모킹
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { getCurrentUser } from '../helpers'
 
 // ─── 모킹 ───────────────────────────────────────────────
 
-// Supabase 서버 클라이언트 모킹
-const mockGetUser = vi.fn()
-const mockSelectProfiles = vi.fn()
 const mockInsertPastExamQuestions = vi.fn()
 const mockSelectSchools = vi.fn()
 
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: {
-      getUser: () => mockGetUser(),
-    },
     from: (table: string) => {
-      if (table === 'profiles') {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => mockSelectProfiles(),
-            }),
-          }),
-        }
-      }
       if (table === 'schools') {
         return {
           select: () => ({
@@ -89,6 +79,17 @@ function createMockFile(name: string, size: number, type: string): File {
   return new File([buffer], name, { type })
 }
 
+function mockAuthAs(role: string, id = 'user-id', academyId: string | null = 'academy-id') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id, role: role as any, academyId },
+  })
+}
+
+function mockAuthFailed() {
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '인증이 필요합니다.' })
+}
+
 // ─── 테스트 ─────────────────────────────────────────────
 
 describe('uploadPastExamAction', () => {
@@ -102,9 +103,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('비인증 사용자에게 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-    })
+    mockAuthFailed()
 
     const { uploadPastExamAction } = await import('../past-exams')
     const file = createMockFile('exam.jpg', 1024 * 1024, 'image/jpeg')
@@ -119,19 +118,11 @@ describe('uploadPastExamAction', () => {
     })
 
     const result = await uploadPastExamAction(null, formData)
-    expect(result.error).toContain('로그인')
+    expect(result.error).toBe('인증이 필요합니다.')
   })
 
   it('student 역할에게 권한 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'student',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('student')
 
     const { uploadPastExamAction } = await import('../past-exams')
     const file = createMockFile('exam.jpg', 1024 * 1024, 'image/jpeg')
@@ -150,15 +141,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('파일이 없으면 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
 
     const { uploadPastExamAction } = await import('../past-exams')
     const formData = createFormData({
@@ -176,15 +159,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('허용되지 않은 MIME 타입 파일을 거부한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
 
     const { uploadPastExamAction } = await import('../past-exams')
     const file = createMockFile('file.txt', 1024, 'text/plain')
@@ -203,15 +178,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('5MB 초과 파일을 거부한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
 
     const { uploadPastExamAction } = await import('../past-exams')
     const file = createMockFile(
@@ -234,15 +201,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('메타데이터 검증 실패 시 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
 
     const { uploadPastExamAction } = await import('../past-exams')
     const file = createMockFile('exam.jpg', 1024 * 1024, 'image/jpeg')
@@ -261,15 +220,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('Storage 업로드 실패 시 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
     mockStorageUpload.mockResolvedValue({
       error: { message: 'Storage error' },
     })
@@ -291,15 +242,7 @@ describe('uploadPastExamAction', () => {
   })
 
   it('DB 저장 실패 시 Storage 파일을 정리하고 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
     mockStorageUpload.mockResolvedValue({
       error: null,
       data: { path: 'academy-id/school-id/2024-1-midterm/file.jpg' },
@@ -329,15 +272,7 @@ describe('uploadPastExamAction', () => {
 
   it('성공 시 업로드된 기출문제 ID를 반환한다', async () => {
     const mockQuestionId = '123e4567-e89b-12d3-a456-426614174000'
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-id' } },
-    })
-    mockSelectProfiles.mockResolvedValue({
-      data: {
-        role: 'teacher',
-        academy_id: 'academy-id',
-      },
-    })
+    mockAuthAs('teacher')
     mockStorageUpload.mockResolvedValue({
       error: null,
       data: { path: 'academy-id/school-id/2024-1-midterm/file.jpg' },

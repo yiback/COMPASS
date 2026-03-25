@@ -19,6 +19,7 @@ import {
   achievementStandardFilterSchema,
   type AchievementStandardFilterInput,
 } from '@/lib/validations/achievement-standards'
+import { getCurrentUser } from './helpers'
 
 // ─── 공통 타입 ──────────────────────────────────────────
 
@@ -27,55 +28,13 @@ export interface AchievementStandardActionResult {
   readonly data?: unknown
 }
 
-// ─── RBAC 헬퍼 함수 ─────────────────────────────────────
-
-/** system_admin 역할 확인 — 성취기준 CUD 작업 전 호출 */
-async function checkSystemAdminRole(): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile } = (await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()) as { data: { role: string } | null }
-
-  if (!profile || profile.role !== 'system_admin') {
-    return { error: '권한이 없습니다.' }
-  }
-
-  return {}
-}
-
-/** 인증 사용자 확인 — 조회 작업 전 호출 */
-async function checkAuthenticated(): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  return {}
-}
-
 // ─── getAchievementStandards (목록 조회) ─────────────────
 
 export async function getAchievementStandards(
   filters?: AchievementStandardFilterInput
 ): Promise<AchievementStandardActionResult> {
   // 1. 인증 확인
-  const { error: authError } = await checkAuthenticated()
+  const { error: authError } = await getCurrentUser()
   if (authError) return { error: authError }
 
   // 2. 필터 파싱
@@ -139,7 +98,7 @@ export async function getAchievementStandardById(
   }
 
   // 1. 인증 확인
-  const { error: authError } = await checkAuthenticated()
+  const { error: authError } = await getCurrentUser()
   if (authError) return { error: authError }
 
   // 2. DB 조회
@@ -164,8 +123,11 @@ export async function createAchievementStandard(
   formData: FormData
 ): Promise<AchievementStandardActionResult> {
   // 1. RBAC 체크
-  const { error: roleError } = await checkSystemAdminRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (profile.role !== 'system_admin') {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. FormData 파싱 — keywords는 JSON 문자열로 전달됨
   const keywordsRaw = formData.get('keywords') as string
@@ -246,8 +208,11 @@ export async function updateAchievementStandard(
   }
 
   // 1. RBAC 체크
-  const { error: roleError } = await checkSystemAdminRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (profile.role !== 'system_admin') {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. FormData 파싱 — 편집 가능 필드만
   const keywordsRaw = formData.get('keywords') as string
@@ -311,8 +276,11 @@ export async function deactivateAchievementStandard(
   }
 
   // 1. RBAC 체크
-  const { error: roleError } = await checkSystemAdminRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (profile.role !== 'system_admin') {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. DB 비활성화 (소프트 삭제)
   const supabase = await createClient()
@@ -337,7 +305,7 @@ export async function getDistinctUnits(
   grade?: number
 ): Promise<AchievementStandardActionResult> {
   // 1. 인증 확인
-  const { error: authError } = await checkAuthenticated()
+  const { error: authError } = await getCurrentUser()
   if (authError) return { error: authError }
 
   // 2. 쿼리 빌드

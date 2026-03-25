@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateQuestionsRequestSchema } from '@/lib/validations/generate-questions'
 import { createAIProvider, AIError } from '@/lib/ai'
 import type { GeneratedQuestion, PastExamContext } from '@/lib/ai'
+import { getCurrentUser } from './helpers'
 
 // ─── 반환 타입 ──────────────────────────────────────────
 
@@ -19,74 +20,17 @@ export interface GenerateQuestionsResult {
   readonly data?: readonly GeneratedQuestion[]
 }
 
-// ─── 내부 타입 ──────────────────────────────────────────
-
-interface AuthorizedUser {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface AuthCheckResult {
-  readonly error?: string
-  readonly user?: AuthorizedUser
-}
-
-// ─── 헬퍼: 인증 + 권한 확인 ────────────────────────────
-
-async function checkTeacherOrAdmin(): Promise<AuthCheckResult> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { id: string; role: string; academy_id: string | null } | null
-    error: unknown
-  }
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
-    return {
-      error:
-        'AI 문제 생성 권한이 없습니다. 교사 또는 관리자만 사용할 수 있습니다.',
-    }
-  }
-
-  return {
-    user: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
-  }
-}
-
 // ─── Server Action ──────────────────────────────────────
 
 export async function generateQuestionsFromPastExam(
   rawInput: Record<string, unknown>,
 ): Promise<GenerateQuestionsResult> {
   // 1. 인증 + 권한
-  const { error: authError, user } = await checkTeacherOrAdmin()
-  if (authError || !user) {
-    return { error: authError }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
+  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
+    return { error: 'AI 문제 생성 권한이 없습니다. 교사 또는 관리자만 사용할 수 있습니다.' }
   }
 
   // 2. 입력값 검증

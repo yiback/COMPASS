@@ -15,6 +15,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { questionFilterSchema } from '@/lib/validations/questions'
 import { getGradeRange, type SchoolType } from '@/lib/utils/grade-filter-utils'
+import { getCurrentUser } from './helpers'
 
 // ─── 타입 정의 ────────────────────────────────────────
 
@@ -43,63 +44,11 @@ export interface QuestionListResult {
   }
 }
 
-// ─── 내부 타입 ────────────────────────────────────────
-
-interface CurrentUserProfile {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface GetCurrentUserResult {
-  readonly error?: string
-  readonly profile?: CurrentUserProfile
-}
-
 // ─── 상수 ────────────────────────────────────────────
 
 const PAGE_SIZE = 10
 
 // ─── 헬퍼 함수 ───────────────────────────────────────
-
-/** 현재 사용자 프로필 조회 (인증 + academy_id 확인) */
-async function getCurrentUserProfile(): Promise<GetCurrentUserResult> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { id: string; role: string; academy_id: string | null } | null
-    error: unknown
-  }
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  return {
-    profile: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
-  }
-}
 
 /** 빈 문자열 → undefined 변환 (Zod 파싱 전 sanitize) */
 function sanitizeFilters(raw: Record<string, unknown>): Record<string, unknown> {
@@ -173,10 +122,9 @@ export async function getQuestionList(
   rawFilters?: Record<string, unknown>
 ): Promise<QuestionListResult> {
   // 1. 인증 확인
-  const { error: profileError, profile } = await getCurrentUserProfile()
-  if (profileError || !profile) {
-    return { error: profileError ?? '인증 실패' }
-  }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
 
   // 2. 필터 검증
   const sanitized = sanitizeFilters(rawFilters ?? {})
@@ -257,10 +205,9 @@ export async function getQuestionList(
  */
 export async function getQuestionDetail(id: string): Promise<QuestionDetailResult> {
   // 1. 인증 + 프로필 확인
-  const { error: profileError, profile } = await getCurrentUserProfile()
-  if (profileError || !profile) {
-    return { error: profileError }
-  }
+  const { error: detailError, profile } = await getCurrentUser()
+  if (detailError || !profile) return { error: detailError ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
 
   const supabase = await createClient()
 

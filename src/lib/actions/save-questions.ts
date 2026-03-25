@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/server'
 import { saveQuestionsRequestSchema } from '@/lib/validations/save-questions'
 import type { QuestionToSave } from '@/lib/validations/save-questions'
 import { toDbQuestionType, toDifficultyNumber } from '@/lib/ai'
+import { getCurrentUser } from './helpers'
 
 // ─── 반환 타입 ──────────────────────────────────────────
 
@@ -21,63 +22,6 @@ export interface SaveQuestionsResult {
   readonly data?: {
     readonly savedCount: number
     readonly questionIds: readonly string[]
-  }
-}
-
-// ─── 내부 타입 ──────────────────────────────────────────
-
-interface AuthorizedUser {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface AuthCheckResult {
-  readonly error?: string
-  readonly user?: AuthorizedUser
-}
-
-// ─── 헬퍼: 인증 + 권한 확인 ────────────────────────────
-// generate-questions.ts와 동일 패턴 (3회 반복 미달로 아직 공통 모듈 추출 안 함)
-
-async function checkTeacherOrAdmin(): Promise<AuthCheckResult> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { id: string; role: string; academy_id: string | null } | null
-    error: unknown
-  }
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
-    return { error: '문제 저장 권한이 없습니다. 교사 또는 관리자만 사용할 수 있습니다.' }
-  }
-
-  return {
-    user: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
   }
 }
 
@@ -160,9 +104,11 @@ export async function saveGeneratedQuestions(
   rawInput: Record<string, unknown>,
 ): Promise<SaveQuestionsResult> {
   // 1. 인증 + 권한
-  const { error: authError, user } = await checkTeacherOrAdmin()
-  if (authError || !user) {
-    return { error: authError }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
+  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
+    return { error: '문제 저장 권한이 없습니다. 교사 또는 관리자만 사용할 수 있습니다.' }
   }
 
   // 2. 입력값 검증
@@ -201,8 +147,8 @@ export async function saveGeneratedQuestions(
   // 4. AI 타입 → DB 타입 변환 (Bulk INSERT용 배열 생성)
   const insertRows = questions.map((q) =>
     toQuestionInsertRow(q, {
-      academyId: user.academyId,
-      userId: user.id,
+      academyId: profile.academyId!,
+      userId: profile.id,
       subject: pastExam.subject,
       grade: pastExam.grade,
       pastExamId,

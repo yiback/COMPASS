@@ -6,10 +6,15 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// ─── 인증 헬퍼 모킹 ────────────────────────────────────────
+const mockGetCurrentUser = vi.fn()
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: (...args: unknown[]) => mockGetCurrentUser(...args),
+}))
+
 // ─── 모킹 ───────────────────────────────────────────────
 
-const mockGetUser = vi.fn()
-const mockSelectProfiles = vi.fn()
 const mockSelectDetailSingle = vi.fn()
 const mockSelectPastExamImages = vi.fn()
 const mockCreateSignedUrl = vi.fn()
@@ -18,19 +23,7 @@ const mockUpdateDetail = vi.fn()
 // Supabase 서버 클라이언트 모킹
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn().mockResolvedValue({
-    auth: {
-      getUser: () => mockGetUser(),
-    },
     from: (table: string) => {
-      if (table === 'profiles') {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => mockSelectProfiles(),
-            }),
-          }),
-        }
-      }
       if (table === 'past_exam_details') {
         return {
           // reanalyzeQuestionAction: .select('*, past_exams(...)').eq('id', x).eq('academy_id', y).single()
@@ -97,17 +90,8 @@ vi.stubGlobal('fetch', mockFetch)
 // ─── 테스트 유틸 ────────────────────────────────────────
 
 function mockAuthenticatedTeacher() {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: 'user-id' } },
-    error: null,
-  })
-  mockSelectProfiles.mockResolvedValue({
-    data: {
-      id: 'user-id',
-      role: 'teacher',
-      academy_id: 'academy-id',
-    },
-    error: null,
+  mockGetCurrentUser.mockResolvedValue({
+    profile: { id: 'user-id', role: 'teacher', academyId: 'academy-id' },
   })
 }
 
@@ -164,14 +148,13 @@ describe('reanalyzeQuestionAction', () => {
   })
 
   it('비인증 사용자에게 에러를 반환한다', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: null,
+    mockGetCurrentUser.mockResolvedValue({
+      error: '인증이 필요합니다.',
     })
 
     const { reanalyzeQuestionAction } = await import('../extract-questions')
     const result = await reanalyzeQuestionAction('detail-id')
-    expect(result.error).toContain('로그인')
+    expect(result.error).toContain('인증')
   })
 
   it('유효한 detailId → 단일 문제 재분석 + UPDATE 확인', async () => {

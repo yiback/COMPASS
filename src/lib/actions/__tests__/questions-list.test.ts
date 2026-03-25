@@ -12,13 +12,11 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getQuestionList } from '../questions'
+import { getCurrentUser } from '../helpers'
 
 // ─── Mock 설정 ────────────────────────────────────────
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
 
@@ -26,49 +24,34 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }))
 
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
+
 // ─── Mock 헬퍼 ────────────────────────────────────────
 
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  } as any)
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '인증이 필요합니다.' })
 }
 
 function mockAuthAs(
   role: string,
   id = 'user-uuid-1',
-  academyId = 'academy-uuid-1'
+  academyId: string | null = 'academy-uuid-1'
 ) {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id } },
-    error: null,
-  } as any)
-
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { id, role, academy_id: academyId },
-      error: null,
-    }),
-  }
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id, role: role as any, academyId },
+  })
 }
 
 function mockProfileNotFound() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'some-user-id' } },
-    error: null,
-  } as any)
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '프로필을 찾을 수 없습니다.' })
+}
 
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: null,
-      error: { message: 'Not found' },
-    }),
-  }
+function mockProfileNoAcademy() {
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'user-no-academy', role: 'teacher' as any, academyId: null },
+  })
 }
 
 /** 목록 조회 Mock 헬퍼 */
@@ -114,7 +97,6 @@ describe('getQuestionList', () => {
   describe('인증 실패', () => {
     it('인증되지 않은 사용자는 에러를 반환한다', async () => {
       mockAuthFailed()
-      mockSupabaseClient.from.mockReturnValue(mockProfileNotFound())
 
       const result = await getQuestionList()
 
@@ -123,11 +105,7 @@ describe('getQuestionList', () => {
     })
 
     it('프로필이 없으면 에러를 반환한다', async () => {
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'some-user-id' } },
-        error: null,
-      } as any)
-      mockSupabaseClient.from.mockReturnValue(mockProfileNotFound())
+      mockProfileNotFound()
 
       const result = await getQuestionList()
 
@@ -135,18 +113,7 @@ describe('getQuestionList', () => {
     })
 
     it('소속 학원이 없으면 에러를 반환한다', async () => {
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-no-academy' } },
-        error: null,
-      } as any)
-      mockSupabaseClient.from.mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: 'user-no-academy', role: 'teacher', academy_id: null },
-          error: null,
-        }),
-      })
+      mockProfileNoAcademy()
 
       const result = await getQuestionList()
 
@@ -158,14 +125,9 @@ describe('getQuestionList', () => {
 
   describe('필터 적용', () => {
     beforeEach(() => {
-      const profileQuery = mockAuthAs('teacher')
+      mockAuthAs('teacher')
       const listQuery = mockQuestionListQuery([SAMPLE_ROW], 1)
-
-      mockSupabaseClient.from.mockImplementation((table: string) => {
-        if (table === 'profiles') return profileQuery
-        if (table === 'questions') return listQuery
-        return listQuery
-      })
+      mockSupabaseClient.from.mockReturnValue(listQuery)
     })
 
     it('필터 없이 목록을 조회한다', async () => {
@@ -204,14 +166,9 @@ describe('getQuestionList', () => {
 
   describe('응답 변환', () => {
     beforeEach(() => {
-      const profileQuery = mockAuthAs('teacher')
+      mockAuthAs('teacher')
       const listQuery = mockQuestionListQuery([SAMPLE_ROW], 5)
-
-      mockSupabaseClient.from.mockImplementation((table: string) => {
-        if (table === 'profiles') return profileQuery
-        if (table === 'questions') return listQuery
-        return listQuery
-      })
+      mockSupabaseClient.from.mockReturnValue(listQuery)
     })
 
     it('DB row를 QuestionListItem으로 변환한다', async () => {
@@ -234,16 +191,12 @@ describe('getQuestionList', () => {
     })
 
     it('profiles.name이 null이면 createdByName은 null이다', async () => {
-      const profileQuery = mockAuthAs('teacher')
+      mockAuthAs('teacher')
       const listQuery = mockQuestionListQuery(
         [{ ...SAMPLE_ROW, profiles: null }],
         1
       )
-
-      mockSupabaseClient.from.mockImplementation((table: string) => {
-        if (table === 'profiles') return profileQuery
-        return listQuery
-      })
+      mockSupabaseClient.from.mockReturnValue(listQuery)
 
       const result = await getQuestionList()
 
@@ -255,7 +208,7 @@ describe('getQuestionList', () => {
 
   describe('에러 처리', () => {
     it('DB 조회 실패 시 에러를 반환한다', async () => {
-      const profileQuery = mockAuthAs('teacher')
+      mockAuthAs('teacher')
       const errorQuery = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -267,10 +220,7 @@ describe('getQuestionList', () => {
         }),
       }
 
-      mockSupabaseClient.from.mockImplementation((table: string) => {
-        if (table === 'profiles') return profileQuery
-        return errorQuery
-      })
+      mockSupabaseClient.from.mockReturnValue(errorQuery)
 
       const result = await getQuestionList()
 

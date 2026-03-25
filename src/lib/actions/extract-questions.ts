@@ -28,6 +28,7 @@ import type {
   ExtractQuestionResult,
 } from '@/lib/ai/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getCurrentUser } from './helpers'
 
 // ─── 반환 타입 ────────────────────────────────────────────
 
@@ -41,70 +42,6 @@ export interface ResetExtractionResult {
 
 export interface ReanalyzeQuestionResult {
   readonly error?: string
-}
-
-// ─── 내부 타입 ────────────────────────────────────────────
-
-interface CurrentUserProfile {
-  readonly id: string
-  readonly role: string
-  readonly academyId: string
-}
-
-interface GetCurrentUserResult {
-  readonly error?: string
-  readonly profile?: CurrentUserProfile
-}
-
-/** 허용 역할: teacher, admin, system_admin */
-const ALLOWED_ROLES = ['teacher', 'admin', 'system_admin']
-
-// ─── 내부 헬퍼 ────────────────────────────────────────────
-
-/**
- * 현재 사용자 인증 + 프로필 + 역할 확인
- * exam-management.ts의 getCurrentUserWithRole과 동일 패턴
- */
-async function getCurrentUserWithRole(): Promise<GetCurrentUserResult> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '로그인이 필요합니다.' }
-  }
-
-  const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
-    .select('id, role, academy_id')
-    .eq('id', user.id)
-    .single()) as {
-    data: { id: string; role: string; academy_id: string | null } | null
-    error: unknown
-  }
-
-  if (profileError || !profile) {
-    return { error: '프로필을 찾을 수 없습니다.' }
-  }
-
-  if (!profile.academy_id) {
-    return { error: '소속 학원이 없습니다.' }
-  }
-
-  if (!ALLOWED_ROLES.includes(profile.role)) {
-    return { error: '권한이 없습니다.' }
-  }
-
-  return {
-    profile: {
-      id: profile.id,
-      role: profile.role,
-      academyId: profile.academy_id,
-    },
-  }
 }
 
 /**
@@ -156,9 +93,11 @@ export async function extractQuestionsAction(
   pastExamId: string,
 ): Promise<ExtractQuestionsResult> {
   // 1. 인증 + 권한
-  const { error: authError, profile } = await getCurrentUserWithRole()
-  if (authError || !profile) {
-    return { error: authError }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
+  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
   }
 
   // 2. Zod 검증
@@ -338,9 +277,11 @@ export async function resetExtractionAction(
   pastExamId: string,
 ): Promise<ResetExtractionResult> {
   // 1. 인증 + 권한
-  const { error: authError, profile } = await getCurrentUserWithRole()
-  if (authError || !profile) {
-    return { error: authError }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
+  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
   }
 
   // 2. Zod 검증
@@ -422,9 +363,11 @@ export async function reanalyzeQuestionAction(
   feedback?: string,
 ): Promise<ReanalyzeQuestionResult> {
   // 1. 인증 + 권한
-  const { error: authError, profile } = await getCurrentUserWithRole()
-  if (authError || !profile) {
-    return { error: authError }
+  const { error, profile } = await getCurrentUser()
+  if (error || !profile) return { error: error ?? '인증 실패' }
+  if (!profile.academyId) return { error: '소속 학원이 없습니다.' }
+  if (!['teacher', 'admin', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
   }
 
   // 2. Zod 검증

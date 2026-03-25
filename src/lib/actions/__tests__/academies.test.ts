@@ -9,14 +9,16 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getMyAcademy, updateMyAcademy } from '../academies'
+import { getCurrentUser } from '../helpers'
 
 // Mock Setup
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
+
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
@@ -27,67 +29,6 @@ vi.mock('next/cache', () => ({
 }))
 
 // Mock 헬퍼 함수
-function mockAuthAsAdmin() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'user-1' } },
-    error: null,
-  } as any)
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'admin', academy_id: 'academy-1' },
-      error: null,
-    }),
-  }
-
-  return profileQuery
-}
-
-function mockAuthAsTeacher() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'user-1' } },
-    error: null,
-  } as any)
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'teacher', academy_id: 'academy-1' },
-      error: null,
-    }),
-  }
-
-  return profileQuery
-}
-
-function mockAuthAsStudent() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'user-1' } },
-    error: null,
-  } as any)
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { role: 'student', academy_id: 'academy-1' },
-      error: null,
-    }),
-  }
-
-  return profileQuery
-}
-
-function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  } as any)
-}
-
 function mockAcademyData() {
   return {
     select: vi.fn().mockReturnThis(),
@@ -123,11 +64,10 @@ describe('getMyAcademy', () => {
   })
 
   it('성공: admin이 자기 학원 조회', async () => {
-    const profileQuery = mockAuthAsAdmin()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
     const academyQuery = mockAcademyData()
-
-    // from() 2번 호출: profiles → academies
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
     mockSupabaseClient.from.mockReturnValueOnce(academyQuery)
 
     const result = await getMyAcademy()
@@ -148,10 +88,10 @@ describe('getMyAcademy', () => {
   })
 
   it('성공: teacher가 자기 학원 조회', async () => {
-    const profileQuery = mockAuthAsTeacher()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'teacher', academyId: 'academy-1' },
+    })
     const academyQuery = mockAcademyData()
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
     mockSupabaseClient.from.mockReturnValueOnce(academyQuery)
 
     const result = await getMyAcademy()
@@ -163,7 +103,9 @@ describe('getMyAcademy', () => {
   })
 
   it('실패: 인증 안 됨', async () => {
-    mockAuthFailed()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      error: '인증이 필요합니다.',
+    })
 
     const result = await getMyAcademy()
 
@@ -172,21 +114,9 @@ describe('getMyAcademy', () => {
   })
 
   it('실패: 프로필 없음', async () => {
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    } as any)
-
-    const profileQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'No profile found' },
-      }),
-    }
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      error: '프로필을 찾을 수 없습니다.',
+    })
 
     const result = await getMyAcademy()
 
@@ -195,21 +125,9 @@ describe('getMyAcademy', () => {
   })
 
   it('실패: academy_id null (system_admin)', async () => {
-    mockSupabaseClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    } as any)
-
-    const profileQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { role: 'system_admin', academy_id: null },
-        error: null,
-      }),
-    }
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'system_admin', academyId: null },
+    })
 
     const result = await getMyAcademy()
 
@@ -218,7 +136,9 @@ describe('getMyAcademy', () => {
   })
 
   it('실패: DB 조회 에러', async () => {
-    const profileQuery = mockAuthAsAdmin()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
 
     const academyQuery = {
       select: vi.fn().mockReturnThis(),
@@ -228,8 +148,6 @@ describe('getMyAcademy', () => {
         error: { message: 'Academy not found' },
       }),
     }
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
     mockSupabaseClient.from.mockReturnValueOnce(academyQuery)
 
     const result = await getMyAcademy()
@@ -245,7 +163,9 @@ describe('updateMyAcademy', () => {
   })
 
   it('성공: admin이 학원 정보 수정', async () => {
-    const profileQuery = mockAuthAsAdmin()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
 
     const updateQuery = {
       update: vi.fn().mockReturnThis(),
@@ -266,10 +186,6 @@ describe('updateMyAcademy', () => {
         error: null,
       }),
     }
-
-    // checkAdminRole: profiles 조회
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
-    // updateMyAcademy: academies 업데이트
     mockSupabaseClient.from.mockReturnValueOnce(updateQuery)
 
     const formData = createMockFormData({
@@ -292,7 +208,9 @@ describe('updateMyAcademy', () => {
   })
 
   it('성공: 선택 필드 빈값도 정상', async () => {
-    const profileQuery = mockAuthAsAdmin()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
 
     const updateQuery = {
       update: vi.fn().mockReturnThis(),
@@ -313,8 +231,6 @@ describe('updateMyAcademy', () => {
         error: null,
       }),
     }
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
     mockSupabaseClient.from.mockReturnValueOnce(updateQuery)
 
     const formData = createMockFormData({
@@ -334,9 +250,9 @@ describe('updateMyAcademy', () => {
   })
 
   it('실패: teacher 권한 에러', async () => {
-    const profileQuery = mockAuthAsTeacher()
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'teacher', academyId: 'academy-1' },
+    })
 
     const formData = createMockFormData({
       name: '수정 시도',
@@ -344,14 +260,14 @@ describe('updateMyAcademy', () => {
 
     const result = await updateMyAcademy(null, formData)
 
-    expect(result.error).toBe('학원 관리자만 수정할 수 있습니다.')
+    expect(result.error).toBe('관리자만 학원 정보를 수정할 수 있습니다.')
     expect(result.data).toBeUndefined()
   })
 
   it('실패: student 권한 에러', async () => {
-    const profileQuery = mockAuthAsStudent()
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'student', academyId: 'academy-1' },
+    })
 
     const formData = createMockFormData({
       name: '수정 시도',
@@ -359,12 +275,14 @@ describe('updateMyAcademy', () => {
 
     const result = await updateMyAcademy(null, formData)
 
-    expect(result.error).toBe('학원 관리자만 수정할 수 있습니다.')
+    expect(result.error).toBe('관리자만 학원 정보를 수정할 수 있습니다.')
     expect(result.data).toBeUndefined()
   })
 
   it('실패: 인증 안 됨', async () => {
-    mockAuthFailed()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      error: '인증이 필요합니다.',
+    })
 
     const formData = createMockFormData({
       name: '수정 시도',
@@ -377,10 +295,9 @@ describe('updateMyAcademy', () => {
   })
 
   it('실패: Zod 검증 에러', async () => {
-    const profileQuery = mockAuthAsAdmin()
-
-    // checkAdminRole에서 profiles 조회
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
 
     const formData = createMockFormData({
       name: '', // 빈값 - Zod 에러
@@ -393,7 +310,9 @@ describe('updateMyAcademy', () => {
   })
 
   it('실패: DB 업데이트 에러', async () => {
-    const profileQuery = mockAuthAsAdmin()
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      profile: { id: 'user-1', role: 'admin', academyId: 'academy-1' },
+    })
 
     const updateQuery = {
       update: vi.fn().mockReturnThis(),
@@ -404,8 +323,6 @@ describe('updateMyAcademy', () => {
         error: { message: 'DB update failed' },
       }),
     }
-
-    mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
     mockSupabaseClient.from.mockReturnValueOnce(updateQuery)
 
     const formData = createMockFormData({

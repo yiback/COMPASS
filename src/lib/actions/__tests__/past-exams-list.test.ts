@@ -9,6 +9,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPastExamList, getPastExamDetail } from '../past-exams'
+import { getCurrentUser } from '../helpers'
 
 // ============================================================================
 // Mock Setup
@@ -17,9 +18,6 @@ import { getPastExamList, getPastExamDetail } from '../past-exams'
 const mockCreateSignedUrl = vi.fn()
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
   storage: {
     from: vi.fn().mockReturnValue({
@@ -32,73 +30,40 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }))
 
+vi.mock('../helpers', () => ({
+  getCurrentUser: vi.fn(),
+}))
+
 // ============================================================================
 // Mock 헬퍼 함수
 // ============================================================================
 
 /** 인증 실패 Mock */
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
-  } as any)
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '인증이 필요합니다.' })
 }
 
 /** 역할별 인증 성공 Mock */
 function mockAuthAs(
   role: string,
   id = '11111111-1111-4111-8111-111111111111',
-  academyId = 'academy-uuid-1'
+  academyId: string | null = 'academy-uuid-1'
 ) {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id } },
-    error: null,
-  } as any)
-
-  const profileQuery = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { id, role, academy_id: academyId },
-      error: null,
-    }),
-  }
-
-  return profileQuery
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id, role: role as any, academyId },
+  })
 }
 
 /** 프로필 없음 Mock */
 function mockProfileNotFound() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'some-user-id' } },
-    error: null,
-  } as any)
-
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: null,
-      error: { message: 'Not found' },
-    }),
-  }
+  vi.mocked(getCurrentUser).mockResolvedValue({ error: '프로필을 찾을 수 없습니다.' })
 }
 
 /** academy_id 없음 Mock */
 function mockProfileNoAcademy() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'some-user-id' } },
-    error: null,
-  } as any)
-
-  return {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({
-      data: { id: 'some-user-id', role: 'student', academy_id: null },
-      error: null,
-    }),
-  }
+  vi.mocked(getCurrentUser).mockResolvedValue({
+    profile: { id: 'some-user-id', role: 'student' as any, academyId: null },
+  })
 }
 
 /** FK JOIN 목록 쿼리 Mock (Fluent API 체인) */
@@ -188,8 +153,7 @@ describe('getPastExamList', () => {
     })
 
     it('프로필 없음 → 에러 "프로필을 찾을 수 없습니다."', async () => {
-      const profileQuery = mockProfileNotFound()
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockProfileNotFound()
 
       const result = await getPastExamList()
 
@@ -198,8 +162,7 @@ describe('getPastExamList', () => {
     })
 
     it('academy_id 없음 → 에러 "소속 학원이 없습니다."', async () => {
-      const profileQuery = mockProfileNoAcademy()
-      mockSupabaseClient.from.mockReturnValueOnce(profileQuery)
+      mockProfileNoAcademy()
 
       const result = await getPastExamList()
 
@@ -210,12 +173,9 @@ describe('getPastExamList', () => {
 
   describe('기본 조회', () => {
     it('필터 없이 호출 → 목록 + meta(total, page=1, pageSize=10) 반환', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([mockDbRow], 1)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       const result = await getPastExamList()
 
@@ -226,12 +186,9 @@ describe('getPastExamList', () => {
     })
 
     it('데이터 없으면 빈 배열 + meta.total=0', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       const result = await getPastExamList()
 
@@ -243,12 +200,9 @@ describe('getPastExamList', () => {
 
   describe('필터 적용', () => {
     it('school 필터 → ilike("schools.name", "%한국%") 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ school: '한국' })
 
@@ -256,12 +210,9 @@ describe('getPastExamList', () => {
     })
 
     it('grade 필터 → eq("grade", 10) 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ grade: 10 })
 
@@ -269,12 +220,9 @@ describe('getPastExamList', () => {
     })
 
     it('examType="midterm" → eq("exam_type", "midterm") 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ examType: 'midterm' })
 
@@ -282,12 +230,9 @@ describe('getPastExamList', () => {
     })
 
     it('examType="all" → eq 호출 안 함 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ examType: 'all' })
 
@@ -295,12 +240,9 @@ describe('getPastExamList', () => {
     })
 
     it('복합 필터 (grade + examType + year) → 여러 eq 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ grade: 10, examType: 'midterm', year: 2024 })
 
@@ -312,12 +254,9 @@ describe('getPastExamList', () => {
 
   describe('페이지네이션', () => {
     it('page=2 → range(10, 19) 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ page: 2 })
 
@@ -327,12 +266,9 @@ describe('getPastExamList', () => {
 
   describe('빈 문자열 처리', () => {
     it('school="" → ilike 호출 안 함 확인 (undefined 변환)', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ school: '' })
 
@@ -342,11 +278,9 @@ describe('getPastExamList', () => {
 
   describe('schoolType 필터', () => {
     it('schoolType="high" + grade 없음 → gte(10), lte(12) 호출', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ schoolType: 'high' })
 
@@ -355,11 +289,9 @@ describe('getPastExamList', () => {
     })
 
     it('schoolType="elementary" + grade 없음 → gte(1), lte(6) 호출', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ schoolType: 'elementary' })
 
@@ -368,11 +300,9 @@ describe('getPastExamList', () => {
     })
 
     it('schoolType="high" + grade=10 → gte/lte 미호출 (grade 우선)', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ schoolType: 'high', grade: 10 })
 
@@ -381,11 +311,9 @@ describe('getPastExamList', () => {
     })
 
     it('schoolType="all" → gte/lte 미호출', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([], 0)
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       await getPastExamList({ schoolType: 'all' })
 
@@ -396,12 +324,9 @@ describe('getPastExamList', () => {
 
   describe('snake_case → camelCase 변환', () => {
     it('DB 응답 → schoolName, schoolType, uploadedByName 등 camelCase 변환 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const listQuery = mockPastExamListQuery([mockDbRow], 1)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(listQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(listQuery)
 
       const result = await getPastExamList()
 
@@ -449,16 +374,13 @@ describe('getPastExamDetail', () => {
 
   describe('조회', () => {
     it('유효 ID → 상세 데이터 + signedImageUrls 배열 반환', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(mockDbDetailRow)
       mockCreateSignedUrl.mockResolvedValue({
         data: { signedUrl: 'https://signed.url/file.jpg' },
         error: null,
       })
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(detailQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
       const result = await getPastExamDetail('exam-uuid-1')
 
@@ -472,12 +394,9 @@ describe('getPastExamDetail', () => {
     })
 
     it('존재하지 않는 ID → 에러 "기출문제를 찾을 수 없습니다."', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(null)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(detailQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
       const result = await getPastExamDetail('nonexistent-uuid')
 
@@ -487,12 +406,9 @@ describe('getPastExamDetail', () => {
 
     it('past_exam_images 빈 배열 → signedImageUrls 빈 배열 (createSignedUrl 미호출)', async () => {
       const rowWithoutImages = { ...mockDbDetailRow, past_exam_images: [] }
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(rowWithoutImages)
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(detailQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
       const result = await getPastExamDetail('exam-uuid-1')
 
@@ -504,16 +420,13 @@ describe('getPastExamDetail', () => {
 
   describe('Signed URL', () => {
     it('이미지별 createSignedUrl(path, 60) 호출 확인', async () => {
-      const profileQuery = mockAuthAs('student')
+      mockAuthAs('student')
       const detailQuery = mockPastExamDetailQuery(mockDbDetailRow)
       mockCreateSignedUrl.mockResolvedValue({
         data: { signedUrl: 'https://signed.url/file.jpg' },
         error: null,
       })
-
-      mockSupabaseClient.from
-        .mockReturnValueOnce(profileQuery)
-        .mockReturnValueOnce(detailQuery)
+      mockSupabaseClient.from.mockReturnValueOnce(detailQuery)
 
       await getPastExamDetail('exam-uuid-1')
 

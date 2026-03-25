@@ -10,14 +10,14 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// ─── Supabase Mock ───────────────────────────────────────
+// ─── 인증 헬퍼 모킹 ────────────────────────────────────────
+const mockGetCurrentUser = vi.fn()
 
-/** profiles 테이블 쿼리 체인 Mock */
-const mockProfileQuery = {
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  single: vi.fn(),
-}
+vi.mock('../helpers', () => ({
+  getCurrentUser: (...args: unknown[]) => mockGetCurrentUser(...args),
+}))
+
+// ─── Supabase Mock ───────────────────────────────────────
 
 /** past_exams 테이블 쿼리 체인 Mock */
 const mockPastExamQuery = {
@@ -33,9 +33,6 @@ const mockQuestionsQuery = {
 }
 
 const mockSupabaseClient = {
-  auth: {
-    getUser: vi.fn(),
-  },
   from: vi.fn(),
 }
 
@@ -115,9 +112,8 @@ const VALID_INPUT_THREE = {
 
 /** 비인증 사용자 Mock */
 function mockAuthFailed() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: 'Not authenticated' },
+  mockGetCurrentUser.mockResolvedValue({
+    error: '인증이 필요합니다.',
   })
 }
 
@@ -127,25 +123,15 @@ function mockAuthAs(
   id = '11111111-1111-4111-8111-111111111111',
   academyId: string | null = 'academy-uuid-1',
 ) {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id } },
-    error: null,
-  })
-  mockProfileQuery.single.mockResolvedValue({
-    data: { id, role, academy_id: academyId },
-    error: null,
+  mockGetCurrentUser.mockResolvedValue({
+    profile: { id, role, academyId },
   })
 }
 
 /** 프로필 없음 Mock */
 function mockProfileNotFound() {
-  mockSupabaseClient.auth.getUser.mockResolvedValue({
-    data: { user: { id: 'some-user-id' } },
-    error: null,
-  })
-  mockProfileQuery.single.mockResolvedValue({
-    data: null,
-    error: { message: 'Not found' },
+  mockGetCurrentUser.mockResolvedValue({
+    error: '프로필을 찾을 수 없습니다.',
   })
 }
 
@@ -202,9 +188,8 @@ describe('saveGeneratedQuestions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // from() 테이블 분기 — 3개 테이블
+    // from() 테이블 분기 — 2개 테이블
     mockSupabaseClient.from.mockImplementation((table: string) => {
-      if (table === 'profiles') return mockProfileQuery
       if (table === 'past_exams') return mockPastExamQuery
       if (table === 'questions') return mockQuestionsQuery
       throw new Error(`예상치 못한 테이블: ${table}`)

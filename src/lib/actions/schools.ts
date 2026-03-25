@@ -18,44 +18,13 @@ import {
   schoolFilterSchema,
   type SchoolFilterInput,
 } from '@/lib/validations/schools'
+import { getCurrentUser } from './helpers'
 
 // ─── 공통 타입 ──────────────────────────────────────────
 
 export interface SchoolActionResult {
   readonly error?: string
   readonly data?: unknown
-}
-
-// ─── RBAC 헬퍼 함수 ─────────────────────────────────────
-
-async function checkAdminOrTeacherRole(): Promise<{
-  error?: string
-  role?: string
-}> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { error: '인증이 필요합니다.' }
-  }
-
-  const { data: profile } = (await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()) as { data: { role: string } | null }
-
-  if (
-    !profile ||
-    !['admin', 'teacher', 'system_admin'].includes(profile.role)
-  ) {
-    return { error: '권한이 없습니다.' }
-  }
-
-  return { role: profile.role }
 }
 
 // ─── createSchool (생성) ────────────────────────────────
@@ -65,8 +34,11 @@ export async function createSchool(
   formData: FormData
 ): Promise<SchoolActionResult> {
   // 1. RBAC 체크
-  const { error: roleError } = await checkAdminOrTeacherRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (!['admin', 'teacher', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. FormData 파싱
   const raw = {
@@ -96,7 +68,6 @@ export async function createSchool(
   })
 
   if (error) {
-    console.error('[createSchool] error:', error)
     return { error: '학교 생성에 실패했습니다.' }
   }
 
@@ -138,7 +109,6 @@ export async function getSchoolList(
   const { data, error, count } = await query
 
   if (error) {
-    console.error('[getSchoolList] error:', error)
     return { error: '학교 목록 조회에 실패했습니다.' }
   }
 
@@ -169,7 +139,6 @@ export async function getSchoolById(
     .single()
 
   if (error) {
-    console.error('[getSchoolById] error:', error)
     return { error: '학교 정보 조회에 실패했습니다.' }
   }
 
@@ -184,8 +153,11 @@ export async function updateSchool(
   formData: FormData
 ): Promise<SchoolActionResult> {
   // 1. RBAC 체크
-  const { error: roleError } = await checkAdminOrTeacherRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (!['admin', 'teacher', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. FormData 파싱 + ID 포함
   const raw = {
@@ -220,7 +192,6 @@ export async function updateSchool(
     .eq('id', parsed.data.id)
 
   if (error) {
-    console.error('[updateSchool] error:', error)
     return { error: '학교 정보 수정에 실패했습니다.' }
   }
 
@@ -236,8 +207,11 @@ export async function deleteSchool(
   id: string
 ): Promise<SchoolActionResult> {
   // 1. RBAC 체크
-  const { error: roleError } = await checkAdminOrTeacherRole()
-  if (roleError) return { error: roleError }
+  const { error: authError, profile } = await getCurrentUser()
+  if (authError || !profile) return { error: authError ?? '인증 실패' }
+  if (!['admin', 'teacher', 'system_admin'].includes(profile.role)) {
+    return { error: '권한이 없습니다.' }
+  }
 
   // 2. ID 검증
   if (!id) {
@@ -260,7 +234,6 @@ export async function deleteSchool(
   const { error } = await supabase.from('schools').delete().eq('id', id)
 
   if (error) {
-    console.error('[deleteSchool] error:', error)
     return { error: '학교 삭제에 실패했습니다.' }
   }
 

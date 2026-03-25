@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-03-25 (세션 32: 단계 2-2 성취기준 DB 구축 완료)
+> **최종 업데이트**: 2026-03-25 (세션 33: 인프라 부채 정리 — 코드 리뷰 잔여 + 테스트 수정 + 인증 헬퍼 통합)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -58,19 +58,20 @@
 | 코드 리뷰 | security/perf/test 3명 × 3차 — CRITICAL 0 | 완료 |
 | E2E | 7개 여정 (필터/검색/Sheet), 콘솔 에러 0건 | 완료 |
 
-### 세션 32 작업 요약
+### 세션 33: 인프라 부채 정리 (100% 완료) ✅
 
 ```
-1. 리서치 v1→v2→v3 (3명 병렬 × 3라운드 = 9회)
-   → v1: 자동 수집 YAGNI → v2: CRUD 필수 → v3: 출처/시점 절충
-2. PLAN v1(조회만) → v2(CRUD 추가) → v2.1(리뷰 반영)
-3. 11개 의사결정 확정 (RLS/편집필드/삭제정책/다과목 등)
-4. Task 1~5 상세 계획 + 리뷰 READY
-5. Wave 1~4 구현 (Task 1+2 병렬 → 3 → 4 → 5)
-6. detail-sheet 추가 (사용자 피드백 "내용이 다 안 보여")
-7. 코드 리뷰 3차 만장일치 PASS
-8. E2E 7개 여정, 콘솔 에러 0건
-9. ROADMAP/PLAN/HANDOFF 완료 반영 + 회고 작성
+1. 코드 리뷰 잔여 이슈 4건 정리
+   - canEdit = true 하드코딩 → profile.role 기반 명시적 계산
+   - LatexRenderer useMemo 캐싱 추가
+   - figure-schema description max(500), color max(50) 추가
+2. extract-questions.test.ts 기존 실패 2건 수정
+   - crop 제거 반영 + { error } 반환 패턴 반영
+3. Server Action 인증 헬퍼 통합 (12개 중복 → getCurrentUser() 1개)
+   - helpers.ts 신규 생성 + 10개 테스트
+   - 10개 Action 파일 교체 + 13개 테스트 파일 mock 교체
+   - 코드 리뷰 2차 만장일치 PASS (security/perf/test)
+   - 1449 tests 전부 PASS
 ```
 
 ---
@@ -87,17 +88,13 @@
    - 성취기준 선택 → AI 프롬프트 연동
    - achievement_standard_id FK 활용
 
-3. **Server Action 리팩토링** (독립 이슈)
-   - getCurrentUserProfile 7가지 변형 → `getCurrentUser()` + `requireRole()` 통합
-
-### 코드 리뷰 잔여 이슈 (MEDIUM/LOW)
+### 코드 리뷰 잔여 이슈 (보안 — 리팩토링 이전부터 존재)
 
 | 등급 | 이슈 |
 |------|------|
-| MEDIUM | admin/academy `canEdit = true` 하드코딩 → 명시적 계산 |
-| MEDIUM | admin/academy `getMyAcademy()` cache() 밖 중복 쿼리 |
-| MEDIUM | `parseLatexText` + `groupAdjacentFigures` useMemo 캐싱 |
-| LOW | `color` 필드 색상 정규식, `description` 길이 제한 |
+| CONSIDER | schools.ts 읽기 Actions에 인증 체크 없음 (RLS 방어 중) |
+| CONSIDER | users.ts getUserList에 academy_id 코드레벨 필터 없음 (RLS 방어 중) |
+| CONSIDER | achievement-standards 조회에서 profiles SELECT 강제 실행 (성능) |
 
 ---
 
@@ -112,6 +109,7 @@
 - **11개 의사결정 명시적 추적**: 리서치→PLAN→구현까지 번호로 추적
 - **PLAN 리뷰 3회 제한**: 과도 반복 방지
 - **Wave 병렬 구현**: 파일 소유권 명확 → 충돌 0건
+- **인증 헬퍼 통합**: 12개 중복 → 1개 `getCurrentUser()`. 3개 에이전트 병렬 구현
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
@@ -172,5 +170,5 @@ GEMINI_MODEL=gemini-2.5-flash (gemini-2.0-flash는 새 프로젝트에서 사용
 - 마이그레이션 20260324: **수동 적용 완료** (성취기준 4컬럼 + 76개 시딩)
 - `await cookies()` 필수 (Next.js 16 비동기)
 - 시드 데이터 UUID가 비표준 → Zod `.uuid()` 대신 `.min(1)` 사용 중
-- 기존 extract-questions.test.ts 실패 2건 — 이번 작업과 무관 (사전 존재)
-- Server Action 인증 헬퍼 7가지 변형 중복 → 독립 리팩토링 이슈로 관리
+- ~~기존 extract-questions.test.ts 실패 2건~~ → **세션 33에서 수정 완료**
+- ~~Server Action 인증 헬퍼 7가지 변형 중복~~ → **세션 33에서 통합 완료** (실제 12개 → 1개)
