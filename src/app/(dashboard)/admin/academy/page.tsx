@@ -11,7 +11,7 @@ import { AcademyInfoCard } from './_components/academy-info-card'
 
 export default async function AcademyPage() {
   // admin만 접근 가능 (미통과 시 /unauthorized 리다이렉트)
-  await requireRole(['admin'])
+  const profile = await requireRole(['admin'])
 
   const result = await getMyAcademy()
 
@@ -37,9 +37,9 @@ export default async function AcademyPage() {
     )
   }
 
-  // requireRole(['admin']) 통과 = admin 이상 확정이므로 canEdit = true
+  // requireRole에서 반환된 role로 편집 권한 명시적 계산
   const { role: _role, ...academyData } = result.data
-  const canEdit = true
+  const canEdit = profile.role === 'admin' || profile.role === 'system_admin'
 
   return (
     <div className="space-y-6">

@@ -20,7 +20,7 @@ const displaySizeSchema = z.enum(['large', 'small']).default('large')
 /**
  * 공통 description 필드 — 렌더링 실패 시 폴백 텍스트로 사용
  */
-const descriptionSchema = z.string().min(1, '도형 설명이 비어있습니다.')
+const descriptionSchema = z.string().min(1, '도형 설명이 비어있습니다.').max(500, '도형 설명은 500자 이하여야 합니다.')
 
 /**
  * 2D 좌표 튜플 스키마 [x, y]
@@ -75,7 +75,7 @@ const functionGraphSchema = z.object({
     message: 'yRange[0]이 yRange[1]보다 작아야 합니다.',
   }),
   gridStep: z.number().positive('gridStep은 양수여야 합니다.'),
-  color: z.string().optional(),
+  color: z.string().max(50, '색상값은 50자 이하여야 합니다.').optional(),
   displaySize: displaySizeSchema,
   description: descriptionSchema,
 })

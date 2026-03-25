@@ -137,8 +137,13 @@ describe('figureDataSchema - function_graph', () => {
   })
 
   it('color 필드는 선택(optional) — 미전달 시 파싱 성공', () => {
-    const { color: _color, ...withoutColor } = validFunctionGraph
-    const result = figureDataSchema.parse(withoutColor)
+    // validFunctionGraph에 color가 없으므로 그대로 파싱 성공 확인
+    const result = figureDataSchema.parse(validFunctionGraph)
+    expect(result.type).toBe('function_graph')
+  })
+
+  it('color 필드 전달 시 파싱 성공', () => {
+    const result = figureDataSchema.parse({ ...validFunctionGraph, color: '#ff0000' })
     expect(result.type).toBe('function_graph')
   })
 })

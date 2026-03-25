@@ -17,7 +17,7 @@
 
 // LatexRenderer가 사용되는 페이지에서만 KaTeX CSS를 로드한다 (코드 스플리팅 최적화)
 import 'katex/dist/katex.min.css'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import katex from 'katex'
 import { parseLatexText, type LatexSegment } from '@/lib/utils/latex-parser'
 import type { FigureData } from '@/lib/ai/types'
@@ -251,15 +251,16 @@ function renderItems(
  * <LatexRenderer text="이차방정식 $ax^2 + bx + c = 0$의 근의 공식" />
  */
 export const LatexRenderer = memo(function LatexRenderer({ text, className, figures }: LatexRendererProps) {
-  const segments = parseLatexText(text)
+  // text에만 의존하는 파싱 결과를 캐싱 — figures 참조 변경 시 재파싱 방지
+  const items = useMemo(() => {
+    const segments = parseLatexText(text)
+    return segments.length === 0 ? null : groupAdjacentFigures(segments)
+  }, [text])
 
   // 세그먼트가 없으면 빈 span 반환
-  if (segments.length === 0) {
+  if (items === null) {
     return <span className={className} />
   }
-
-  // 연속 figure 세그먼트를 그룹화 (수평 배치 처리)
-  const items = groupAdjacentFigures(segments)
 
   return (
     <span className={className}>
