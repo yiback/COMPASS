@@ -68,6 +68,10 @@ export type Database = {
           subject: string
           unit: string | null
           updated_at: string | null
+          effective_year: number | null
+          order_in_semester: number | null
+          source_name: string | null
+          source_url: string | null
         }
         Insert: {
           code: string
@@ -83,6 +87,10 @@ export type Database = {
           subject: string
           unit?: string | null
           updated_at?: string | null
+          effective_year?: number | null
+          order_in_semester?: number | null
+          source_name?: string | null
+          source_url?: string | null
         }
         Update: {
           code?: string
@@ -98,6 +106,10 @@ export type Database = {
           subject?: string
           unit?: string | null
           updated_at?: string | null
+          effective_year?: number | null
+          order_in_semester?: number | null
+          source_name?: string | null
+          source_url?: string | null
         }
         Relationships: []
       }

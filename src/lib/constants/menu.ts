@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Settings,
   BookOpen,
+  Target,
   type LucideIcon,
 } from 'lucide-react'
 import type { Role } from '@/lib/auth'
@@ -52,6 +53,13 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: BookOpen,
     description: '저장된 문제 조회 및 관리',
     roles: ['admin', 'teacher', 'student'],
+  },
+  {
+    title: '성취기준',
+    href: '/achievement-standards',
+    icon: Target,
+    description: '교육과정 성취기준 조회',
+    roles: ['admin', 'teacher'],
   },
   {
     title: '학원 관리',

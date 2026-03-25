@@ -22,5 +22,6 @@ export const ROUTE_PERMISSIONS: readonly RoutePermission[] = [
   { pattern: '/past-exams', roles: ['admin', 'teacher'] },
   { pattern: '/generate', roles: ['admin', 'teacher'] },
   { pattern: '/questions', roles: ['admin', 'teacher', 'student'] },
+  { pattern: '/achievement-standards', roles: ['admin', 'teacher', 'student'] },
   // 미등록 경로(/, /settings, /unauthorized)는 인증된 모든 사용자 허용
 ] as const

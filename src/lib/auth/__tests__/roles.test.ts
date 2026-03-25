@@ -26,8 +26,8 @@ describe('ROUTE_PERMISSIONS', () => {
   // 유효한 Role 집합 — 타입 안전 검증용
   const validRoles = new Set<Role>(ROLES)
 
-  it('보호 대상 경로 6개가 정의되어 있다', () => {
-    expect(ROUTE_PERMISSIONS).toHaveLength(6)
+  it('보호 대상 경로 7개가 정의되어 있다', () => {
+    expect(ROUTE_PERMISSIONS).toHaveLength(7)
   })
 
   it('모든 경로의 roles에 유효한 Role 값만 포함된다', () => {
@@ -77,6 +77,7 @@ describe('ROUTE_PERMISSIONS', () => {
       '/past-exams': ['admin', 'teacher'],
       '/generate': ['admin', 'teacher'],
       '/questions': ['admin', 'teacher', 'student'],
+      '/achievement-standards': ['admin', 'teacher', 'student'],
     }
 
     for (const permission of ROUTE_PERMISSIONS) {
