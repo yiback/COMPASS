@@ -368,9 +368,9 @@ describe('extractQuestionsAction', () => {
     mockExtractQuestions.mockRejectedValue(new Error('AI API 오류'))
 
     const { extractQuestionsAction } = await import('../extract-questions')
-    // AI 오류가 throw되면 finally에서 'failed' 설정
-    // Action은 throw를 잡지 않으므로 에러가 전파됨
-    await expect(extractQuestionsAction('exam-id')).rejects.toThrow()
+    // AI 오류 시 catch에서 { error } 반환 (throw 대신)
+    const result = await extractQuestionsAction('exam-id')
+    expect(result).toEqual({ error: 'AI API 오류' })
 
     // finally에서 'failed' 업데이트가 호출되었는지 확인
     expect(mockUpdatePastExamsCompleted).toHaveBeenCalledWith(
@@ -378,7 +378,7 @@ describe('extractQuestionsAction', () => {
     )
   })
 
-  it('crop 성공 — figure.url에 Storage 경로 저장', async () => {
+  it('figure 포함 문제 — crop 미수행, figure.url = null로 INSERT', async () => {
     mockAuthenticatedTeacher()
     mockUpdatePastExams.mockResolvedValue({
       data: [
@@ -432,24 +432,16 @@ describe('extractQuestionsAction', () => {
     }
     mockExtractQuestions.mockResolvedValue(aiResultWithFigure)
 
-    // sharp 메타데이터 + crop
-    mockMetadata.mockResolvedValue({ width: 1000, height: 1500 })
-    mockToBuffer.mockResolvedValue(Buffer.from('cropped-image'))
-    mockAdminStorageUpload.mockResolvedValue({ error: null })
-
     const { extractQuestionsAction } = await import('../extract-questions')
     await extractQuestionsAction('exam-id')
 
-    // Storage 업로드가 호출되었는지 확인
-    expect(mockAdminStorageUpload).toHaveBeenCalled()
-    const uploadPath = mockAdminStorageUpload.mock.calls[0]?.[0] as string
-    expect(uploadPath).toMatch(/^academy-id\/exam-id\/figures\/.*-0\.jpg$/)
+    // crop 제거됨 — Storage 업로드 미호출
+    expect(mockAdminStorageUpload).not.toHaveBeenCalled()
 
-    // INSERT된 details에 figures[0].url이 경로를 가지는지 확인
+    // INSERT된 details에 figures[0].url = null (메타데이터만 저장)
     const insertedData = mockInsertPastExamDetails.mock.calls[0]?.[0]
-    expect(insertedData[0].figures[0].url).toMatch(
-      /^academy-id\/exam-id\/figures\//,
-    )
+    expect(insertedData[0].figures[0].url).toBeNull()
+    expect(insertedData[0].figures[0].description).toBe('그래프')
   })
 
   it('crop 부분 실패 — figure.url = null + 나머지 INSERT 정상', async () => {
