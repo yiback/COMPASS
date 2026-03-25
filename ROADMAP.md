@@ -1,6 +1,6 @@
 # COMPASS 개발 로드맵
 
-> **최종 업데이트**: 2026-03-24 (단계 2-1 RBAC 시스템 완료 — 역할 기반 라우트 보호 + 사이드바 필터링 + 1390 tests)
+> **최종 업데이트**: 2026-03-25 (단계 2-2 성취기준 DB 구축 완료 — CRUD + 76개 시딩 + 캐스케이딩 필터 + 상세 Sheet + 1431 tests)
 
 ## 개발 전략
 
@@ -231,12 +231,18 @@
 - [x] system_admin 암묵 허용 + ROLES.includes 런타임 가드
 - [x] 단위 테스트 23개 (requireRole, getCurrentProfile, ROUTE_PERMISSIONS)
 
-### 2-2. 성취기준 DB 구축 [F002]
+### 2-2. 성취기준 DB 구축 [F002] ✅
 
-- [ ] 성취기준 데이터 스키마
-- [ ] 성취기준 데이터 시딩 (교육과정 데이터)
-- [ ] 성취기준 검색/필터 API
-- [ ] 학년/학기/과목별 조회
+> **계획**: `docs/plan/achievement-standards-db.md` (v2.1) + Task별 상세 5개
+> **리서치**: `docs/research/achievement-standards-collection-recommendation.md` (v3)
+> **작업량**: M (1~1.5주) → **완료** (세션 32, 1431 tests, E2E 통과)
+
+- [x] 성취기준 데이터 스키마 (4개 컬럼 추가: source_url, source_name, order_in_semester, effective_year)
+- [x] 성취기준 데이터 시딩 (76개 중등 수학, 2022 개정 교육과정, UPSERT 멱등성)
+- [x] 성취기준 검색/필터 API (6개 Server Action — CRUD + 조회 + Autocomplete)
+- [x] 학년/학기/과목별 조회 (캐스케이딩 필터 + DataTable + 상세 Sheet)
+- [x] system_admin CRUD (수동 폼 생성/수정/비활성화)
+- [x] 단위/통합 테스트 41개 (Zod 14 + Action 27)
 
 ### 2-3. 역할별 대시보드 [F018]
 
@@ -505,7 +511,7 @@ CREATE TABLE teacher_subjects (
 | 단계 1 (기출 기반 문제 생성 + 인증) | 100% (1-1~1-9 + 통합 테스트 완료, 1238 tests) | ✅ 완료 |
 | 단계 1.5-1 (LaTeX 수식 렌더링) | 100% (8/8 Task 완료, 31 tests) | ✅ 완료 |
 | 단계 1.5-2 (도형/그래프 렌더링) | 100% (11 Task + 코드 리뷰 + E2E, 1367 tests) | ✅ 완료 |
-| 단계 2 (성취기준 연동 + RBAC/대시보드) | 11% (2-1 RBAC 완료, 1390 tests) | 🚧 진행 중 |
+| 단계 2 (성취기준 연동 + RBAC/대시보드) | 22% (2-1 RBAC + 2-2 성취기준 DB 완료, 1431 tests) | 🚧 진행 중 |
 | 단계 3 (AI 채점 + 채점/오답 UI) | 0% | ⏸️ 대기 |
 | 단계 4 (개인화 + 학부모 리포트) | 0% | ⏸️ 대기 |
 

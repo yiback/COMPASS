@@ -1,6 +1,6 @@
 # COMPASS 프로젝트 핸드오프 문서
 
-> **최종 업데이트**: 2026-03-24 (세션 31: 단계 2-1 RBAC 시스템 구현 완료)
+> **최종 업데이트**: 2026-03-25 (세션 32: 단계 2-2 성취기준 DB 구축 완료)
 > **규칙·워크플로우**: `CLAUDE.md` | **반복 실수·교훈**: `MEMORY.md`
 
 ---
@@ -66,8 +66,22 @@
 7. ROADMAP/PLAN 완료 반영
 ```
 
-### 이전 세션 (세션 11-30)
+### 단계 2-2: 성취기준 DB 구축 (100% 완료) ✅
 
+| Task | 작업 | 상태 |
+|------|------|------|
+| Task 1 | 마이그레이션 (4개 컬럼 + 76개 시딩) | 완료 |
+| Task 2 | Zod 스키마 (create/update/filter 3종) | 완료 |
+| Task 3 | Server Action (CRUD 6개 + Autocomplete) | 완료 |
+| Task 4 | UI (DataTable + Dialog + 캐스케이딩 필터 + RBAC) | 완료 |
+| Task 5 | 테스트 41개 (Zod 14 + Action 27) | 완료 |
+| 추가 | 상세 Sheet (행 클릭 → 전체 정보 표시) | 완료 |
+| 코드 리뷰 | security/perf/test 3명 × 3차 — CRITICAL 0 | 완료 |
+| E2E | 7개 여정 (필터/검색/Sheet), 콘솔 에러 0건 | 완료 |
+
+### 이전 세션 (세션 11-31)
+
+- 세션 31: RBAC 시스템 전체 구현 (23개 파일, 1390 tests)
 - 세션 30: 도형 렌더링 전체 구현 (11 Task, 1367 tests)
 - 세션 29: 정리 작업 + 도형 렌더링 PLAN v1
 - 세션 28: LaTeX 수식 렌더링 구현 (31 tests, E2E 통과)
@@ -83,15 +97,13 @@
 
 ### 즉시 해야 할 일 (우선순위순)
 
-1. **단계 2-1 회고 작성**
-   - `docs/retrospective/phase-2.1-retro.md` 작성
-   - 리서치 팀 3명 병렬, PLAN 리뷰 3회 제한, 방식 C 채택 프로세스 교훈
+1. **단계 2-2 회고 작성**
+   - `docs/retrospective/phase-2.2-retro.md` 작성
+   - 리서치 v1→v2→v3, PLAN v2.1, 코드 리뷰 3차 프로세스 교훈
 
-2. **단계 2-2 성취기준 DB 구축** — ROADMAP.md 참조
-   - 성취기준 데이터 스키마
-   - 성취기준 데이터 시딩 (교육과정 데이터)
-   - 성취기준 검색/필터 API
-   - 학년/학기/과목별 조회
+2. **단계 2-3 역할별 대시보드 [F018]** — ROADMAP.md 참조
+   - 학원장/강사/학생 역할별 현황 요약
+   - 대시보드 위젯 시스템
 
 3. **Server Action 리팩토링** (독립 이슈 — RBAC에서 분리)
    - getCurrentUserProfile 7가지 변형 → `getCurrentUser()` + `requireRole()` 통합
