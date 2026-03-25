@@ -163,7 +163,7 @@ GEMINI_MODEL=gemini-2.5-flash (gemini-2.0-flash는 새 프로젝트에서 사용
 
 ### 진행 중 이슈
 
-- 마이그레이션 00004: Supabase Cloud에 **미적용** (로컬 파일만 존재)
+- 마이그레이션 00004: **수동 적용 완료** (invite_code + 트리거 확인됨)
 - 마이그레이션 00005: **수동 적용 완료** (Dashboard SQL Editor에서 실행)
 - 마이그레이션 20260315: **수동 적용 완료** (3계층 구조)
 - 마이그레이션 20260322: **수동 적용 완료** (Dashboard SQL Editor에서 실행)
