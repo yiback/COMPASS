@@ -43,28 +43,7 @@
 
 ### 단계 2-1: RBAC 시스템 (100% 완료) ✅
 
-| Task | 작업 | 상태 |
-|------|------|------|
-| Task 1 | 권한 정의 모듈 (roles.ts, route-permissions.ts, index.ts) | 완료 |
-| Task 2 | 공유 인증 유틸 (get-current-user.ts + require-role.ts + React 19 cache) | 완료 |
-| Task 3 | page.tsx 역할 체크 9개 + layout 수정 + unauthorized 페이지 | 완료 |
-| Task 4 | 사이드바/모바일네비 역할별 메뉴 필터링 | 완료 |
-| Task 5 | 단위 테스트 23개 (requireRole, getCurrentProfile, ROUTE_PERMISSIONS) | 완료 |
-| 코드 리뷰 | security/perf/test 3명 — CRITICAL 0, HIGH 4건 수정 | 완료 |
-| E2E | Chrome DevTools MCP 시각적 검증 8개 여정, 콘솔 에러 0건 | 완료 |
-
-### 세션 31 작업 요약
-
-```
-1. RBAC 기술 리서치 (3명 병렬: tech/feasibility/devil-advocate)
-   → 방식 C(page.tsx 개별 체크) 만장일치 채택
-2. PLAN v1 → v2 → v2.1 (리뷰 3회 제한 준수, MUST FIX 4건 반영)
-3. Task별 상세 계획 5개 작성
-4. Wave 1~4 구현 (Task 1 직렬 → Task 2+4 병렬 → Task 3 직렬 → Task 5)
-5. 코드 리뷰: security/perf/test 3명 — HIGH 4건 수정 (런타임 role 가드 + 테스트 4개)
-6. E2E 시각적 검증: 8개 여정, 콘솔 에러 0건
-7. ROADMAP/PLAN 완료 반영
-```
+23개 파일, 1390 tests, E2E 8개 여정 (세션 31)
 
 ### 단계 2-2: 성취기준 DB 구축 (100% 완료) ✅
 
@@ -79,17 +58,20 @@
 | 코드 리뷰 | security/perf/test 3명 × 3차 — CRITICAL 0 | 완료 |
 | E2E | 7개 여정 (필터/검색/Sheet), 콘솔 에러 0건 | 완료 |
 
-### 이전 세션 (세션 11-31)
+### 세션 32 작업 요약
 
-- 세션 31: RBAC 시스템 전체 구현 (23개 파일, 1390 tests)
-- 세션 30: 도형 렌더링 전체 구현 (11 Task, 1367 tests)
-- 세션 29: 정리 작업 + 도형 렌더링 PLAN v1
-- 세션 28: LaTeX 수식 렌더링 구현 (31 tests, E2E 통과)
-- 세션 27: figure crop 제거 + 문서 업데이트
-- 세션 26: E2E 테스트 전체 통과 + 버그 수정 4건
-- 세션 25: 기출문제 추출 전체 구현 (34개 파일, 1235 tests)
-- 세션 19-24: 기출문제 추출 계획 v1→v7
-- 세션 11-18: 학습 리뷰 + 학년 필터링 + 1-6~1-8 구현
+```
+1. 리서치 v1→v2→v3 (3명 병렬 × 3라운드 = 9회)
+   → v1: 자동 수집 YAGNI → v2: CRUD 필수 → v3: 출처/시점 절충
+2. PLAN v1(조회만) → v2(CRUD 추가) → v2.1(리뷰 반영)
+3. 11개 의사결정 확정 (RLS/편집필드/삭제정책/다과목 등)
+4. Task 1~5 상세 계획 + 리뷰 READY
+5. Wave 1~4 구현 (Task 1+2 병렬 → 3 → 4 → 5)
+6. detail-sheet 추가 (사용자 피드백 "내용이 다 안 보여")
+7. 코드 리뷰 3차 만장일치 PASS
+8. E2E 7개 여정, 콘솔 에러 0건
+9. ROADMAP/PLAN/HANDOFF 완료 반영 + 회고 작성
+```
 
 ---
 
@@ -97,59 +79,50 @@
 
 ### 즉시 해야 할 일 (우선순위순)
 
-1. **단계 2-2 회고 작성**
-   - `docs/retrospective/phase-2.2-retro.md` 작성
-   - 리서치 v1→v2→v3, PLAN v2.1, 코드 리뷰 3차 프로세스 교훈
-
-2. **단계 2-3 역할별 대시보드 [F018]** — ROADMAP.md 참조
+1. **단계 2-3 역할별 대시보드 [F018]** — ROADMAP.md 참조
    - 학원장/강사/학생 역할별 현황 요약
    - 대시보드 위젯 시스템
 
-3. **Server Action 리팩토링** (독립 이슈 — RBAC에서 분리)
-   - getCurrentUserProfile 7가지 변형 → `getCurrentUser()` + `requireRole()` 통합
-   - 9개 Action 파일 점진적 교체
+2. **단계 2-4 성취기준 기반 AI 문제 생성 [F001]** — 2-2의 직접 후속
+   - 성취기준 선택 → AI 프롬프트 연동
+   - achievement_standard_id FK 활용
 
-### 코드 리뷰 잔여 이슈 (MEDIUM/LOW — 구현 중 처리 가능)
+3. **Server Action 리팩토링** (독립 이슈)
+   - getCurrentUserProfile 7가지 변형 → `getCurrentUser()` + `requireRole()` 통합
+
+### 코드 리뷰 잔여 이슈 (MEDIUM/LOW)
 
 | 등급 | 이슈 |
 |------|------|
-| MEDIUM | admin/academy `canEdit = true` 하드코딩 → `profile.role === 'admin'` 명시적 계산 권장 |
-| MEDIUM | admin/academy `getMyAcademy()` cache() 밖 중복 쿼리 (요청당 5쿼리) → Action 리팩토링과 함께 |
-| MEDIUM | `parseLatexText` + `groupAdjacentFigures` useMemo 캐싱 권장 |
-| LOW | `color` 필드 색상 정규식, `description` 길이 제한 등 |
+| MEDIUM | admin/academy `canEdit = true` 하드코딩 → 명시적 계산 |
+| MEDIUM | admin/academy `getMyAcademy()` cache() 밖 중복 쿼리 |
+| MEDIUM | `parseLatexText` + `groupAdjacentFigures` useMemo 캐싱 |
+| LOW | `color` 필드 색상 정규식, `description` 길이 제한 |
 
 ---
 
 ## 4. 성공한 접근 (재사용할 패턴)
 
 ### 개발 패턴
-- **Defense in Depth 4중 방어**: page.tsx(requireRole) + 사이드바(UX) + Server Action + RLS
-- **React 19 cache()**: layout + page 간 DB 조회 1회 최적화
-- **requireRole() Gateway 패턴**: 인증 + 프로필 + 역할 체크를 1줄로 통합
-- **ROLES.includes() 런타임 가드**: DB에서 잘못된 role이 와도 타입 안전
-- **props drilling (role)**: 소비자 2개일 때 Context보다 단순
-- **방식 C (page.tsx 개별 체크)**: Layout pathname 문제 해소, Next.js 공식 권장
-- **리서치 팀 3명 병렬**: tech-researcher + feasibility-analyst + devil-advocate → 1페이지 추천안
-- **devil-advocate YAGNI 비판**: 8 Task → 5 Task, 30파일 → 17파일 축소
-- **Self-referencing ID**: academy_id를 profile에서 추출 → URL 조작 방지
-- **TDD RED→GREEN→REFACTOR** 철저 준수
-- **PLAN 리뷰 3회 제한**: v1→v2→v2.1 마지막, 과도 반복 방지
+- **Defense in Depth 4중 방어**: page.tsx + 사이드바 + Server Action + RLS
+- **schools.ts CRUD 패턴 100% 재사용**: 성취기준도 동일 구조 복제
+- **thenable mock**: Supabase 동적 체인 → Object.defineProperty('then')
+- **트리거 vs 제어 모드 Dialog**: union type props로 생성/수정 통합
+- **리서치 3라운드 점진적 정제**: 사용자 피드백 반영하며 반복
+- **11개 의사결정 명시적 추적**: 리서치→PLAN→구현까지 번호로 추적
+- **PLAN 리뷰 3회 제한**: 과도 반복 방지
 - **Wave 병렬 구현**: 파일 소유권 명확 → 충돌 0건
-- **E2E 테스트**: Chrome DevTools MCP로 실제 브라우저 자동화
 
 ### 학습 방법
 - **빈칸 채우기 방식 재구현**: 전체 삭제가 아닌 핵심 로직만 빈칸
-- **사용자 수준**: JavaScript 기초(`const`, `await`)부터 설명 필요. 간결하게
+- **사용자 수준**: JavaScript 기초부터 설명 필요. 간결하게
 
 ### 실패한 접근 (반복하지 말 것)
-- **Layout pathname 접근 시도** (v1): App Router에서 Layout은 pathname 접근 불가 → page.tsx 방식으로 전환
-- **RoleProvider (React Context)**: 소비자 2개뿐인데 Context는 과잉 → props drilling
-- **permissions.ts (행동 기반 권한)**: route-permissions.ts와 중복 → YAGNI 제거
-- **canAccessRoute() 함수**: 실질 소비자 0곳 → YAGNI 제거
-- **RBAC + Action 리팩토링 동시 진행**: 범위 과다 → 독립 이슈로 분리
-- **parent 역할 DB 추가**: 소비자 0명일 때 마이그레이션은 YAGNI → 단계 4로 이동
-- **계획 파일 없이 코드 작성**: 반드시 `docs/plan/` 파일 먼저 생성
-- **체크리스트 없는 응답**: 모든 응답 첫 줄에 체크리스트 필수
+- **PLAN v1 YAGNI 과도 적용**: 사용자가 명시적으로 원한 CRUD를 제거 → 복원 요청
+- **리서치 전 요구사항 미확인**: v1→v2→v3 반복 원인 = 요구사항 점진적 추가
+- **코드 리뷰 반복 요청**: PASS 후 같은 코드에 재리뷰 = 비효율
+- **supabase gen types Docker 미확인**: Docker 미실행 시 타입 파일 비워짐
+- **AchievementStandard 타입 누락**: 마이그레이션과 동시에 타입 확장 필수
 
 ---
 
@@ -160,27 +133,28 @@
 | 1 | `CLAUDE.md` — 규칙·워크플로우 |
 | 2 | `MEMORY.md` — 반복 실수·기술 교훈 |
 | 3 | `ROADMAP.md` — 순차 스텝별 로드맵 |
-| 4 | `docs/plan/rbac-system.md` — RBAC 마스터 PLAN v2.1 (완료) |
-| 5 | `docs/plan/rbac-task-{1-5}-*.md` — RBAC Task별 상세 계획 (완료) |
-| 6 | `docs/reviews/rbac-code-review.md` — RBAC 코드 리뷰 최종 리포트 |
-| 7 | `docs/research/tech/rbac-route-protection.md` — 라우트 보호 기술 비교 |
-| 8 | `docs/retrospective/phase-1-retro.md` — Phase 1 전체 회고 |
+| 4 | `docs/plan/achievement-standards-db.md` — 성취기준 마스터 PLAN v2.1 (완료) |
+| 5 | `docs/plan/achievement-task-{1-5}-*.md` — 성취기준 Task별 상세 (완료) |
+| 6 | `docs/reviews/phase-2.2-code-review.md` — 성취기준 코드 리뷰 최종 |
+| 7 | `docs/retrospective/phase-2.2-retro.md` — 성취기준 회고 |
+| 8 | `docs/research/achievement-standards-collection-recommendation.md` — 리서치 종합 v3 |
 
-### RBAC 주요 파일 참조
+### 성취기준 주요 파일 참조
 
 | 기능 | 파일 |
 |------|------|
-| **Role 타입 + 상수** | `src/lib/auth/roles.ts` |
-| **경로-역할 매핑** | `src/lib/auth/route-permissions.ts` (문서화 상수) |
-| **getCurrentProfile** | `src/lib/auth/get-current-user.ts` (React 19 cache) |
-| **requireRole** | `src/lib/auth/require-role.ts` (page.tsx 가드) |
-| **배럴 파일** | `src/lib/auth/index.ts` |
-| **403 페이지** | `src/app/(dashboard)/unauthorized/page.tsx` |
-| **사이드바 필터** | `src/components/layout/dashboard-sidebar.tsx` (role?: Role) |
-| **모바일 네비** | `src/components/layout/mobile-nav.tsx` (role?: Role) |
-| **헤더 drilling** | `src/components/layout/dashboard-header.tsx` (role?: Role) |
-| **메뉴 정의** | `src/lib/constants/menu.ts` (MenuItem.roles) |
-| **테스트** | `src/lib/auth/__tests__/roles.test.ts`, `require-role.test.ts` |
+| **마이그레이션** | `supabase/migrations/20260324_achievement_standards_v2.sql` |
+| **Zod 스키마** | `src/lib/validations/achievement-standards.ts` |
+| **Server Action (CRUD 6개)** | `src/lib/actions/achievement-standards.ts` |
+| **목록 페이지** | `src/app/(dashboard)/achievement-standards/page.tsx` |
+| **DataTable 컬럼** | `src/components/achievement-standards/columns.tsx` |
+| **캐스케이딩 필터** | `src/components/achievement-standards/toolbar.tsx` |
+| **생성/수정 Dialog** | `src/components/achievement-standards/form-dialog.tsx` |
+| **비활성화 AlertDialog** | `src/components/achievement-standards/deactivate-dialog.tsx` |
+| **상세 Sheet** | `src/components/achievement-standards/detail-sheet.tsx` |
+| **테이블 래퍼** | `src/components/achievement-standards/achievement-standards-table.tsx` |
+| **테스트 (Zod)** | `src/lib/validations/__tests__/achievement-standards.test.ts` |
+| **테스트 (Action)** | `src/lib/actions/__tests__/achievement-standards.test.ts` |
 
 ### 환경 설정 (.env.local)
 
@@ -195,6 +169,7 @@ GEMINI_MODEL=gemini-2.5-flash (gemini-2.0-flash는 새 프로젝트에서 사용
 - 마이그레이션 00005: **수동 적용 완료** (Dashboard SQL Editor에서 실행)
 - 마이그레이션 20260315: **수동 적용 완료** (3계층 구조)
 - 마이그레이션 20260322: **수동 적용 완료** (Dashboard SQL Editor에서 실행)
+- 마이그레이션 20260324: **수동 적용 완료** (성취기준 4컬럼 + 76개 시딩)
 - `await cookies()` 필수 (Next.js 16 비동기)
 - 시드 데이터 UUID가 비표준 → Zod `.uuid()` 대신 `.min(1)` 사용 중
 - 기존 extract-questions.test.ts 실패 2건 — 이번 작업과 무관 (사전 존재)
